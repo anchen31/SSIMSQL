@@ -10,13 +10,6 @@ import subprocess
 #importing file which sets env variable
 #subprocess.call("./settings.sh", shell = True)
 
-
-consumer_key = 'd9iECNcgQsRoNQXkFsikk8dsC'
-consumer_secret = 'hA48EPaFwl3vdmfPyYDnOs0qQnr8q3aL1FtTvoQvBoabkbS7S8'
-access_token = '1291554276884406272-ucfXmUs5fkiRgG6Eqzah3TnMoPHKEi'
-access_token_secret = 'cWwfsIC3dsixdbxV6HseTZUNkGAEABFHErFZZcz9sh7dZ'
-password = "@ndych3n1454L46i5Z9"
-
 # consumer_key = os.environ['CONSUMER_KEY']
 # consumer_secret = os.environ['CONSUMER_SECRET']
 # access_token = os.environ['ACCESS_TOKEN']
