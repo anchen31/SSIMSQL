@@ -2,18 +2,28 @@ import mysql.connector
 from mysql.connector import Error
 import tweepy
 import json
-from dateutil import parser
+from datetime import datetime
+from pytz import timezone
+from unidecode import unidecode
+import praw
 import time
 import os
 import subprocess
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
+track = ['Tsla']
 # consumer_key = os.environ['CONSUMER_KEY']
 # consumer_secret = os.environ['CONSUMER_SECRET']
 # access_token = os.environ['ACCESS_TOKEN']
 # access_token_secret = os.environ['ACCESS_TOKEN_SECRET']
 # password = os.environ['PASSWORD']
 
-def connect(created_at, tweet, retweet_count):
+def datetime_from_utc_to_local(utc_datetime):
+    now_timestamp = time.time()
+    offset = datetime.fromtimestamp(now_timestamp) - datetime.utcfromtimestamp(now_timestamp)
+    return utc_datetime + offset
+
+def connect(timestamp_ms, tweet, sentiment):
 	"""
 	connect to MySQL database and insert twitter data
 	"""
@@ -32,12 +42,13 @@ def connect(created_at, tweet, retweet_count):
 			"""
 			cursor = con.cursor()
 			# twitter
-			query = "INSERT INTO TwitterSent (created_at, tweet, retweet_count) VALUES (%s, %s, %s)"
-			cursor.execute(query, (created_at, tweet, retweet_count))
+			query = "INSERT INTO TwitterSent (timestamp_ms, tweet, sentiment) VALUES (%s, %s, %s)"
+			cursor.execute(query, (timestamp_ms, tweet, sentiment))
 			con.commit()
 			
 			
 	except Error as e:
+	
 		print(e)
 
 	cursor.close()
@@ -67,35 +78,36 @@ class Streamlistener(tweepy.StreamListener):
 	def on_data(self,data):
 		
 		try:
-			raw_data = json.loads(data)
+			data = json.loads(data)
 
-			if 'text' in raw_data:
-				created_at = parser.parse(raw_data['created_at'])
-				tweet = raw_data['text']
-				retweet_count = raw_data['retweet_count']
-				#insert data just collected into MySQL database
-				connect(created_at, tweet, retweet_count)
-				print("Tweet colleted at: {} ".format(str(created_at)))
+			if 'truncated' not in data:
+				return True
+			if data['truncated']:
+				tweet = unidecode(data['extended_tweet']['full_text'])
+			else:
+				tweet = unidecode(data['text'])
+
+			#Takes in string stream data and converts it into a different format
+			timestamp_ms = datetime.strftime(datetime.strptime(data['created_at'], '%a %b %d %H:%M:%S +0000 %Y'), '%Y-%m-%d %H:%M:%S')
+			#converts it back into a datetime object to pass it through datetime_from_utc_to_local
+			timestamp_ms = datetime.strptime(timestamp_ms, '%Y-%m-%d %H:%M:%S')
+			#run it through the created method
+			timestamp_ms = datetime_from_utc_to_local(timestamp_ms)
+			#turn it back into a string so we can store it, I feel like it can shorten this but..
+			timestamp_ms = datetime.strftime(timestamp_ms, '%Y-%m-%d %H:%M:%S')
+
+
+			tweet = data['text']
+			vs = analyzer.polarity_scores(tweet)
+			sentiment = vs['compound']
+			#insert data just collected into MySQL database
+			connect(timestamp_ms, tweet, sentiment)
+			print("Tweet collected at: {} ".format(str(timestamp_ms)))
 		except Error as e:
 			print(e)
 
 
 if __name__== '__main__':
-
-	# # #Allow user input
-	# track = []
-	# while True:
-
-	# 	input1  = input("what do you want to collect tweets on?: ")
-	# 	track.append(input1)
-
-	# 	input2 = input("Do you wish to enter another word? y/n ")
-	# 	if input2 == 'n' or input2 == 'N':
-	# 		break
-	
-	# print("You want to search for {}".format(track))
-	# print("Initialising Connection to Twitter API....")
-	# time.sleep(2)
 
 	# authentification so we can access twitter
 	auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
@@ -106,7 +118,6 @@ if __name__== '__main__':
 	listener = Streamlistener(api = api)
 	stream = tweepy.Stream(auth, listener = listener)
 
-	track = ['Tsla']
 	#track = ['nba', 'cavs', 'celtics', 'basketball']
 	# choose what we want to filter by
 	stream.filter(track = track, languages = ['en'])
