@@ -2,8 +2,8 @@ import os
 from multiprocessing import Pool                                                
                                                                                 
                                                                                 
-processes = ('TSSmySQL.py', 'process2.py')                                    
-other = ('process3.py',)
+processes = ('TSSmySQL.py', 'RSSmySQL.py', 'ibStream.py')                                    
+other = ('stonks.py',)
                                                   
                                                                                 
 def run_process(process):                                                             

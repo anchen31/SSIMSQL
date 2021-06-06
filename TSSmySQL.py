@@ -23,7 +23,7 @@ def datetime_from_utc_to_local(utc_datetime):
     offset = datetime.fromtimestamp(now_timestamp) - datetime.utcfromtimestamp(now_timestamp)
     return utc_datetime + offset
 
-def connect(timestamp_ms, tweet, sentiment):
+def connect(timestamp_ms, sentiment):
 	"""
 	connect to MySQL database and insert twitter data
 	"""
@@ -42,8 +42,8 @@ def connect(timestamp_ms, tweet, sentiment):
 			"""
 			cursor = con.cursor()
 			# twitter
-			query = "INSERT INTO TwitterSent (timestamp_ms, tweet, sentiment) VALUES (%s, %s, %s)"
-			cursor.execute(query, (timestamp_ms, tweet, sentiment))
+			query = "INSERT INTO TwitterSent (timestamp_ms, sentiment) VALUES (%s, %s)"
+			cursor.execute(query, (timestamp_ms, sentiment))
 			con.commit()
 			
 			
@@ -93,15 +93,13 @@ class Streamlistener(tweepy.StreamListener):
 			timestamp_ms = datetime.strptime(timestamp_ms, '%Y-%m-%d %H:%M:%S')
 			#run it through the created method
 			timestamp_ms = datetime_from_utc_to_local(timestamp_ms)
-			#turn it back into a string so we can store it, I feel like it can shorten this but..
-			timestamp_ms = datetime.strftime(timestamp_ms, '%Y-%m-%d %H:%M:%S')
 
 
 			tweet = data['text']
 			vs = analyzer.polarity_scores(tweet)
 			sentiment = vs['compound']
 			#insert data just collected into MySQL database
-			connect(timestamp_ms, tweet, sentiment)
+			connect(timestamp_ms, sentiment)
 			print("Tweet collected at: {} ".format(str(timestamp_ms)))
 		except Error as e:
 			print(e)
