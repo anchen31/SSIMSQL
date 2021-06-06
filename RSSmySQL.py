@@ -10,12 +10,6 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 sia = SentimentIntensityAnalyzer()
 #connect to reddit client
-reddit = praw.Reddit(client_id='Q3V71dMukXlxgw',
-                     client_secret='UxRpG3kgw_4nfcEGpK7s8c2lrpxsRQ',
-                     user_agent='A1KobeBeefyBryant')
-
-password = "@ndych3n1454L46i5Z9"
-
 # reddit = praw.Reddit(client_id='',
 #                      client_secret='',
 #                      user_agent='')
