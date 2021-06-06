@@ -12,11 +12,11 @@ import subprocess
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 track = ['Tsla']
-# consumer_key = os.environ['CONSUMER_KEY']
-# consumer_secret = os.environ['CONSUMER_SECRET']
-# access_token = os.environ['ACCESS_TOKEN']
-# access_token_secret = os.environ['ACCESS_TOKEN_SECRET']
-# password = os.environ['PASSWORD']
+consumer_key = os.environ[CONSUMER_KEY]
+consumer_secret = os.environ[CONSUMER_SECRET]
+access_token = os.environ[ACCESS_TOKEN]
+access_token_secret = os.environ[ACCESS_TOKEN_SECRET]
+password = os.environ[PASSWORD]
 
 def datetime_from_utc_to_local(utc_datetime):
     now_timestamp = time.time()
