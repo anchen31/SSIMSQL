@@ -1,22 +1,27 @@
 import mysql.connector
 from mysql.connector import Error
-import tweepy
+import os
 import json
+import praw
+import time
+import tweepy
 from datetime import datetime
 from pytz import timezone
 from unidecode import unidecode
-import praw
-import time
-import os
-import subprocess
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
+import config
+
+
+analyzer = SentimentIntensityAnalyzer()
+
 track = ['Tsla']
-# consumer_key = os.environ['CONSUMER_KEY']
-# consumer_secret = os.environ['CONSUMER_SECRET']
-# access_token = os.environ['ACCESS_TOKEN']
-# access_token_secret = os.environ['ACCESS_TOKEN_SECRET']
-# password = os.environ['PASSWORD']
+consumer_key = config.consumer_key
+consumer_secret = config.consumer_secret
+access_token = config.access_token
+access_token_secret = config.access_token_secret
+password = config.password
+
 
 def datetime_from_utc_to_local(utc_datetime):
     now_timestamp = time.time()
