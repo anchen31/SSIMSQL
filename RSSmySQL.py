@@ -16,6 +16,12 @@ reddit = praw.Reddit(client_id='Q3V71dMukXlxgw',
 
 password = "@ndych3n1454L46i5Z9"
 
+# reddit = praw.Reddit(client_id='',
+#                      client_secret='',
+#                      user_agent='')
+
+# password = ""
+
 
 #connect to mysql method to add data
 def connect(timestamp_ms, reddit_sentiment, reddit_comm_sentiment, news_sentiment):
