@@ -8,13 +8,23 @@ import mysql.connector
 from mysql.connector import Error
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
+import config
+
 sia = SentimentIntensityAnalyzer()
 #connect to reddit client
+<<<<<<< HEAD
+reddit = praw.Reddit(client_id=config.client_id,
+                     client_secret=config.client_secret,
+                     user_agent=config.user_agent)
+
+password = config.password
+
+=======
 # reddit = praw.Reddit(client_id='',
 #                      client_secret='',
 #                      user_agent='')
+>>>>>>> c40b92a00f82544339106e2e9b4e2d377f337649
 
-# password = ""
 
 
 #connect to mysql method to add data
@@ -58,7 +68,7 @@ def getTime():
         host = 'localhost',
         database='twitterdb', 
         user='root', 
-        password = password)
+        password = config.password)
         print("You are connected to mySQL")
 
         cursor = con.cursor()
@@ -98,6 +108,4 @@ if __name__== '__main__':
             print("fuck")
 
         run = False
-
-
 
