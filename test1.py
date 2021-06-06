@@ -14,10 +14,6 @@ reddit = praw.Reddit(client_id='',
                      client_secret='',
                      user_agent='')
 
-reddit = praw.Reddit(client_id='Q3V71dMukXlxgw',
-                     client_secret='UxRpG3kgw_4nfcEGpK7s8c2lrpxsRQ',
-                     user_agent='A1KobeBeefyBryant')
-
 # get 10 hot posts from the showerthoughts subreddit
 top_posts = reddit.subreddit('TSLA').top('week', limit=5)
 
