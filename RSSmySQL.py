@@ -19,14 +19,6 @@ reddit = praw.Reddit(client_id=config.client_id,
 
 password = config.password
 
-=======
-# reddit = praw.Reddit(client_id='',
-#                      client_secret='',
-#                      user_agent='')
->>>>>>> c40b92a00f82544339106e2e9b4e2d377f337649
-
-
-
 #connect to mysql method to add data
 def connect(timestamp_ms, reddit_sentiment, reddit_comm_sentiment, news_sentiment):
     """
@@ -108,4 +100,6 @@ if __name__== '__main__':
             print("fuck")
 
         run = False
+
+
 
