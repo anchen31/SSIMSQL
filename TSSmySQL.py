@@ -16,23 +16,13 @@ import config
 analyzer = SentimentIntensityAnalyzer()
 
 track = ['Tsla']
-<<<<<<< HEAD
+
 consumer_key = config.consumer_key
 consumer_secret = config.consumer_secret
 access_token = config.access_token
 access_token_secret = config.access_token_secret
 password = config.password
 
-<<<<<<< HEAD
-=======
-consumer_key = os.environ[CONSUMER_KEY]
-consumer_secret = os.environ[CONSUMER_SECRET]
-access_token = os.environ[ACCESS_TOKEN]
-access_token_secret = os.environ[ACCESS_TOKEN_SECRET]
-password = os.environ[PASSWORD]
->>>>>>> c40b92a00f82544339106e2e9b4e2d377f337649
-=======
->>>>>>> 8120f8840231a6b00820cc6ba97c30a8991e81c5
 
 def datetime_from_utc_to_local(utc_datetime):
     now_timestamp = time.time()

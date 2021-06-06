@@ -12,24 +12,14 @@ import config
 
 sia = SentimentIntensityAnalyzer()
 #connect to reddit client
-<<<<<<< HEAD
+
 reddit = praw.Reddit(client_id=config.client_id,
                      client_secret=config.client_secret,
                      user_agent=config.user_agent)
-<<<<<<< HEAD
+
 
 password = config.password
 
-=======
-# reddit = praw.Reddit(client_id='',
-#                      client_secret='',
-#                      user_agent='')
->>>>>>> c40b92a00f82544339106e2e9b4e2d377f337649
-
-=======
->>>>>>> 8120f8840231a6b00820cc6ba97c30a8991e81c5
-
-password = config.password
 
 #connect to mysql method to add data
 def connect(timestamp_ms, reddit_sentiment, reddit_comm_sentiment, news_sentiment):
