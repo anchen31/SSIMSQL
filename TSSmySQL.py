@@ -29,6 +29,40 @@ def datetime_from_utc_to_local(utc_datetime):
     offset = datetime.fromtimestamp(now_timestamp) - datetime.utcfromtimestamp(now_timestamp)
     return utc_datetime + offset
 
+#### We will be adding to the ib db instead ##########
+######################################################
+
+#gets the time from the main database 
+def getTime():
+    date = []
+    try:
+        con = mysql.connector.connect(
+        host = 'localhost',
+        database='twitterdb', 
+        user='root', 
+        password = config.password)
+
+        cursor = con.cursor()
+        query = "select * from TwitterSent"
+        cursor.execute(query)
+        # get all records
+        db = cursor.fetchall()
+
+        df = pd.DataFrame(db)
+
+        date.append(df[0].iloc[-1])
+        date.append(df[0].iloc[-2])
+
+
+    except mysql.connector.Error as e:
+        print("Error reading data from MySQL table", e)
+
+    cursor.close()
+    con.close()
+
+    return date
+
+
 def connect(timestamp_ms, sentiment):
 	"""
 	connect to MySQL database and insert twitter data
@@ -62,6 +96,26 @@ def connect(timestamp_ms, sentiment):
 
 	return
 
+############################
+
+
+#will add a list class that will allow us to modify it from the outside
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#############################
 
 # Tweepy class to access Twitter API
 class Streamlistener(tweepy.StreamListener):
@@ -102,16 +156,32 @@ class Streamlistener(tweepy.StreamListener):
 
 
 			tweet = data['text']
+
+			# add in a part where it will only add the combined sentiment to the mysql db
+
+			# check if that the minute changes then
+			# if it changes, then we combine all of our data and then package it into a mysql db
+			# and then push it off to the main db
+			# clear the list that stores it
+
+			# if it doesnt change, we keep appending to the list
+
+
+
+
+
 			vs = analyzer.polarity_scores(tweet)
 			sentiment = vs['compound']
+
+
+
 			#insert data just collected into MySQL database
 			connect(timestamp_ms, sentiment)
 			print("Tweet collected at: {} ".format(str(timestamp_ms)))
 		except Error as e:
 			print(e)
 
-
-if __name__== '__main__':
+def main():
 
 	# authentification so we can access twitter
 	auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
@@ -125,3 +195,7 @@ if __name__== '__main__':
 	#track = ['nba', 'cavs', 'celtics', 'basketball']
 	# choose what we want to filter by
 	stream.filter(track = track, languages = ['en'])
+
+
+if __name__== '__main__':
+	main()

@@ -1,6 +1,7 @@
 import praw
 import nltk
 import time
+import time
 import pandas as pd
 from datetime import datetime
 from textblob import TextBlob
@@ -55,15 +56,15 @@ def connect(timestamp_ms, reddit_sentiment, reddit_comm_sentiment, news_sentimen
 
     return
 
-#gets the time from the main database
+#gets the time from the main database 
 def getTime():
+    date = []
     try:
         con = mysql.connector.connect(
         host = 'localhost',
         database='twitterdb', 
         user='root', 
         password = config.password)
-        print("You are connected to mySQL")
 
         cursor = con.cursor()
         query = "select * from TwitterSent"
@@ -73,7 +74,8 @@ def getTime():
 
         df = pd.DataFrame(db)
 
-        date = df[0].iloc[-1]
+        date.append(df[0].iloc[-1])
+        date.append(df[0].iloc[-2])
 
 
     except mysql.connector.Error as e:
@@ -84,24 +86,76 @@ def getTime():
 
     return date
 
-
-if __name__== '__main__':
+def main():
     run = True
+    timeout = time.time() + 20
+    timeCompare = getTime()
+    timeNow = datetime.strptime(timeCompare[0], '%Y-%m-%d %H:%M:%S')
 
     while(run):
-        time = datetime.now()
-        time = time.strftime('%Y-%m-%d %H:%M:%S')
-        time = datetime.strptime(time, '%Y-%m-%d %H:%M:%S')
 
-        #if the time is on the database, then add onto it.
-        #will make this a lil earlier
+        timeCompare = getTime()
+        timePast = datetime.strptime(timeCompare[1], '%Y-%m-%d %H:%M:%S')
 
-        if (time == getTime()):
-            print("LOL AHAHAH")
+        # whenever we detect that interactive brokers data has updated into the mysql database
+        # we will add to our table and then join to it
+        if timePast == timeNow:
+            #add
+            timeNow = datetime.strptime(timeCompare[0], '%Y-%m-%d %H:%M:%S')
+
+            # use to connect method to store into the db?
+            # then join it to the main table
+
+
+
+
+
+        # while its not the time, we will keep gathering the latest sentiment
         else:
-            print("fuck")
+            #gather reddit sentiment score
 
-        run = False
+            #gather reddit comment score
+
+
+            #should I put this here?
+            #don't change the news score if there isn't any new news, base it off of the most recent news
+            #gather news about overall market??
+
+            #gather news about overall stock??
+
+
+
+
+
+
+
+
+
+
+        # use if necessary
+        #time.sleep(1)
+
+
+
+
+
+
+
+
+        # kills main after a certain amount of time
+        test = 0
+        if test == 5 or time.time() > timeout:
+            run = False
+            break
+        test = test - 1
+
+
+
+
+if __name__== '__main__':
+    main()
+
+
 
 
 
