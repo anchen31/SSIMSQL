@@ -89,10 +89,6 @@ class Streamlistener(tweepy.StreamListener):
 	and extracts the data we want.
 	"""
 	def on_data(self,data):
-		
-		# objs instance
-		myList = MyList()
-		#timeCompare = getTime()
 
 		try:
 			data = json.loads(data)
