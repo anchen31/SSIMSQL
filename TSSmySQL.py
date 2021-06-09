@@ -29,6 +29,7 @@ def datetime_from_utc_to_local(utc_datetime):
     offset = datetime.fromtimestamp(now_timestamp) - datetime.utcfromtimestamp(now_timestamp)
     return utc_datetime + offset
 
+
 #### We will be adding to the ib db instead ##########
 ######################################################
 
@@ -96,26 +97,25 @@ def connect(timestamp_ms, sentiment):
 
 	return
 
-############################
-
 
 #will add a list class that will allow us to modify it from the outside
 
+class MyList(object):
 
+  def __init__(self):
+    self.word_list = []
 
+  def append(self, sent):
+  	self.word_list.append(sent)
 
+  def clear(self):
+  	self.word_list = []
 
+  def show(self):
+  	print(self.word_list)
 
+  	return 
 
-
-
-
-
-
-
-
-
-#############################
 
 # Tweepy class to access Twitter API
 class Streamlistener(tweepy.StreamListener):
@@ -137,6 +137,8 @@ class Streamlistener(tweepy.StreamListener):
 	"""
 	def on_data(self,data):
 		
+		myList = MyList()
+
 		try:
 			data = json.loads(data)
 
@@ -167,7 +169,9 @@ class Streamlistener(tweepy.StreamListener):
 			# if it doesnt change, we keep appending to the list
 
 
-
+			myList.append("hello")
+			myList.append("yeur")
+			myList.show()
 
 
 			vs = analyzer.polarity_scores(tweet)
