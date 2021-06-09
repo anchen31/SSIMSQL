@@ -86,6 +86,21 @@ def getTime():
 
     return date
 
+
+def getRedditSentiment():
+    score = []
+    # will get reddit and comment score
+    return score
+
+
+
+def getNewSentiment():
+    score = 0
+    return score
+
+
+def getMarketSentiment():
+
 def main():
     run = True
     timeout = time.time() + 20
@@ -99,9 +114,14 @@ def main():
 
         # whenever we detect that interactive brokers data has updated into the mysql database
         # we will add to our table and then join to it
+        # IF THERE IS A NEW TICKER
         if timePast == timeNow:
             #add
             timeNow = datetime.strptime(timeCompare[0], '%Y-%m-%d %H:%M:%S')
+
+            #connect to the twitter db
+
+            # GET THE SENTIMENT FROM THE TWITTER AND STORE IT ALL TOGETHER
 
             # use to connect method to store into the db?
             # then join it to the main table
