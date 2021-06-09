@@ -15,6 +15,8 @@ import config
 
 analyzer = SentimentIntensityAnalyzer()
 
+myList = []
+
 track = ['Tsla']
 
 consumer_key = config.consumer_key
@@ -32,37 +34,6 @@ def datetime_from_utc_to_local(utc_datetime):
 
 #### We will be adding to the ib db instead ##########
 ######################################################
-
-#gets the time from the main database 
-def getTime():
-    date = []
-    try:
-        con = mysql.connector.connect(
-        host = 'localhost',
-        database='twitterdb', 
-        user='root', 
-        password = config.password)
-
-        cursor = con.cursor()
-        query = "select * from TwitterSent"
-        cursor.execute(query)
-        # get all records
-        db = cursor.fetchall()
-
-        df = pd.DataFrame(db)
-
-        date.append(df[0].iloc[-1])
-        date.append(df[0].iloc[-2])
-
-
-    except mysql.connector.Error as e:
-        print("Error reading data from MySQL table", e)
-
-    cursor.close()
-    con.close()
-
-    return date
-
 
 def connect(timestamp_ms, sentiment):
 	"""
@@ -98,24 +69,6 @@ def connect(timestamp_ms, sentiment):
 	return
 
 
-#will add a list class that will allow us to modify it from the outside
-
-class MyList(object):
-
-  def __init__(self):
-    self.word_list = []
-
-  def append(self, sent):
-  	self.word_list.append(sent)
-
-  def clear(self):
-  	self.word_list = []
-
-  def show(self):
-  	print(self.word_list)
-
-  	return 
-
 
 # Tweepy class to access Twitter API
 class Streamlistener(tweepy.StreamListener):
@@ -137,7 +90,9 @@ class Streamlistener(tweepy.StreamListener):
 	"""
 	def on_data(self,data):
 		
+		# objs instance
 		myList = MyList()
+		#timeCompare = getTime()
 
 		try:
 			data = json.loads(data)
@@ -158,25 +113,8 @@ class Streamlistener(tweepy.StreamListener):
 
 
 			tweet = data['text']
-
-			# add in a part where it will only add the combined sentiment to the mysql db
-
-			# check if that the minute changes then
-			# if it changes, then we combine all of our data and then package it into a mysql db
-			# and then push it off to the main db
-			# clear the list that stores it
-
-			# if it doesnt change, we keep appending to the list
-
-
-			myList.append("hello")
-			myList.append("yeur")
-			myList.show()
-
-
 			vs = analyzer.polarity_scores(tweet)
 			sentiment = vs['compound']
-
 
 
 			#insert data just collected into MySQL database
