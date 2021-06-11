@@ -56,13 +56,13 @@ def connect(timestamp_ms, reddit_sentiment, reddit_comm_sentiment, news_sentimen
 
     return
 
-
+# changes a string to datetime format
 def toDateTime(yabadabadoo):
-    toDateTime = 1
-
+    toDateTime = datetime.strptime(yabadabadoo, '%Y-%m-%d %H:%M:%S')
     return toDateTime
 
 
+################################################### change to connect to the main df from ib
 # gets the time from the main database 
 def getTime():
     date = []
@@ -110,8 +110,8 @@ def getMarketSentiment():
     score = 0
     return score
 
-# This will get the tweet sentiment from twittersent db by merging the rows sentiment into one
-# returns combined sentiment score
+################################################### Does this work if it has a 
+# returns combined sentiment score from twitter db
 def getTweetSentiment():
     score = 0
     holder = -1
@@ -132,12 +132,12 @@ def getTweetSentiment():
 
         df = pd.DataFrame(db)
 
-        minCompare = datetime.strptime(df[0].iloc[holder], '%Y-%m-%d %H:%M:%S')
+        minCompare = toDateTime(df[0].iloc[holder])
         minCompare = minCompare.minute
 
 
         while(run):
-            Compare = datetime.strptime(df[0].iloc[holder-1], '%Y-%m-%d %H:%M:%S')
+            Compare = toDateTime(df[0].iloc[holder-1])
             Compare = Compare.minute
 
             if minCompare == Compare:
@@ -153,7 +153,7 @@ def getTweetSentiment():
                     score += x
 
                 score = score/holder
-                #print("final score", score)
+                print("final score", score)
 
                 run = False
                 return score
@@ -174,27 +174,29 @@ def main():
     run = True
     timeout = time.time() + 1
     timeCompare = getTime()
-    timeNow = datetime.strptime(timeCompare[0], '%Y-%m-%d %H:%M:%S')
+    timeNow = toDateTime(timeCompare[0])
 
     # constantly refreshes to check if there is a new ticker update
     while(run):
 
         timeCompare = getTime()
-        timePast = datetime.strptime(timeCompare[1], '%Y-%m-%d %H:%M:%S')
+        timePast = toDateTime(timeCompare[1])
 
         # whenever we detect that interactive brokers data has updated into the mysql database
         # we will add to our table and then join to it
         # IF THERE IS A NEW TICKER
         if timePast == timeNow:
             #add
-            timeNow = datetime.strptime(timeCompare[0], '%Y-%m-%d %H:%M:%S')
+            timeNow = toDateTime(timeCompare[0])
 
             #connect to the twitter db
-
+            
             # GET THE SENTIMENT FROM THE TWITTER AND STORE IT ALL TOGETHER
 
             # use to connect method to store into the db?
             # then join it to the main table
+
+
 
 
 
@@ -213,7 +215,7 @@ def main():
 
             #gather news about overall stock??
 
-            getTweetSentiment()
+            #getTweetSentiment()
 
 
 
