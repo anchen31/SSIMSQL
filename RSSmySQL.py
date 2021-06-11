@@ -56,7 +56,14 @@ def connect(timestamp_ms, reddit_sentiment, reddit_comm_sentiment, news_sentimen
 
     return
 
-#gets the time from the main database 
+
+def toDateTime(yabadabadoo):
+    toDateTime = 1
+
+    return toDateTime
+
+
+# gets the time from the main database 
 def getTime():
     date = []
     try:
@@ -86,7 +93,7 @@ def getTime():
 
     return date
 
-
+# will get scores of each post and the comment 
 def getRedditSentiment():
     score = []
     # will get reddit and comment score
@@ -100,13 +107,76 @@ def getNewSentiment():
 
 
 def getMarketSentiment():
+    score = 0
+    return score
+
+# This will get the tweet sentiment from twittersent db by merging the rows sentiment into one
+# returns combined sentiment score
+def getTweetSentiment():
+    score = 0
+    holder = -1
+    run = True
+    scoreL = []
+    try:
+        con = mysql.connector.connect(
+        host = 'localhost',
+        database='twitterdb', 
+        user='root', 
+        password = config.password)
+
+        cursor = con.cursor()
+        query = "select * from TwitterSent"
+        cursor.execute(query)
+        # get all records
+        db = cursor.fetchall()
+
+        df = pd.DataFrame(db)
+
+        minCompare = datetime.strptime(df[0].iloc[holder], '%Y-%m-%d %H:%M:%S')
+        minCompare = minCompare.minute
+
+
+        while(run):
+            Compare = datetime.strptime(df[0].iloc[holder-1], '%Y-%m-%d %H:%M:%S')
+            Compare = Compare.minute
+
+            if minCompare == Compare:
+                # append it to the holder list
+                scoreL.append(float(df[1].iloc[holder]))
+                holder -= 1
+            else:
+                scoreL.append(float(df[1].iloc[holder]))
+                # calulate the score and return it 
+                holder = 0
+                for x in scoreL:
+                    holder += 1
+                    score += x
+
+                score = score/holder
+                #print("final score", score)
+
+                run = False
+                return score
+
+
+
+    except mysql.connector.Error as e:
+        print("Error reading data from MySQL table", e)
+
+    cursor.close()
+    con.close()
+
+
+    return score
+
 
 def main():
     run = True
-    timeout = time.time() + 20
+    timeout = time.time() + 1
     timeCompare = getTime()
     timeNow = datetime.strptime(timeCompare[0], '%Y-%m-%d %H:%M:%S')
 
+    # constantly refreshes to check if there is a new ticker update
     while(run):
 
         timeCompare = getTime()
@@ -143,21 +213,13 @@ def main():
 
             #gather news about overall stock??
 
-
-
-
-
-
+            getTweetSentiment()
 
 
 
 
         # use if necessary
         #time.sleep(1)
-
-
-
-
 
 
 
