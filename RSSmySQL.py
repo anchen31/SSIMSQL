@@ -153,7 +153,7 @@ def getTweetSentiment():
                     score += x
 
                 score = score/holder
-                print("final score", score)
+                #print("final score", score)
 
                 run = False
                 return score
@@ -188,12 +188,11 @@ def main():
         if timePast == timeNow:
             #add
             timeNow = toDateTime(timeCompare[0])
-
-            #connect to the twitter db
-            
             # GET THE SENTIMENT FROM THE TWITTER AND STORE IT ALL TOGETHER
 
-            # use to connect method to store into the db?
+            # use to connect method to store into the db
+            # (timestamp, twitter, reddit, reddit comment?, news on stock from finviz, overall stock news s&p500, s&p500 data?)
+            #connect(timeNow, )
             # then join it to the main table
 
 
@@ -202,7 +201,7 @@ def main():
 
 
 
-        # while its not the time, we will keep gathering the latest sentiment
+        # while the ticker hasn't refreshed, we will keep gathering the latest sentiment
         else:
             #gather reddit sentiment score
 
