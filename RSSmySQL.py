@@ -96,6 +96,8 @@ def getTime():
 # will get scores of each post and the comment 
 def getRedditSentiment():
     score = []
+
+    top_posts = reddit.subreddit('TSLA').hot('week', limit=5)
     # will get reddit and comment score
     return score
 
