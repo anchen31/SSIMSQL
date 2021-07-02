@@ -93,30 +93,32 @@ def getTime():
 
     return date
 
-# will get scores of each post and the comment 
+# will get scores of each post
 def getRedditSentiment():
-    score = []
+    scoreList = []
+    score = 0
     submissions = 0
 
     # change this so that the ticker can be changed externally 
     # chooses the top posts 
-    hot_posts = reddit.subreddit('TSLA').hot('week', limit=5)
+    hot_posts = reddit.subreddit(config.stock).hot()
     # will get reddit and comment score
 
     for submission in hot_posts:
         # will store in vs and append it all into a list and compact it
-        vs = sia.polarity_scores(submissions.title)
+        vs = sia.polarity_scores(submission.title)
         sentiment = vs['compound']
 
         # adds onto the score list
-        score.append(sentiment)
+        scoreList.append(sentiment)
         submissions += 1
         
 
+    for x in scoreList:
+        score += x
 
-
-
-
+    score = score/submissions
+    print(score)
 
     return score
 
@@ -235,7 +237,8 @@ def main():
 
             #gather news about overall stock??
 
-            #getTweetSentiment()
+            #getTweetSentiment() works
+            getRedditSentiment() 
 
 
 
