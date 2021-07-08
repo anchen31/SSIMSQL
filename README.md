@@ -11,9 +11,10 @@ it is needed to incorperate mmultiple data streams from different sources.
 
 - SuperSent.py
   - strings all of the files together with multiprocessing
-SuperSent.py - strings all of the files together with multiprocessing
 
-TSSmySQL.py - handles the twitter stream and stores it into a mySQL db
+
+- TSSmySQL.py
+  - handles the twitter stream and stores it into a mySQL db
 
 RSSmySQL.py - handles the data from TSSmySQL.py and condenses sentiment into
               one minute chunks
