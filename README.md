@@ -9,7 +9,8 @@ trading. All of this data will be quantified numerically into one minute
 seqences. All of this will be strung together with multiprocessing as
 it is needed to incorperate mmultiple data streams from different sources.
 
-
+- SuperSent.py
+  - strings all of the files together with multiprocessing
 SuperSent.py - strings all of the files together with multiprocessing
 
 TSSmySQL.py - handles the twitter stream and stores it into a mySQL db
