@@ -17,7 +17,6 @@ it is needed to incorperate mmultiple data streams from different sources.
   - handles the twitter stream and stores it into a mySQL db
 
 - RSSmySQL.py
-  - Sub Item 1
   - handles the data from TSSmySQL.py and condenses sentiment into
     one minute chunks
   - gets reddit sentiment
