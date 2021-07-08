@@ -28,3 +28,8 @@ Ibkr.py - gets price of stock
         - long term support / resistance with 1 day intervals
         - options data (gamma and theta?)
         - IBKR live stock news.
+
+- Item 1
+- Item 2
+  - Sub Item 1
+  - Sub Item 2
