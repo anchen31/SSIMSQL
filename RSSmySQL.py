@@ -4,7 +4,6 @@ import time
 import time
 import pandas as pd
 from datetime import datetime
-from textblob import TextBlob
 import mysql.connector
 from mysql.connector import Error
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
@@ -65,7 +64,7 @@ def toDateTime(yabadabadoo):
 ################################################### change to connect to the main df from ib
 # gets the time from the main database 
 def getTime():
-    date = []
+    date
     try:
         con = mysql.connector.connect(
         host = 'localhost',
@@ -82,7 +81,6 @@ def getTime():
         df = pd.DataFrame(db)
 
         date.append(df[0].iloc[-1])
-        date.append(df[0].iloc[-2])
 
 
     except mysql.connector.Error as e:
@@ -118,7 +116,6 @@ def getRedditSentiment():
         score += x
 
     score = score/submissions
-    print(score)
 
     return score
 
@@ -133,7 +130,7 @@ def getMarketSentiment():
     score = 0
     return score
 
-################################################### Does this work if it has a 
+
 # returns combined sentiment score from twitter db
 def getTweetSentiment():
     score = 0
@@ -237,8 +234,9 @@ def main():
 
             #gather news about overall stock??
 
-            #getTweetSentiment() works
-            getRedditSentiment() 
+            #getTweetSentiment() #works
+            #print(getRedditSentiment()) #works
+
 
 
 
