@@ -1,106 +1,47 @@
-# PRAW to interact with reddit
-import praw
-#install textblob if not already installed using "pip install -U textblob"
-from textblob import TextBlob
-import nltk
-# Download VADER, if not downloaded
-# nltk.download('vader_lexicon')
+import pandas as pd
+import matplotlib.pyplot as plt
+from datetime import date, timedelta
+from urllib.request import urlopen, Request
+from bs4 import BeautifulSoup
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
-# create object for VADER sentiment function interaction
 sia = SentimentIntensityAnalyzer()
 
-reddit = praw.Reddit(client_id='',
-                     client_secret='',
-                     user_agent='')
+ticker = "tsla"
 
-# get 10 hot posts from the showerthoughts subreddit
-top_posts = reddit.subreddit('TSLA').top('week', limit=5)
+# Getting Finviz Data
+news_tables = {}        # contains each ticker headlines
+url = f'https://finviz.com/quote.ashx?t={ticker}'
+req = Request(url=url, headers={'user-agent': 'news'})
+response = urlopen(req)     # taking out html response
+        
+html = BeautifulSoup(response, features = 'html.parser')
+news_table = html.find(id = 'news-table') # gets the html object of entire table
+news_tables[ticker] = news_table
 
-# Sentiment analysis function for TextBlob tools
-def text_blob_sentiment(review, sub_entries_textblob):
-    analysis = TextBlob(review)
-    if analysis.sentiment.polarity >= 0.0001:
-        if analysis.sentiment.polarity > 0:
-            sub_entries_textblob['positive'] = sub_entries_textblob['positive'] + 1
-            return 'Positive'
-
-    elif analysis.sentiment.polarity <= -0.0001:
-        if analysis.sentiment.polarity <= 0:
-            sub_entries_textblob['negative'] = sub_entries_textblob['negative'] + 1
-            return 'Negative'
-    else:
-        sub_entries_textblob['neutral'] = sub_entries_textblob['neutral'] + 1
-        return 'Neutral'
+print(news_table[ticker])    
     
+# Parsing and Manipulating
+parsed = []    
+for ticker, news_table in news_tables.items():  # iterating thru key and value
+    for row in news_table.findAll('tr'):  # for each row that contains 'tr'
+        title = row.a.text
+        source = row.span.text
+        date = row.td.text.split(' ')
+        if len(date) > 1:     # both date and time, ex: Dec-27-20 10:00PM
+            date1 = date[0]
+            time = date[1]
+        else:time = date[0] # only time is given ex: 05:00AM
+        
 
-# sentiment analysis function for VADER tool
-def nltk_sentiment(review, sub_entries_nltk):
-    vs = sia.polarity_scores(review)
-    if not vs['neg'] > 0.05:
-        if vs['pos'] - vs['neg'] > 0:
-            sub_entries_nltk['positive'] = sub_entries_nltk['positive'] + 1
-            return 'Positive'
-        else:
-            sub_entries_nltk['neutral'] = sub_entries_nltk['neutral'] + 1
-            return 'Neutral'
+# Applying Sentiment Analysis
+df = pd.DataFrame(parsed, columns=['Ticker', 'date', 'Time', 'Title'])
 
-    elif not vs['pos'] > 0.05:
-        if vs['pos'] - vs['neg'] <= 0:
-            sub_entries_nltk['negative'] = sub_entries_nltk['negative'] + 1
-            return 'Negative'
-        else:
-            sub_entries_nltk['neutral'] = sub_entries_nltk['neutral'] + 1
-            return 'Neutral'
-    else:
-        sub_entries_nltk['neutral'] = sub_entries_nltk['neutral'] + 1
-        return 'Neutral'
+# for every title in data set, give the compund score
+score = lambda title: sia.polarity_scores(title)['compound']
+df['compound'] = df['Title'].apply(score)   # adds compund score to data frame
 
+# Visualization of Sentiment Analysis
+df['date'] = pd.to_datetime(df.date).dt.date # takes date comlumn convert it to date/time format
 
-# replication of comment section of reddit post
-def replies_of(top_level_comment, count_comment, sub_entries_textblob, sub_entries_nltk):
-    if len(top_level_comment.replies) == 0:
-        count_comment = 0
-        return
-    else:
-        for num, comment in enumerate(top_level_comment.replies):
-            try:
-                count_comment += 1
-                print('-' * count_comment, comment.body)
-                text_blob_sentiment(comment.body, sub_entries_textblob)
-                nltk_sentiment(comment.body, sub_entries_nltk)
-            except:
-                continue
-            replies_of(comment, count_comment, sub_entries_textblob,sub_entries_nltk)
-
-
-def main():
-    
-    for submission in top_posts:
-        sub_entries_textblob = {'negative': 0, 'positive' : 0, 'neutral' : 0}
-        sub_entries_nltk = {'negative': 0, 'positive' : 0, 'neutral' : 0}
-        print('Title of the post :', submission.title)
-        text_blob_sentiment(submission.title, sub_entries_textblob)
-        nltk_sentiment(submission.title, sub_entries_nltk)
-        print("\n")
-        submission_comm = reddit.submission(id=submission.id)
-
-        for count, top_level_comment in enumerate(submission_comm.comments):
-            print(f"-------------{count} top level comment start--------------")
-            count_comm = 0
-            try :
-                print(top_level_comment.body)
-                text_blob_sentiment(top_level_comment.body, sub_entries_textblob)
-                nltk_sentiment(top_level_comment.body, sub_entries_nltk)
-                replies_of(top_level_comment,
-                           count_comm,
-                           sub_entries_textblob,
-                           sub_entries_nltk)
-            except:
-                continue
-        print('Over all Sentiment of Topic by TextBlob :', sub_entries_textblob)
-        print('Over all Sentiment of Topic by VADER :', sub_entries_nltk)
-        print("\n\n\n")
-
-if __name__ == '__main__' :
-    main()
+print(df)

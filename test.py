@@ -15,6 +15,7 @@ mycursor.execute("SELECT * FROM TwitterSent")
 #mycursor.execute("CREATE TABLE TwitterSent (timestamp_ms VARCHAR(20), sentiment VARCHAR(10))")
 
 #mycursor.execute("CREATE TABLE rednewsDB (timestamp_ms VARCHAR(20), reddit_sentiment VARCHAR(10), reddit_comm_sentiment VARCHAR(10), news_sentiment VARCHAR(10))")
+#mycursor.execute("DROP TABLE rednewsDB")
 #mycursor.execute("TRUNCATE TABLE rednewsDB")
 #mycursor.execute("SELECT * FROM rednewsDB")
 

@@ -1,12 +1,9 @@
 import mysql.connector
 from mysql.connector import Error
-import os
 import json
-import praw
 import time
 import tweepy
 from datetime import datetime
-from pytz import timezone
 from unidecode import unidecode
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 

@@ -64,7 +64,7 @@ def toDateTime(yabadabadoo):
 ################################################### change to connect to the main df from ib
 # gets the time from the main database 
 def getTime():
-    date
+    date = []
     try:
         con = mysql.connector.connect(
         host = 'localhost',
@@ -81,6 +81,7 @@ def getTime():
         df = pd.DataFrame(db)
 
         date.append(df[0].iloc[-1])
+        date.append(df[0].iloc[-2])
 
 
     except mysql.connector.Error as e:
@@ -209,6 +210,7 @@ def main():
             #add
             timeNow = toDateTime(timeCompare[0])
             # GET THE SENTIMENT FROM THE TWITTER AND STORE IT ALL TOGETHER
+            # STORE INTO MYSQL DB
 
             # use to connect method to store into the db
             # (timestamp, twitter, reddit, reddit comment?, news on stock from finviz, overall stock news s&p500, s&p500 data?)
@@ -236,6 +238,8 @@ def main():
 
             #getTweetSentiment() #works
             #print(getRedditSentiment()) #works
+            print(timeNow)
+            print(timePast)
 
 
 
