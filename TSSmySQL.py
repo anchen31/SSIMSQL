@@ -14,7 +14,7 @@ analyzer = SentimentIntensityAnalyzer()
 
 myList = []
 
-track = ['Tsla']
+track = ['$TSLA']
 
 consumer_key = config.consumer_key
 consumer_secret = config.consumer_secret
@@ -107,7 +107,7 @@ class Streamlistener(tweepy.StreamListener):
 
 			tweet = data['text']
 			vs = analyzer.polarity_scores(tweet)
-			sentiment = vs['compound']
+			sentiment = round(vs['compound'], 4)
 
 
 			#insert data just collected into MySQL database

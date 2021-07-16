@@ -1,12 +1,13 @@
 import praw
 import nltk
 import time
-import time
 import pandas as pd
 from datetime import datetime
 import mysql.connector
 from mysql.connector import Error
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+
+import matplotlib.pyplot as plt
 
 import config
 
@@ -190,12 +191,86 @@ def getTweetSentiment():
 
     return score
 
+# returns a df of the twitter data organized by the minute
+def df_resample_sizes(df):
+    Holder_List = []
+    holder = df[0]
+    holder = toDateTime(holder[0])
+    holder = holder.minute
+    counter = 0
+    total = 0
+
+    df1 = pd.DataFrame(columns = [0, 1])
+
+    for index, row in df.iterrows():
+        date1 = toDateTime(row[0])
+        date = date1.minute
+        if(date != holder):
+            holder = date
+            total = sum(Holder_List)
+            try:
+                #total = total/counter  # will have to use later after i implement rounding on tssmysql     
+                total = round(total, 4)
+            except ZeroDivisionError as e:
+                pass
+
+            df1 = df1.append({0:date1, 1:total}, ignore_index=True)
+            #print(date, total)
+
+            #resets the params
+            total = 0
+            Holder_List = []
+            counter = 0
+
+        else:
+            Holder_List.append(float(row[1]))
+            counter = counter + 1
+
+    return df1
+
 
 def main():
     run = True
     timeout = time.time() + 1
     timeCompare = getTime()
     timeNow = toDateTime(timeCompare[0])
+
+    try:
+        con = mysql.connector.connect(
+        host = 'localhost',
+        database='twitterdb', 
+        user='root', 
+        password = config.password)
+
+        cursor = con.cursor()
+        query = "select * from TwitterSent"
+        cursor.execute(query)
+        # get all records
+        db = cursor.fetchall()
+
+        df = pd.DataFrame(db)
+
+    except mysql.connector.Error as e:
+        print("Error reading data from MySQL table", e)
+
+    cursor.close()
+    con.close()
+
+    df = df_resample_sizes(df)
+    df[1] = df[1].rolling(int(len(df)/5)).mean()
+
+    #print(df)
+
+    x = df[0]
+    y = df[1]
+
+    plt.plot(x,y)
+
+    plt.show()
+
+    print("dont read lmaoo")
+
+    ################################################
 
     # constantly refreshes to check if there is a new ticker update
     while(run):
