@@ -209,7 +209,7 @@ def df_resample_sizes(df):
             holder = date
             total = sum(Holder_List)
             try:
-                #total = total/counter  # will have to use later after i implement rounding on tssmysql     
+                total = total/counter  # will have to use later after i implement rounding on tssmysql     
                 total = round(total, 4)
             except ZeroDivisionError as e:
                 pass
