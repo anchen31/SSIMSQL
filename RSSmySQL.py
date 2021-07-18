@@ -215,7 +215,7 @@ def df_resample_sizes(df):
                 pass
 
             df1 = df1.append({0:date1, 1:total}, ignore_index=True)
-            #print(date, total)
+            #print(date, total) #shows the condensed data organized
 
             #resets the params
             total = 0
