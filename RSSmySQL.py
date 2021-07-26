@@ -3,6 +3,9 @@ import nltk
 import time
 import pandas as pd
 from datetime import datetime
+from sqlalchemy import create_engine
+import pymysql
+pymysql.install_as_MySQLdb()
 import mysql.connector
 from mysql.connector import Error
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
@@ -18,30 +21,25 @@ reddit = praw.Reddit(client_id=config.client_id,
                      client_secret=config.client_secret,
                      user_agent=config.user_agent)
 
-
 password = config.password
 
 
-#connect to mysql method to add data
+#connect to mysql method to add data to the IBKR
 def connect(timestamp_ms, reddit_sentiment, reddit_comm_sentiment, news_sentiment):
-    """
-    connect to MySQL database and insert twitter data
-    """
+
     try:
         con = mysql.connector.connect(
         host = 'localhost',
+        #database='ibpy',
         database='twitterdb', 
         user='root', 
         password = password)
-        print("You are connected to mySQL")
-        
 
         if con.is_connected():
-            """
-            Insert twitter data
-            """
+
             cursor = con.cursor()
-            # twitter
+            # connect this to the IBKR DB
+            # CREATE IBKR DATA ON ibpy and then append to it
             query = "INSERT INTO rednewsDB (timestamp_ms, reddit_sentiment, reddit_comm_sentiment, news_sentiment) VALUES (%s, %s, %s, %s)"
             cursor.execute(query, (timestamp_ms, reddit_sentiment, reddit_comm_sentiment, news_sentiment))
             con.commit()
@@ -62,16 +60,17 @@ def toDateTime(yabadabadoo):
     return toDateTime
 
 
-################################################### change to connect to the main df from ib
+################################################### change to connect to the main df from ibpy
 # gets the time from the main database 
 def getTime():
     date = []
     try:
         con = mysql.connector.connect(
         host = 'localhost',
+        #database='ibpy',
         database='twitterdb', 
         user='root', 
-        password = config.password)
+        password = password)
 
         cursor = con.cursor()
         query = "select * from TwitterSent"
@@ -132,19 +131,14 @@ def getMarketSentiment():
     score = 0
     return score
 
-
-# returns combined sentiment score from twitter db
-def getTweetSentiment():
-    score = 0
-    holder = -1
-    run = True
-    scoreL = []
+# returns a df of the twitter data organized by the minute
+def df_resample_sizes():
     try:
         con = mysql.connector.connect(
         host = 'localhost',
         database='twitterdb', 
         user='root', 
-        password = config.password)
+        password = password)
 
         cursor = con.cursor()
         query = "select * from TwitterSent"
@@ -154,45 +148,12 @@ def getTweetSentiment():
 
         df = pd.DataFrame(db)
 
-        minCompare = toDateTime(df[0].iloc[holder])
-        minCompare = minCompare.minute
-
-
-        while(run):
-            Compare = toDateTime(df[0].iloc[holder-1])
-            Compare = Compare.minute
-
-            if minCompare == Compare:
-                # append it to the holder list
-                scoreL.append(float(df[1].iloc[holder]))
-                holder -= 1
-            else:
-                scoreL.append(float(df[1].iloc[holder]))
-                # calulate the score and return it 
-                holder = 0
-                for x in scoreL:
-                    holder += 1
-                    score += x
-
-                score = score/holder
-                #print("final score", score)
-
-                run = False
-                return score
-
-
-
     except mysql.connector.Error as e:
         print("Error reading data from MySQL table", e)
 
     cursor.close()
     con.close()
 
-
-    return score
-
-# returns a df of the twitter data organized by the minute
-def df_resample_sizes(df):
     Holder_List = []
     holder = df[0]
     holder = toDateTime(holder[0])
@@ -200,7 +161,8 @@ def df_resample_sizes(df):
     counter = 0
     total = 0
 
-    df1 = pd.DataFrame(columns = [0, 1])
+
+    df1 = pd.DataFrame(columns = ['timestamp_ms', 'tweetsent'])
 
     for index, row in df.iterrows():
         date1 = toDateTime(row[0])
@@ -214,7 +176,9 @@ def df_resample_sizes(df):
             except ZeroDivisionError as e:
                 pass
 
-            df1 = df1.append({0:date1, 1:total}, ignore_index=True)
+
+            date1 = date1.replace(second=0)
+            df1 = df1.append({'timestamp_ms':date1, 'tweetsent':total}, ignore_index=True)
             #print(date, total) #shows the condensed data organized
 
             #resets the params
@@ -226,6 +190,8 @@ def df_resample_sizes(df):
             Holder_List.append(float(row[1]))
             counter = counter + 1
 
+    df1['tweetsent'] = df1['tweetsent'].rolling(int(len(df1)/5)).mean()
+
     return df1
 
 
@@ -235,42 +201,8 @@ def main():
     timeCompare = getTime()
     timeNow = toDateTime(timeCompare[0])
 
-    try:
-        con = mysql.connector.connect(
-        host = 'localhost',
-        database='twitterdb', 
-        user='root', 
-        password = config.password)
+    #df.to_sql(con=con, name='tweetdb', if_exists='replace')
 
-        cursor = con.cursor()
-        query = "select * from TwitterSent"
-        cursor.execute(query)
-        # get all records
-        db = cursor.fetchall()
-
-        df = pd.DataFrame(db)
-
-    except mysql.connector.Error as e:
-        print("Error reading data from MySQL table", e)
-
-    cursor.close()
-    con.close()
-
-    df = df_resample_sizes(df)
-    df[1] = df[1].rolling(int(len(df)/5)).mean()
-
-    #print(df)
-
-    x = df[0]
-    y = df[1]
-
-    plt.plot(x,y)
-
-    plt.show()
-
-    print("dont read lmaoo")
-
-    ################################################
 
     # constantly refreshes to check if there is a new ticker update
     while(run):
@@ -287,37 +219,22 @@ def main():
             # GET THE SENTIMENT FROM THE TWITTER AND STORE IT ALL TOGETHER
             # STORE INTO MYSQL DB
 
+            #works LOL
+            df = df_resample_sizes()
+            engine = create_engine(config.engine)
+            with engine.begin() as connection:
+                df.to_sql(name='tweetdb', con=connection, if_exists='append', index=False)
+
+
+            connect(timeNow, getRedditSentiment(), )
+
+
+
+
             # use to connect method to store into the db
-            # (timestamp, twitter, reddit, reddit comment?, news on stock from finviz, overall stock news s&p500, s&p500 data?)
+            # (timestamp, twitter, reddit, news on stock from finviz, overall stock news s&p500, s&p500 data?)
             #connect(timeNow, )
             # then join it to the main table
-
-
-
-
-
-
-
-        # while the ticker hasn't refreshed, we will keep gathering the latest sentiment
-        else:
-            #gather reddit sentiment score
-
-            #gather reddit comment score
-
-
-            #should I put this here?
-            #don't change the news score if there isn't any new news, base it off of the most recent news
-            #gather news about overall market??
-
-            #gather news about overall stock??
-
-            #getTweetSentiment() #works
-            #print(getRedditSentiment()) #works
-            print(timeNow)
-            print(timePast)
-
-
-
 
 
         # use if necessary

@@ -14,7 +14,7 @@ analyzer = SentimentIntensityAnalyzer()
 
 myList = []
 
-track = ['$TSLA']
+track = ['$SPY']
 
 consumer_key = config.consumer_key
 consumer_secret = config.consumer_secret
