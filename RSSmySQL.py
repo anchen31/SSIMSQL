@@ -1,5 +1,3 @@
-import praw
-import nltk
 import time
 import pandas as pd
 from datetime import datetime
@@ -8,18 +6,10 @@ import pymysql
 pymysql.install_as_MySQLdb()
 import mysql.connector
 from mysql.connector import Error
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 import matplotlib.pyplot as plt
 
 import config
-
-sia = SentimentIntensityAnalyzer()
-#connect to reddit client
-
-reddit = praw.Reddit(client_id=config.client_id,
-                     client_secret=config.client_secret,
-                     user_agent=config.user_agent)
 
 password = config.password
 
@@ -91,45 +81,6 @@ def getTime():
     con.close()
 
     return date
-
-# will get scores of each post
-def getRedditSentiment():
-    scoreList = []
-    score = 0
-    submissions = 0
-
-    # change this so that the ticker can be changed externally 
-    # chooses the top posts 
-    hot_posts = reddit.subreddit(config.stock).hot()
-    # will get reddit and comment score
-
-    for submission in hot_posts:
-        # will store in vs and append it all into a list and compact it
-        vs = sia.polarity_scores(submission.title)
-        sentiment = vs['compound']
-
-        # adds onto the score list
-        scoreList.append(sentiment)
-        submissions += 1
-        
-
-    for x in scoreList:
-        score += x
-
-    score = score/submissions
-
-    return score
-
-
-
-def getNewSentiment():
-    score = 0
-    return score
-
-
-def getMarketSentiment():
-    score = 0
-    return score
 
 # returns a df of the twitter data organized by the minute
 def df_resample_sizes():
@@ -226,9 +177,6 @@ def main():
                 df.to_sql(name='tweetdb', con=connection, if_exists='append', index=False)
 
 
-            connect(timeNow, getRedditSentiment(), )
-
-
 
 
             # use to connect method to store into the db
@@ -239,8 +187,9 @@ def main():
 
         # use if necessary
         #time.sleep(1)
-
-
+        df = df_resample_sizes()
+        df.plot('timestamp_ms', 'tweetsent')
+        plt.show()
 
 
         # kills main after a certain amount of time
