@@ -8,7 +8,9 @@ mydb = mysql.connector.connect(
 
 mycursor = mydb.cursor(buffered=True)
 
-mycursor.execute("SELECT * FROM TwitterSent")
+
+#mycursor.execute("SELECT * FROM TwitterSent")
+mycursor.execute("SELECT * FROM tweetdb")
 #mycursor.execute("TRUNCATE TABLE TwitterSent") 
 #// deletes all the data in table
 #mycursor.execute("DROP TABLE TwitterSent")
@@ -19,6 +21,7 @@ mycursor.execute("SELECT * FROM TwitterSent")
 #mycursor.execute("DROP TABLE rednewsDB")
 #mycursor.execute("TRUNCATE TABLE rednewsDB")
 #mycursor.execute("SELECT * FROM rednewsDB")
+
 
 myresult = mycursor.fetchall()
 

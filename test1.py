@@ -1,47 +1,62 @@
 import pandas as pd
+import numpy as np
+import yfinance
+from mplfinance.original_flavor import candlestick_ohlc
+import matplotlib.dates as mpl_dates
 import matplotlib.pyplot as plt
-from datetime import date, timedelta
-from urllib.request import urlopen, Request
-from bs4 import BeautifulSoup
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
-sia = SentimentIntensityAnalyzer()
+plt.rcParams['figure.figsize'] = [12, 7]
+plt.rc('font', size=14)
 
-ticker = "tsla"
+name = 'SPY'
+ticker = yfinance.Ticker(name)
+df = ticker.history(interval="1m",start="2021-08-5",end="2021-08-6", threads= False)
+df['Date'] = pd.to_datetime(df.index)
+df['Date'] = df['Date'].apply(mpl_dates.date2num)
+df = df.loc[:,['Date', 'Open', 'High', 'Low', 'Close']]
 
-# Getting Finviz Data
-news_tables = {}        # contains each ticker headlines
-url = f'https://finviz.com/quote.ashx?t={ticker}'
-req = Request(url=url, headers={'user-agent': 'news'})
-response = urlopen(req)     # taking out html response
-        
-html = BeautifulSoup(response, features = 'html.parser')
-news_table = html.find(id = 'news-table') # gets the html object of entire table
-news_tables[ticker] = news_table
+s =  np.mean(df['High'] - df['Low'])
 
-print(news_table[ticker])    
-    
-# Parsing and Manipulating
-parsed = []    
-for ticker, news_table in news_tables.items():  # iterating thru key and value
-    for row in news_table.findAll('tr'):  # for each row that contains 'tr'
-        title = row.a.text
-        source = row.span.text
-        date = row.td.text.split(' ')
-        if len(date) > 1:     # both date and time, ex: Dec-27-20 10:00PM
-            date1 = date[0]
-            time = date[1]
-        else:time = date[0] # only time is given ex: 05:00AM
-        
 
-# Applying Sentiment Analysis
-df = pd.DataFrame(parsed, columns=['Ticker', 'date', 'Time', 'Title'])
+def isFarFromLevel(l):
+  return np.sum([abs(l-x) < s  for x in levels]) == 0
 
-# for every title in data set, give the compund score
-score = lambda title: sia.polarity_scores(title)['compound']
-df['compound'] = df['Title'].apply(score)   # adds compund score to data frame
+def isSupport(df,i):
+  support = df['Low'][i] < df['Low'][i-1]  and df['Low'][i] < df['Low'][i+1] and df['Low'][i+1] < df['Low'][i+2] and df['Low'][i-1] < df['Low'][i-2]
+  return support
 
-# Visualization of Sentiment Analysis
-df['date'] = pd.to_datetime(df.date).dt.date # takes date comlumn convert it to date/time format
 
-print(df)
+def isResistance(df,i):
+  resistance = df['High'][i] > df['High'][i-1]  and df['High'][i] > df['High'][i+1] and df['High'][i+1] > df['High'][i+2] and df['High'][i-1] > df['High'][i-2]
+  return resistance
+
+levels = []
+for i in range(2,df.shape[0]-2):
+  if isSupport(df,i):
+    l = df['Low'][i]
+
+    if isFarFromLevel(l):
+      levels.append((i,l))
+
+  elif isResistance(df,i):
+    l = df['High'][i]
+
+    if isFarFromLevel(l):
+      levels.append((i,l))
+
+def plot_all():
+  fig, ax = plt.subplots()
+  candlestick_ohlc(ax,df.values,width=0.0001, \
+                   colorup='green', colordown='red', alpha=0.8)
+  date_format = mpl_dates.DateFormatter('%d %b %Y')
+  ax.xaxis.set_major_formatter(date_format)
+  fig.autofmt_xdate()
+  fig.tight_layout()
+  for level in levels:
+    plt.hlines(level[1],xmin=df['Date'][level[0]],\
+               xmax=max(df['Date']),colors='blue')
+  plt.show()
+
+
+
+plot_all()
