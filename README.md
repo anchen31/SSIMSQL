@@ -7,7 +7,7 @@ sentiment from reddit, finviz, and twitter. Alongside some technical data
 from interactive brokers and finviz such as price, options data, and insider
 trading. All of this data will be quantified numerically into one minute 
 seqences. All of this will be strung together with multiprocessing as
-it is needed to incorperate mmultiple data streams from different sources.
+it is needed to incorperate multiple data streams from different sources.
 
 - SuperSent.py
   - strings all of the files together with multiprocessing
