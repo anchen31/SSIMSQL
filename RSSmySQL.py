@@ -152,9 +152,6 @@ def main():
     timeCompare = getTime()
     timeNow = toDateTime(timeCompare[0])
 
-    #df.to_sql(con=con, name='tweetdb', if_exists='replace')
-
-
     # constantly refreshes to check if there is a new ticker update
     while(run):
 

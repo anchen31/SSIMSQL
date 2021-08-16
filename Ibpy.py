@@ -1,6 +1,7 @@
 from ib_insync import *
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from datetime import datetime
+import pytz
 import pandas as pd
 import numpy as np
 import yfinance
@@ -74,15 +75,15 @@ contract1 = Stock('SPY', 'SMART', 'USD')
 
 
 
-plt.rcParams['figure.figsize'] = [12, 7]
-plt.rc('font', size=14)
+# plt.rcParams['figure.figsize'] = [12, 7]
+# plt.rc('font', size=14)
 
-name = 'SPY'
-ticker = yfinance.Ticker(name)
-df1 = ticker.history(interval="5m",start="2021-08-12",end="2021-08-13", threads= False)
-df1['Date'] = pd.to_datetime(df1.index)
-df1['Date'] = df1['Date'].apply(mpl_dates.date2num)
-df1 = df1.loc[:,['Date', 'Open', 'High', 'Low', 'Close']]
+# name = 'SPY'
+# ticker = yfinance.Ticker(name)
+# df1 = ticker.history(interval="5m",start="2021-08-12",end="2021-08-13", threads= False)
+# df1['Date'] = pd.to_datetime(df1.index)
+# df1['Date'] = df1['Date'].apply(mpl_dates.date2num)
+# df1 = df1.loc[:,['Date', 'Open', 'High', 'Low', 'Close']]
 
 
 
@@ -97,27 +98,67 @@ ib.qualifyContracts(contract1)
 # headlines = ib.reqHistoricalNews(contract1.conId, codes, '2021-08-12', '2021-08-13', 50)
 headlines = ib.reqHistoricalNews(contract1.conId, codes, '', '', 50)
 
+
+
+
+
+
+
+
+
+#TEST
+#if the day doesn't match up then you remove the headline
+today = datetime.today()
+today = today.day
+
+print(headlines)
+
+for j in headlines:
+    day = j.time
+    day = day.day
+    if day != today:
+        #or
+        #headlines.remove(j)
+        del j
+print(headlines)
+
+
+##########################################
+
 for i in headlines:
     latest = i.headline
-    # time = i.time
-    # time = datetime_from_utc_to_local(time)
+    # turn headline into pst time and remove the seconds into 0
+    # next, 
+    time = i.time
+    # Hopefully this turns time datetime obj to string format
+    time = datetime.strftime(datetime.strptime(time, '%a %b %d %H:%M:%S +0000 %Y'), '%Y-%m-%d %H:%M:%S')
+    print(time)
+    #turns it back into a datetime object
+    time = datetime.strptime(time, '%Y-%m-%d %H:%M:%S')
+    print(time)
+    #change it to pst time from utc
+    time = datetime_from_utc_to_local(time)
+    print(time)
+    #datetime_from_utc_to_local(time)
     vs = sia.polarity_scores(latest)
     sentiment = round(vs['compound'], 4)
     time = i.time
-    print(time, sentiment, latest)
+    #print(time, sentiment, latest)
+
+
     df.loc[h] = [time, sentiment]
 
     h = h+1
 
 
 
-fig, ax = plt.subplots()
-candlestick_ohlc(ax,df1.values,width=0.0001, \
-               colorup='green', colordown='red', alpha=0.8)
-date_format = mpl_dates.DateFormatter('%Y-%m-%d %H:%M:%S')
-ax.xaxis.set_major_formatter(date_format)
-fig.autofmt_xdate()
-fig.tight_layout()
+# fig, ax = plt.subplots()
+# candlestick_ohlc(ax,df1.values,width=0.0001, \
+#                colorup='green', colordown='red', alpha=0.8)
+# date_format = mpl_dates.DateFormatter('%Y-%m-%d %H:%M:%S')
+# ax.xaxis.set_major_formatter(date_format)
+# fig.autofmt_xdate()
+# fig.tight_layout()
 
 
 
@@ -125,21 +166,11 @@ df['sentiment'] = df['sentiment'].rolling(int(len(df)/5)).mean()
 df.plot('date', 'sentiment')
 
 
-plt.show()
+# plt.show()
 
 
 # article = ib.reqNewsArticle(latest.providerCode, latest.articleId)
 # print(article)
-
-
-
-
-
-
-
-
-
-
 
 
 ib.disconnect()
