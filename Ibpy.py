@@ -95,43 +95,33 @@ newsProviders = ib.reqNewsProviders()
 codes = '+'.join(np.code for np in newsProviders)
 
 ib.qualifyContracts(contract1)
-# headlines = ib.reqHistoricalNews(contract1.conId, codes, '2021-08-12', '2021-08-13', 50)
+# the number parameter should stay at 50
 headlines = ib.reqHistoricalNews(contract1.conId, codes, '', '', 50)
 
-
-
-
-
-
-
-
-
-#TEST
 #if the day doesn't match up then you remove the headline
+# store headlines into a manipulatable list
+hList = []
+
 today = datetime.today()
 today = today.day
-
-print(headlines)
 
 for j in headlines:
     day = j.time
     day = day.day
-    if day != today:
-        #or
-        #headlines.remove(j)
-        del j
-print(headlines)
+    if day == today:
+        hList.append(j)
 
 
 ##########################################
 
-for i in headlines:
+for i in hList:
     latest = i.headline
     # turn headline into pst time and remove the seconds into 0
     # next, 
     time = i.time
+    time = datetime.strftime(time, '%a %b %d %H:%M:%S +0000 %Y')
     # Hopefully this turns time datetime obj to string format
-    time = datetime.strftime(datetime.strptime(time, '%a %b %d %H:%M:%S +0000 %Y'), '%Y-%m-%d %H:%M:%S')
+    time = datetime.strftime(time, '%Y-%m-%d %H:%M:%S')
     print(time)
     #turns it back into a datetime object
     time = datetime.strptime(time, '%Y-%m-%d %H:%M:%S')
@@ -162,8 +152,8 @@ for i in headlines:
 
 
 
-df['sentiment'] = df['sentiment'].rolling(int(len(df)/5)).mean()
-df.plot('date', 'sentiment')
+# df['sentiment'] = df['sentiment'].rolling(int(len(df)/5)).mean()
+# df.plot('date', 'sentiment')
 
 
 # plt.show()
