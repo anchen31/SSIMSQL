@@ -5,6 +5,8 @@ import pytz
 import pandas as pd
 import numpy as np
 import yfinance
+from ta.utils import dropna
+from ta.volatility import BollingerBands
 from mplfinance.original_flavor import candlestick_ohlc
 import matplotlib.dates as mpl_dates
 import matplotlib.pyplot as plt
@@ -14,61 +16,106 @@ ib.connect('127.0.0.1', 7497, clientId=2)
 
 sia = SentimentIntensityAnalyzer()
 
-def datetime_from_utc_to_local(utc_datetime):
-    now_timestamp = time.time()
-    offset = datetime.fromtimestamp(now_timestamp) - datetime.utcfromtimestamp(now_timestamp)
-    return utc_datetime + offset
-
 contract1 = Stock('SPY', 'SMART', 'USD')
 
-#1 pull data from here
+def isFarFromLevel(l):
+    return np.sum([abs(l-x) < s  for x in levels]) == 0
 
-# bars = ib.reqHistoricalData(
-#     contract1, 
-#     endDateTime='',
-#     durationStr='1 D',
-#     barSizeSetting='1 min',
-#     whatToShow='TRADES',
-#     useRTH=True,
-#     formatDate=1,
-#     keepUpToDate=True)
-
-# dt = ''
-# barsList = []
+def isSupport(df,i):
+    support = df['low'][i] < df['low'][i-1]  and df['low'][i] < df['low'][i+1] and df['low'][i+1] < df['low'][i+2] and df['low'][i-1] < df['low'][i-2]
+    return support
 
 
-# ib.reqMktData(contract1, '', False, False)
-# ticker = ib.ticker(contract1)
-# ib.sleep(0.1)
+def isResistance(df,i):
+    resistance = df['high'][i] > df['high'][i-1]  and df['high'][i] > df['high'][i+1] and df['high'][i+1] > df['high'][i+2] and df['high'][i-1] > df['high'][i-2]
+    return resistance
 
-# sPrice = ticker.marketPrice()
-# print(sPrice)
+def closest(lst, K):
+    lst.sort()
+    
+    return 
 
-# #gets market price
-# data = ib.reqMktData(contract1)
-# print(data.marketPrice())
-###
+# 1 pull data from here
 
-# while True:
-#     bars = ib.reqHistoricalData(
-#         contract1, 
-#         endDateTime='',
-#         durationStr='1 D',
-#         barSizeSetting='1 min',
-#         whatToShow='TRADES',
-#         useRTH=True,
-#         formatDate=1,
-#         keepUpToDate=True)
-#     if not bars:
-#         break
-#     barsList.append(bars)
+bars = ib.reqHistoricalData(
+    contract1, 
+    endDateTime='',
+    durationStr='1 D',
+    barSizeSetting='1 min',
+    whatToShow='TRADES',
+    useRTH=True,
+    formatDate=1,
+    keepUpToDate=True)
 
-# allBars = [b for bars in reversed(barsList) for b in bars]
-# df = util.df(allBars)
+dt = ''
+barsList = []
 
-# print(df)
 
-#i can just do the df into a sql thingy again lol
+ib.reqMktData(contract1, '', False, False)
+ticker = ib.ticker(contract1)
+ib.sleep(0.1)
+
+sPrice = ticker.marketPrice()
+
+while True:
+    bars = ib.reqHistoricalData(
+        contract1, 
+        endDateTime='',
+        durationStr='1 D',
+        barSizeSetting='1 min',
+        whatToShow='TRADES',
+        useRTH=True,
+        formatDate=1,
+        keepUpToDate=True)
+    if not bars:
+        break
+    barsList.append(bars)
+
+allBars = [b for bars in reversed(barsList) for b in bars]
+df = util.df(allBars)
+
+
+
+
+#TA STUFF HERE ######################################
+
+indicator_bb = BollingerBands(close=df["close"], window=20, window_dev=2)
+
+df['bb_bbm'] = indicator_bb.bollinger_mavg()
+df['bb_bbh'] = indicator_bb.bollinger_hband()
+df['bb_bbl'] = indicator_bb.bollinger_lband()
+
+v = df['volume']
+p = df['close']
+
+df['VWAP'] = ((v * p).cumsum() / v.cumsum())
+
+# LT AND ST S/R ######################################
+
+s =  np.mean(df['high'] - df['low'])
+
+levels = []
+for i in range(2,df.shape[0]-2):
+  if isSupport(df,i):
+    l = df['low'][i]
+
+    if isFarFromLevel(l):
+      # levels.append((i,l))
+      levels.append(l)
+
+  elif isResistance(df,i):
+    l = df['high'][i]
+
+    if isFarFromLevel(l):
+      # levels.append((i,l))
+      levels.append(l)
+
+
+
+#df = dropna(df)
+
+
+# i can just do the df into a sql thingy again lol
 
 
 
@@ -88,63 +135,63 @@ contract1 = Stock('SPY', 'SMART', 'USD')
 
 
 
-df = pd.DataFrame(columns=['date', 'sentiment'])
+# df = pd.DataFrame(columns=['date', 'sentiment'])
 
-h = 0
-newsProviders = ib.reqNewsProviders()
-codes = '+'.join(np.code for np in newsProviders)
+# h = 0
+# newsProviders = ib.reqNewsProviders()
+# codes = '+'.join(np.code for np in newsProviders)
 
-print(codes)
+# print(codes)
 
-ib.qualifyContracts(contract1)
+# ib.qualifyContracts(contract1)
 
-td = datetime.today()
-td1 = td.strftime("%Y-%m-%d")
+# td = datetime.today()
+# td1 = td.strftime("%Y-%m-%d")
 
-print(td1)
+# print(td1)
 
-tmr = td.strftime("%Y-%m-%d+1")
+# tmr = td.strftime("%Y-%m-%d+1")
 
-print(tmr)
+# print(tmr)
 
-# the number parameter should stay at 50
-headlines = ib.reqHistoricalNews(contract1.conId, codes, '2021-09-19', '2021-09', 50)
+# # the number parameter should stay at 50
+# headlines = ib.reqHistoricalNews(contract1.conId, codes, '2021-09-19', '2021-09', 50)
 
-#if the day doesn't match up then you remove the headline
-# store headlines into a manipulatable list
-hList = []
+# #if the day doesn't match up then you remove the headline
+# # store headlines into a manipulatable list
+# hList = []
 
-today = datetime.today()
-today = today.day
+# today = datetime.today()
+# today = today.day
 
-for j in headlines:
-    day = j.time
-    day = day.day
-    if day == today:
-        hList.append(j)
+# for j in headlines:
+#     day = j.time
+#     day = day.day
+#     if day == today:
+#         hList.append(j)
 
-for i in headlines:
-    print(i)
-
-
-for i in hList:
-    latest = i.headline
-    # turn headline into pst time and remove the seconds into 0
-    # next, 
-    time = i.time
-    time = time.replace(minute = 0)
-    print(time)
-
-    #datetime_from_utc_to_local(time)
-    vs = sia.polarity_scores(latest)
-    sentiment = round(vs['compound'], 4)
-    time = i.time
-    #print(time, sentiment, latest)
+# for i in headlines:
+#     print(i)
 
 
-    df.loc[h] = [time, sentiment]
+# for i in hList:
+#     latest = i.headline
+#     # turn headline into pst time and remove the seconds into 0
+#     # next, 
+#     time = i.time
+#     time = time.replace(minute = 0)
+#     print(time)
 
-    h = h+1
+#     #datetime_from_utc_to_local(time)
+#     vs = sia.polarity_scores(latest)
+#     sentiment = round(vs['compound'], 4)
+#     time = i.time
+#     #print(time, sentiment, latest)
+
+
+#     df.loc[h] = [time, sentiment]
+
+#     h = h+1
 
 
 
