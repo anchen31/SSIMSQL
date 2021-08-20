@@ -94,9 +94,21 @@ h = 0
 newsProviders = ib.reqNewsProviders()
 codes = '+'.join(np.code for np in newsProviders)
 
+print(codes)
+
 ib.qualifyContracts(contract1)
+
+td = datetime.today()
+td1 = td.strftime("%Y-%m-%d")
+
+print(td1)
+
+tmr = td.strftime("%Y-%m-%d+1")
+
+print(tmr)
+
 # the number parameter should stay at 50
-headlines = ib.reqHistoricalNews(contract1.conId, codes, '', '', 50)
+headlines = ib.reqHistoricalNews(contract1.conId, codes, '2021-09-19', '2021-09', 50)
 
 #if the day doesn't match up then you remove the headline
 # store headlines into a manipulatable list
@@ -111,24 +123,18 @@ for j in headlines:
     if day == today:
         hList.append(j)
 
+for i in headlines:
+    print(i)
 
-##########################################
 
 for i in hList:
     latest = i.headline
     # turn headline into pst time and remove the seconds into 0
     # next, 
     time = i.time
-    time = datetime.strftime(time, '%a %b %d %H:%M:%S +0000 %Y')
-    # Hopefully this turns time datetime obj to string format
-    time = datetime.strftime(time, '%Y-%m-%d %H:%M:%S')
+    time = time.replace(minute = 0)
     print(time)
-    #turns it back into a datetime object
-    time = datetime.strptime(time, '%Y-%m-%d %H:%M:%S')
-    print(time)
-    #change it to pst time from utc
-    time = datetime_from_utc_to_local(time)
-    print(time)
+
     #datetime_from_utc_to_local(time)
     vs = sia.polarity_scores(latest)
     sentiment = round(vs['compound'], 4)
