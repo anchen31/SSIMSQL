@@ -83,6 +83,7 @@ def ltSR():
 
     return levels
 
+##########################################################################################################################################################
 # 1 pull data from here
 barsList = []
 
@@ -109,7 +110,7 @@ barsList.append(bars)
 allBars = [b for bars in reversed(barsList) for b in bars]
 df = util.df(allBars)
 
-#TA STUFF HERE ######################################
+#TA STUFF HERE ##########################################################################################################################################
 indicator_bb = BollingerBands(close=df["close"], window=20, window_dev=2)
 
 df['bb_bbm'] = indicator_bb.bollinger_mavg()
@@ -121,7 +122,7 @@ p = df['close']
 
 df['VWAP'] = ((v * p).cumsum() / v.cumsum())
 
-# LT AND ST S/R ######################################
+# LT AND ST S/R ##########################################################################################################################################
 s =  np.mean(df['high'] - df['low'])
 
 levels = []
