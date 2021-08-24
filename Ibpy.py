@@ -2,6 +2,7 @@ from ib_insync import *
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from datetime import datetime
 import pytz
+import bisect
 import pandas as pd
 import numpy as np
 import yfinance
@@ -30,12 +31,66 @@ def isResistance(df,i):
     resistance = df['high'][i] > df['high'][i-1]  and df['high'][i] > df['high'][i+1] and df['high'][i+1] > df['high'][i+2] and df['high'][i-1] > df['high'][i-2]
     return resistance
 
-def closest(lst, K):
+def closest(lst, b):
     lst.sort()
-    
-    return 
+    n, j = len(lst), bisect.bisect_left(lst, b)
+    if b < lst[-1]:
+        if lst[j] > b:
+           return (None if j == 0 else lst[j-1]), lst[j] 
+        else:
+           return lst[j], (None if j >= n - 1 else lst[j + 1])
+    else:
+        return lst[len(lst)-1], None
+
+
+
+    n, j = len(lst), bisect.bisect_left(lst, b)
+    return ((None if j == 0 else lst[j-1]), lst[j]) if lst[j] > b else (lst[j], (None if j >= n - 1 else lst[j + 1]))
+ 
+def ltSR():
+    bars = ib.reqHistoricalData(
+        contract1, 
+        endDateTime='',
+        durationStr='5 M',
+        barSizeSetting='1 day',
+        whatToShow='TRADES',
+        useRTH=True,
+        formatDate=1,
+        keepUpToDate=True)
+
+    barsList.append(bars)
+
+    allBars = [b for bars in reversed(barsList) for b in bars]
+    df = util.df(allBars)
+
+    s =  np.mean(df['high'] - df['low'])
+
+    levels = []
+    for i in range(2,df.shape[0]-2):
+      if isSupport(df,i):
+        l = df['low'][i]
+
+        if isFarFromLevel(l):
+          # levels.append((i,l))
+          levels.append(l)
+
+      elif isResistance(df,i):
+        l = df['high'][i]
+
+        if isFarFromLevel(l):
+          # levels.append((i,l))
+          levels.append(l)
+
+    return levels
 
 # 1 pull data from here
+barsList = []
+
+ib.reqMktData(contract1, '', False, False)
+ticker = ib.ticker(contract1)
+ib.sleep(0.1)
+
+sPrice = ticker.marketPrice()
 
 bars = ib.reqHistoricalData(
     contract1, 
@@ -47,38 +102,14 @@ bars = ib.reqHistoricalData(
     formatDate=1,
     keepUpToDate=True)
 
-dt = ''
-barsList = []
+barsList.append(bars)
 
 
-ib.reqMktData(contract1, '', False, False)
-ticker = ib.ticker(contract1)
-ib.sleep(0.1)
-
-sPrice = ticker.marketPrice()
-
-while True:
-    bars = ib.reqHistoricalData(
-        contract1, 
-        endDateTime='',
-        durationStr='1 D',
-        barSizeSetting='1 min',
-        whatToShow='TRADES',
-        useRTH=True,
-        formatDate=1,
-        keepUpToDate=True)
-    if not bars:
-        break
-    barsList.append(bars)
 
 allBars = [b for bars in reversed(barsList) for b in bars]
 df = util.df(allBars)
 
-
-
-
 #TA STUFF HERE ######################################
-
 indicator_bb = BollingerBands(close=df["close"], window=20, window_dev=2)
 
 df['bb_bbm'] = indicator_bb.bollinger_mavg()
@@ -91,7 +122,6 @@ p = df['close']
 df['VWAP'] = ((v * p).cumsum() / v.cumsum())
 
 # LT AND ST S/R ######################################
-
 s =  np.mean(df['high'] - df['low'])
 
 levels = []
@@ -110,7 +140,15 @@ for i in range(2,df.shape[0]-2):
       # levels.append((i,l))
       levels.append(l)
 
+print(levels)
 
+#prints out the short term intra day s/r
+# yeee = closest(levels, 450)
+# print(yeee)
+
+print(ltSR())
+
+print(closest(ltSR(), 450))
 
 #df = dropna(df)
 
