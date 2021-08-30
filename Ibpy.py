@@ -3,9 +3,11 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from datetime import datetime
 import pytz
 import bisect
+import yfinance
+import pymysql
+pymysql.install_as_MySQLdb()
 import pandas as pd
 import numpy as np
-import yfinance
 from ta.utils import dropna
 from ta.volatility import BollingerBands
 from mplfinance.original_flavor import candlestick_ohlc
@@ -31,6 +33,7 @@ def isResistance(df,i):
     resistance = df['high'][i] > df['high'][i-1]  and df['high'][i] > df['high'][i+1] and df['high'][i+1] > df['high'][i+2] and df['high'][i-1] > df['high'][i-2]
     return resistance
 
+# takes in a List and finds the two values next to b, one value is higher if it exist and one value is lower
 def closest(lst, b):
     lst.sort()
     n, j = len(lst), bisect.bisect_left(lst, b)
@@ -47,6 +50,7 @@ def closest(lst, b):
     n, j = len(lst), bisect.bisect_left(lst, b)
     return ((None if j == 0 else lst[j-1]), lst[j]) if lst[j] > b else (lst[j], (None if j >= n - 1 else lst[j + 1]))
  
+# Calculates the long term support/resistance and puts it into a list
 def ltSR():
     bars = ib.reqHistoricalData(
         contract1, 
@@ -83,88 +87,104 @@ def ltSR():
 
     return levels
 
-##########################################################################################################################################################
-# 1 pull data from here
-barsList = []
+# returns a df from ibkr highlighting it's price action
+def df():
+    barsList = []
 
-ib.reqMktData(contract1, '', False, False)
-ticker = ib.ticker(contract1)
-ib.sleep(0.1)
+    ib.reqMktData(contract1, '', False, False)
+    ticker = ib.ticker(contract1)
+    ib.sleep(0.1)
 
-sPrice = ticker.marketPrice()
+    sPrice = ticker.marketPrice()
 
-bars = ib.reqHistoricalData(
-    contract1, 
-    endDateTime='',
-    durationStr='1 D',
-    barSizeSetting='1 min',
-    whatToShow='TRADES',
-    useRTH=True,
-    formatDate=1,
-    keepUpToDate=True)
+    bars = ib.reqHistoricalData(
+        contract1, 
+        endDateTime='',
+        durationStr='1 D',
+        barSizeSetting='1 min',
+        whatToShow='TRADES',
+        useRTH=True,
+        formatDate=1,
+        keepUpToDate=True)
 
-barsList.append(bars)
-
-
-
-allBars = [b for bars in reversed(barsList) for b in bars]
-df = util.df(allBars)
-
-#TA STUFF HERE ##########################################################################################################################################
-indicator_bb = BollingerBands(close=df["close"], window=20, window_dev=2)
-
-df['bb_bbm'] = indicator_bb.bollinger_mavg()
-df['bb_bbh'] = indicator_bb.bollinger_hband()
-df['bb_bbl'] = indicator_bb.bollinger_lband()
-
-v = df['volume']
-p = df['close']
-
-df['VWAP'] = ((v * p).cumsum() / v.cumsum())
+    barsList.append(bars)
 
 
-delta = df['close'].diff()
-up = delta.clip(lower=0)
-down = -1*delta.clip(upper=0)
-ema_up = up.ewm(com=13, adjust=False).mean()
-ema_down = down.ewm(com=13, adjust=False).mean()
-rs = ema_up/ema_down
 
-df['RSI'] = 100-(100/(1 + rs))
-
-df['RSIup'] = 70
-
-df['RSIdown'] = 30
+    allBars = [b for bars in reversed(barsList) for b in bars]
+    df = util.df(allBars)
+    return df
 
 
-# LT AND ST S/R ##########################################################################################################################################
-s =  np.mean(df['high'] - df['low'])
+# does all of the ta stuff and puts it into a mysql db
+def main():
 
-levels = []
-for i in range(2,df.shape[0]-2):
-  if isSupport(df,i):
-    l = df['low'][i]
+    #can I even modify the returned df or naw?
+    # if not create an empty df to store df() in
+    df = df()
 
-    if isFarFromLevel(l):
-      # levels.append((i,l))
-      levels.append(l)
+    indicator_bb = BollingerBands(close=df["close"], window=20, window_dev=2)
 
-  elif isResistance(df,i):
-    l = df['high'][i]
+    df['bb_bbm'] = indicator_bb.bollinger_mavg()
+    df['bb_bbh'] = indicator_bb.bollinger_hband()
+    df['bb_bbl'] = indicator_bb.bollinger_lband()
 
-    if isFarFromLevel(l):
-      # levels.append((i,l))
-      levels.append(l)
+    v = df['volume']
+    p = df['close']
 
-print(levels)
+    df['VWAP'] = ((v * p).cumsum() / v.cumsum())
 
-#prints out the short term intra day s/r
-# yeee = closest(levels, 450)
-# print(yeee)
 
-print(ltSR())
+    delta = df['close'].diff()
+    up = delta.clip(lower=0)
+    down = -1*delta.clip(upper=0)
+    ema_up = up.ewm(com=13, adjust=False).mean()
+    ema_down = down.ewm(com=13, adjust=False).mean()
+    rs = ema_up/ema_down
 
-print(closest(ltSR(), 450))
+    df['RSI'] = 100-(100/(1 + rs))
+
+    df['RSIup'] = 70
+
+    df['RSIdown'] = 30
+
+    # LT AND ST S/R ##########################################################################################################################################
+    s =  np.mean(df['high'] - df['low'])
+
+    levels = []
+    for i in range(2,df.shape[0]-2):
+      if isSupport(df,i):
+        l = df['low'][i]
+
+        if isFarFromLevel(l):
+          # levels.append((i,l))
+          levels.append(l)
+
+      elif isResistance(df,i):
+        l = df['high'][i]
+
+        if isFarFromLevel(l):
+          # levels.append((i,l))
+          levels.append(l)
+
+    print(levels)
+
+    #prints out the short term intra day s/r
+    # yeee = closest(levels, 450)
+    # print(yeee)
+
+    #prints out lt S/R
+    print(ltSR())
+    print(closest(ltSR(), 450))
+    # append these 4 values into the df
+    ################################################# for S/R make it so that after it changes S/R, it does not change the previous S/R
+
+
+    ##################################################Create a new db for this data, this will be the main db that will have everything else join it###
+    # engine = create_engine(config.engine)
+    # ############################# Create config.engine1 that has a different db loaction #######################
+    # with engine.begin() as connection:
+    #     df.to_sql(name='tweetdb', con=connection, if_exists='append', index=False)
 
 #df = dropna(df)
 
@@ -173,6 +193,9 @@ print(closest(ltSR(), 450))
 
 
 
+if __name__== '__main__':
+    # put the loop logic here eto loop through everything accordingly
+    main()
 
 
 
