@@ -122,6 +122,21 @@ p = df['close']
 
 df['VWAP'] = ((v * p).cumsum() / v.cumsum())
 
+
+delta = df['close'].diff()
+up = delta.clip(lower=0)
+down = -1*delta.clip(upper=0)
+ema_up = up.ewm(com=13, adjust=False).mean()
+ema_down = down.ewm(com=13, adjust=False).mean()
+rs = ema_up/ema_down
+
+df['RSI'] = 100-(100/(1 + rs))
+
+df['RSIup'] = 70
+
+df['RSIdown'] = 30
+
+
 # LT AND ST S/R ##########################################################################################################################################
 s =  np.mean(df['high'] - df['low'])
 
