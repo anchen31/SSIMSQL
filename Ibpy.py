@@ -171,15 +171,15 @@ def main():
           # levels.append((i,l))
           levels.append(l)
 
-    print(levels)
+    # print(levels)
 
-    #prints out the short term intra day s/r
-    # yeee = closest(levels, 450)
-    # print(yeee)
+    # #prints out the short term intra day s/r
+    # # yeee = closest(levels, 450)
+    # # print(yeee)
 
-    #prints out lt S/R
-    print(ltSR())
-    print(closest(ltSR(), 450))
+    # #prints out lt S/R
+    # print(ltSR())
+    # print(closest(ltSR(), 450))
     # append these 4 values into the df
     ################################################# for S/R make it so that after it changes S/R, it does not change the previous S/R
 
