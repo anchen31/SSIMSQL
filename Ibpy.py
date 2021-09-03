@@ -21,6 +21,8 @@ sia = SentimentIntensityAnalyzer()
 
 contract1 = Stock('SPY', 'SMART', 'USD')
 
+levels = []
+
 def isFarFromLevel(l):
     return np.sum([abs(l-x) < s  for x in levels]) == 0
 
@@ -35,6 +37,7 @@ def isResistance(df,i):
 
 # takes in a List and finds the two values next to b, one value is higher if it exist and one value is lower
 def closest(lst, b):
+    lst = list(lst)
     lst.sort()
     n, j = len(lst), bisect.bisect_left(lst, b)
     if b < lst[-1]:
@@ -52,6 +55,8 @@ def closest(lst, b):
  
 # Calculates the long term support/resistance and puts it into a list
 def ltSR():
+    barsList = []
+
     bars = ib.reqHistoricalData(
         contract1, 
         endDateTime='',
@@ -88,7 +93,7 @@ def ltSR():
     return levels
 
 # returns a df from ibkr highlighting it's price action
-def df():
+def datafrm():
     barsList = []
 
     ib.reqMktData(contract1, '', False, False)
@@ -119,9 +124,7 @@ def df():
 # does all of the ta stuff and puts it into a mysql db
 def main():
 
-    #can I even modify the returned df or naw?
-    # if not create an empty df to store df() in
-    df = df()
+    df = datafrm()
 
     indicator_bb = BollingerBands(close=df["close"], window=20, window_dev=2)
 
@@ -148,10 +151,6 @@ def main():
 
     df['RSIdown'] = 30
 
-
-    # This is what i need to test
-    print(df)
-
     # LT AND ST S/R ##########################################################################################################################################
     s =  np.mean(df['high'] - df['low'])
 
@@ -171,17 +170,22 @@ def main():
           # levels.append((i,l))
           levels.append(l)
 
-    # print(levels)
+    # Stores it into datafram
+    LTe = ltSR()
+    df['STsupp'] = 0
+    df['STres'] = 0
+    df['LTsupp'] = 0
+    df['LTres'] = 0
 
-    # #prints out the short term intra day s/r
-    # # yeee = closest(levels, 450)
-    # # print(yeee)
+    for ind in df.index:
+        price = df['close'][ind]
+        ST = closest(levels, price)
+        LT = closest(LTe, price)
+        df.loc[ind, ['STsupp']] = ST[0]
+        df.loc[ind, ['STres']] = ST[1]
+        df.loc[ind, ['LTsupp']] = LT[0]
+        df.loc[ind, ['LTres']] = LT[1]
 
-    # #prints out lt S/R
-    # print(ltSR())
-    # print(closest(ltSR(), 450))
-    # append these 4 values into the df
-    ################################################# for S/R make it so that after it changes S/R, it does not change the previous S/R
 
 
     ##################################################Create a new db for this data, this will be the main db that will have everything else join it###

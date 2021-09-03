@@ -9,7 +9,6 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 import config
 
-
 analyzer = SentimentIntensityAnalyzer()
 
 myList = []

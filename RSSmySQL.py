@@ -200,7 +200,6 @@ def main():
 
 
 if __name__== '__main__':
-    # put the loop logic here eto loop through everything accordingly
     main()
 
 
