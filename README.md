@@ -44,9 +44,9 @@ it is needed to incorperate multiple data streams from different sources.
 
 End Goal df
 
-[timestamp, open, high, low, close, volume, bar count, bar size, bbHigh, bbLow, bbAvg, VWAP, RSI, RSIup, RSIdown, stSup, stRes, ltSup, ltRes, tweetSent]
+[timestamp, open, high, low, close, volume, bar count, bar size, bbHigh, bbLow, bbAvg, VWAP, RSI, RSIup, RSIdown, stSup, stRes, ltSup, ltRes, tweetSent, $GLD, $UVXY, $SQQQ]
 
-current implemented size: 20
+current implemented size: 23
 
 can add: ema cross over +2
          news sentiment from IBKR +1

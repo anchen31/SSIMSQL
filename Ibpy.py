@@ -1,7 +1,7 @@
 from ib_insync import *
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from datetime import datetime
-import pytz
+import math
 import bisect
 import yfinance
 import pymysql
@@ -16,12 +16,23 @@ import matplotlib.pyplot as plt
 
 ib = IB()
 ib.connect('127.0.0.1', 7497, clientId=2)
+#0.6 ms difference but can gather more data for the openning bars
+RTH = True
 
 sia = SentimentIntensityAnalyzer()
 
 contract1 = Stock('SPY', 'SMART', 'USD')
+GLD1 = Stock('GLD', 'SMART', 'USD')
+UVXY1 = Stock('UVXY', 'SMART', 'USD')
+SQQQ1 = Stock('SQQQ', 'SMART', 'USD')
 
 levels = []
+
+def RoudUp(x, base=5):
+    return base * math.ceil(x/base)
+
+def RoudDown(x, base=5):
+    return base * math.floor(x/base)
 
 def isFarFromLevel(l):
     return np.sum([abs(l-x) < s  for x in levels]) == 0
@@ -33,7 +44,7 @@ def isSupport(df,i):
 
 def isResistance(df,i):
     resistance = df['high'][i] > df['high'][i-1]  and df['high'][i] > df['high'][i+1] and df['high'][i+1] > df['high'][i+2] and df['high'][i-1] > df['high'][i-2]
-    return resistance
+    return resistance 
 
 # takes in a List and finds the two values next to b, one value is higher if it exist and one value is lower
 def closest(lst, b):
@@ -63,7 +74,7 @@ def ltSR():
         durationStr='5 M',
         barSizeSetting='1 day',
         whatToShow='TRADES',
-        useRTH=True,
+        useRTH=RTH,
         formatDate=1,
         keepUpToDate=True)
 
@@ -108,18 +119,96 @@ def datafrm():
         durationStr='1 D',
         barSizeSetting='1 min',
         whatToShow='TRADES',
-        useRTH=True,
+        useRTH=RTH,
         formatDate=1,
         keepUpToDate=True)
 
     barsList.append(bars)
 
-
-
     allBars = [b for bars in reversed(barsList) for b in bars]
     df = util.df(allBars)
     return df
 
+def GLD():
+    barsList = []
+
+    ib.reqMktData(GLD1, '', False, False)
+    ticker = ib.ticker(GLD1)
+    ib.sleep(0.1)
+
+    sPrice = ticker.marketPrice()
+
+    bars = ib.reqHistoricalData(
+        GLD1, 
+        endDateTime='',
+        durationStr='1 D',
+        barSizeSetting='1 min',
+        whatToShow='TRADES',
+        useRTH=RTH,
+        formatDate=1,
+        keepUpToDate=True)
+
+    barsList.append(bars)
+
+    allBars = [b for bars in reversed(barsList) for b in bars]
+    df = util.df(allBars)
+    df['GLD'] = df['close']
+
+    return df[['date', 'GLD']]
+
+def UVXY():
+    barsList = []
+
+    ib.reqMktData(UVXY1, '', False, False)
+    ticker = ib.ticker(UVXY1)
+    ib.sleep(0.1)
+
+    sPrice = ticker.marketPrice()
+
+    bars = ib.reqHistoricalData(
+        UVXY1, 
+        endDateTime='',
+        durationStr='1 D',
+        barSizeSetting='1 min',
+        whatToShow='TRADES',
+        useRTH=RTH,
+        formatDate=1,
+        keepUpToDate=True)
+
+    barsList.append(bars)
+
+    allBars = [b for bars in reversed(barsList) for b in bars]
+    df = util.df(allBars)
+    df['UVXY'] = df['close']
+
+    return df[['date', 'UVXY']]
+
+def SQQQ():
+    barsList = []
+
+    ib.reqMktData(SQQQ1, '', False, False)
+    ticker = ib.ticker(SQQQ1)
+    ib.sleep(0.1)
+
+    sPrice = ticker.marketPrice()
+
+    bars = ib.reqHistoricalData(
+        SQQQ1, 
+        endDateTime='',
+        durationStr='1 D',
+        barSizeSetting='1 min',
+        whatToShow='TRADES',
+        useRTH=RTH,
+        formatDate=1,
+        keepUpToDate=True)
+
+    barsList.append(bars)
+
+    allBars = [b for bars in reversed(barsList) for b in bars]
+    df = util.df(allBars)
+    df['SQQQ'] = df['close']
+
+    return df[['date', 'SQQQ']]
 
 # does all of the ta stuff and puts it into a mysql db
 def main():
@@ -181,13 +270,39 @@ def main():
         price = df['close'][ind]
         ST = closest(levels, price)
         LT = closest(LTe, price)
-        df.loc[ind, ['STsupp']] = ST[0]
-        df.loc[ind, ['STres']] = ST[1]
-        df.loc[ind, ['LTsupp']] = LT[0]
-        df.loc[ind, ['LTres']] = LT[1]
+
+        #This will take care of Nan Values on the S/R
+        if (ST[0] == None):
+            df.loc[ind, ['STsupp']] = RoudDown(price)
+        else:
+            df.loc[ind, ['STsupp']] = ST[0]
+
+        if(ST[1] == None):
+            df.loc[ind, ['STres']] = RoudUp(price)
+        else:
+            df.loc[ind, ['STres']] = ST[1]
+
+        if(LT[0] == None):
+            df.loc[ind, ['LTsupp']] = RoudDown(price)
+        else:
+            df.loc[ind, ['LTsupp']] = LT[0]
+
+        if(LT[1] == None):
+            df.loc[ind, ['LTres']] = RoudUp(price)
+        else:
+            df.loc[ind, ['LTres']] = LT[1]
+
+    # Merge the tickers with the main df
+    GLDdf = GLD()
+    df = pd.merge(df, GLDdf, on=['date'])
+    UVXYdf = UVXY()
+    df = pd.merge(df, UVXYdf, on=['date'])
+    SQQQdf = SQQQ()
+    df = pd.merge(df, SQQQdf, on=['date'])
 
 
 
+    
     ##################################################Create a new db for this data, this will be the main db that will have everything else join it###
     # engine = create_engine(config.engine)
     # ############################# Create config.engine1 that has a different db loaction #######################
@@ -206,6 +321,7 @@ if __name__== '__main__':
     main()
 
 
+#################################################################### WHY IS BENZINGA DATA 250$ LOL #####################################################################
 
 # plt.rcParams['figure.figsize'] = [12, 7]
 # plt.rc('font', size=14)
