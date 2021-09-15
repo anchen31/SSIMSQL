@@ -18,7 +18,7 @@ import matplotlib.dates as mpl_dates
 import matplotlib.pyplot as plt
 
 ib = IB()
-ib.connect('127.0.0.1', 7497, clientId=2)
+ib.connect('127.0.0.1', 7497, clientId=1)
 #0.6 ms difference but can gather more data for the openning bars
 RTH = True
 
@@ -311,7 +311,8 @@ def main():
     engine = create_engine(config.engine)
     # ############################# Create config.engine1 that has a different db loaction #######################
     with engine.begin() as connection:
-        df.to_sql(name='IBPY', con=connection, if_exists='append', index=False)
+        df.to_sql(name='ibpy', con=connection, if_exists='append', index=False)
+    ib.disconnect()
 
 #df = dropna(df)
 
@@ -420,8 +421,6 @@ if __name__== '__main__':
 # article = ib.reqNewsArticle(latest.providerCode, latest.articleId)
 # print(article)
 
-
-ib.disconnect()
 
 
 

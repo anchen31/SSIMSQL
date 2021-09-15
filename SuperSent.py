@@ -20,6 +20,7 @@
 
 from TSSmySQL import main as TSSmain
 from RSSmySQL import main as RSSmain
+from Ibpy import main as IBPYmain
 
 import functools
 from multiprocessing import Pool
@@ -29,11 +30,12 @@ def smap(f):
     return f()
 
 def main():
-    func1 = functools.partial(TSSmain)
-    func2 = functools.partial(RSSmain)
+    func1 = functools.partial(IBPYmain)
+    func2 = functools.partial(TSSmain)
+    func3 = functools.partial(RSSmain)
 
     with Pool() as pool:
-        res = pool.map(smap, [func1, func2])
+        res = pool.map(smap, [func1, func2, func3])
         print(res)
 
 

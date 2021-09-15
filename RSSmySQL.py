@@ -63,7 +63,8 @@ def getTime():
         password = password)
 
         cursor = con.cursor()
-        query = "select * from TwitterSent"
+        #query = "select * from TwitterSent"
+        query = "select * from ibpy"
         cursor.execute(query)
         # get all records
         db = cursor.fetchall()
@@ -147,13 +148,14 @@ def df_resample_sizes():
 
 
 def main():
-    run = True
-    timeout = time.time() + 1
+    # run = True
+    # timeout = time.time() + 1
     timeCompare = getTime()
+    print(timeCompare)
     timeNow = toDateTime(timeCompare[0])
 
     # constantly refreshes to check if there is a new ticker update
-    while(run):
+    while(True):
 
         timeCompare = getTime()
         timePast = toDateTime(timeCompare[1])
@@ -184,17 +186,17 @@ def main():
 
         # use if necessary
         #time.sleep(1)
-        df = df_resample_sizes()
-        df.plot('timestamp_ms', 'tweetsent')
-        plt.show()
+        # df = df_resample_sizes()
+        # df.plot('timestamp_ms', 'tweetsent')
+        # plt.show()
 
 
         # kills main after a certain amount of time
-        test = 0
-        if test == 5 or time.time() > timeout:
-            run = False
-            break
-        test = test - 1
+        # test = 0
+        # if test == 5 or time.time() > timeout:
+        #     run = False
+        #     break
+        # test = test - 1
 
 
 
