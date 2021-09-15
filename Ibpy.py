@@ -3,11 +3,14 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from datetime import datetime
 import math
 import bisect
-import yfinance
 import pymysql
+import config
 pymysql.install_as_MySQLdb()
 import pandas as pd
 import numpy as np
+from sqlalchemy import create_engine
+
+
 from ta.utils import dropna
 from ta.volatility import BollingerBands
 from mplfinance.original_flavor import candlestick_ohlc
@@ -217,14 +220,14 @@ def main():
 
     indicator_bb = BollingerBands(close=df["close"], window=20, window_dev=2)
 
-    df['bb_bbm'] = indicator_bb.bollinger_mavg()
-    df['bb_bbh'] = indicator_bb.bollinger_hband()
-    df['bb_bbl'] = indicator_bb.bollinger_lband()
+    df['bb_bbm'] = round(indicator_bb.bollinger_mavg(), 4)
+    df['bb_bbh'] = round(indicator_bb.bollinger_hband(), 4)
+    df['bb_bbl'] = round(indicator_bb.bollinger_lband(), 4)
 
     v = df['volume']
     p = df['close']
 
-    df['VWAP'] = ((v * p).cumsum() / v.cumsum())
+    df['VWAP'] = round(((v * p).cumsum() / v.cumsum()), 4)
 
 
     delta = df['close'].diff()
@@ -234,11 +237,11 @@ def main():
     ema_down = down.ewm(com=13, adjust=False).mean()
     rs = ema_up/ema_down
 
-    df['RSI'] = 100-(100/(1 + rs))
+    df['RSI'] = round(100-(100/(1 + rs)), 4)
 
-    df['RSIup'] = 70
-
-    df['RSIdown'] = 30
+    # most likely wont need these
+    # df['RSIup'] = 70
+    # df['RSIdown'] = 30
 
     # LT AND ST S/R ##########################################################################################################################################
     s =  np.mean(df['high'] - df['low'])
@@ -300,14 +303,15 @@ def main():
     SQQQdf = SQQQ()
     df = pd.merge(df, SQQQdf, on=['date'])
 
+    #print(df.columns)
 
 
     
     ##################################################Create a new db for this data, this will be the main db that will have everything else join it###
-    # engine = create_engine(config.engine)
+    engine = create_engine(config.engine)
     # ############################# Create config.engine1 that has a different db loaction #######################
-    # with engine.begin() as connection:
-    #     df.to_sql(name='tweetdb', con=connection, if_exists='append', index=False)
+    with engine.begin() as connection:
+        df.to_sql(name='IBPY', con=connection, if_exists='append', index=False)
 
 #df = dropna(df)
 
