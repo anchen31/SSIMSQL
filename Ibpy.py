@@ -216,103 +216,114 @@ def SQQQ():
 # does all of the ta stuff and puts it into a mysql db
 def main():
 
-    df = datafrm()
+    # what  do i need to test?
+    # loop it and have a time limit to kill it and disconnect from ib
+    # add a time sleep mode that catches 
 
-    indicator_bb = BollingerBands(close=df["close"], window=20, window_dev=2)
-
-    df['bb_bbm'] = round(indicator_bb.bollinger_mavg(), 4)
-    df['bb_bbh'] = round(indicator_bb.bollinger_hband(), 4)
-    df['bb_bbl'] = round(indicator_bb.bollinger_lband(), 4)
-
-    v = df['volume']
-    p = df['close']
-
-    df['VWAP'] = round(((v * p).cumsum() / v.cumsum()), 4)
+    while true:
 
 
-    delta = df['close'].diff()
-    up = delta.clip(lower=0)
-    down = -1*delta.clip(upper=0)
-    ema_up = up.ewm(com=13, adjust=False).mean()
-    ema_down = down.ewm(com=13, adjust=False).mean()
-    rs = ema_up/ema_down
+        df = datafrm()
 
-    df['RSI'] = round(100-(100/(1 + rs)), 4)
+        indicator_bb = BollingerBands(close=df["close"], window=20, window_dev=2)
 
-    # most likely wont need these
-    # df['RSIup'] = 70
-    # df['RSIdown'] = 30
+        df['bb_bbm'] = round(indicator_bb.bollinger_mavg(), 4)
+        df['bb_bbh'] = round(indicator_bb.bollinger_hband(), 4)
+        df['bb_bbl'] = round(indicator_bb.bollinger_lband(), 4)
 
-    # LT AND ST S/R ##########################################################################################################################################
-    s =  np.mean(df['high'] - df['low'])
+        v = df['volume']
+        p = df['close']
 
-    levels = []
-    for i in range(2,df.shape[0]-2):
-      if isSupport(df,i):
-        l = df['low'][i]
-
-        if isFarFromLevel(l):
-          # levels.append((i,l))
-          levels.append(l)
-
-      elif isResistance(df,i):
-        l = df['high'][i]
-
-        if isFarFromLevel(l):
-          # levels.append((i,l))
-          levels.append(l)
-
-    # Stores it into datafram
-    LTe = ltSR()
-    df['STsupp'] = 0
-    df['STres'] = 0
-    df['LTsupp'] = 0
-    df['LTres'] = 0
-
-    for ind in df.index:
-        price = df['close'][ind]
-        ST = closest(levels, price)
-        LT = closest(LTe, price)
-
-        #This will take care of Nan Values on the S/R
-        if (ST[0] == None):
-            df.loc[ind, ['STsupp']] = RoudDown(price)
-        else:
-            df.loc[ind, ['STsupp']] = ST[0]
-
-        if(ST[1] == None):
-            df.loc[ind, ['STres']] = RoudUp(price)
-        else:
-            df.loc[ind, ['STres']] = ST[1]
-
-        if(LT[0] == None):
-            df.loc[ind, ['LTsupp']] = RoudDown(price)
-        else:
-            df.loc[ind, ['LTsupp']] = LT[0]
-
-        if(LT[1] == None):
-            df.loc[ind, ['LTres']] = RoudUp(price)
-        else:
-            df.loc[ind, ['LTres']] = LT[1]
-
-    # Merge the tickers with the main df
-    GLDdf = GLD()
-    df = pd.merge(df, GLDdf, on=['date'])
-    UVXYdf = UVXY()
-    df = pd.merge(df, UVXYdf, on=['date'])
-    SQQQdf = SQQQ()
-    df = pd.merge(df, SQQQdf, on=['date'])
-
-    #print(df.columns)
+        df['VWAP'] = round(((v * p).cumsum() / v.cumsum()), 4)
 
 
-    
-    ##################################################Create a new db for this data, this will be the main db that will have everything else join it###
-    engine = create_engine(config.engine)
-    # ############################# Create config.engine1 that has a different db loaction #######################
-    with engine.begin() as connection:
-        df.to_sql(name='ibpy', con=connection, if_exists='append', index=False)
-    ib.disconnect()
+        delta = df['close'].diff()
+        up = delta.clip(lower=0)
+        down = -1*delta.clip(upper=0)
+        ema_up = up.ewm(com=13, adjust=False).mean()
+        ema_down = down.ewm(com=13, adjust=False).mean()
+        rs = ema_up/ema_down
+
+        df['RSI'] = round(100-(100/(1 + rs)), 4)
+
+        # most likely wont need these
+        # df['RSIup'] = 70
+        # df['RSIdown'] = 30
+
+        # LT AND ST S/R ##########################################################################################################################################
+        s =  np.mean(df['high'] - df['low'])
+
+        levels = []
+        for i in range(2,df.shape[0]-2):
+          if isSupport(df,i):
+            l = df['low'][i]
+
+            if isFarFromLevel(l):
+              # levels.append((i,l))
+              levels.append(l)
+
+          elif isResistance(df,i):
+            l = df['high'][i]
+
+            if isFarFromLevel(l):
+              # levels.append((i,l))
+              levels.append(l)
+
+        # Stores it into datafram
+        LTe = ltSR()
+        df['STsupp'] = 0
+        df['STres'] = 0
+        df['LTsupp'] = 0
+        df['LTres'] = 0
+
+        for ind in df.index:
+            price = df['close'][ind]
+            ST = closest(levels, price)
+            LT = closest(LTe, price)
+
+            #This will take care of Nan Values on the S/R
+            if (ST[0] == None):
+                df.loc[ind, ['STsupp']] = RoudDown(price)
+            else:
+                df.loc[ind, ['STsupp']] = ST[0]
+
+            if(ST[1] == None):
+                df.loc[ind, ['STres']] = RoudUp(price)
+            else:
+                df.loc[ind, ['STres']] = ST[1]
+
+            if(LT[0] == None):
+                df.loc[ind, ['LTsupp']] = RoudDown(price)
+            else:
+                df.loc[ind, ['LTsupp']] = LT[0]
+
+            if(LT[1] == None):
+                df.loc[ind, ['LTres']] = RoudUp(price)
+            else:
+                df.loc[ind, ['LTres']] = LT[1]
+
+        # Merge the tickers with the main df
+        GLDdf = GLD()
+        df = pd.merge(df, GLDdf, on=['date'])
+        UVXYdf = UVXY()
+        df = pd.merge(df, UVXYdf, on=['date'])
+        SQQQdf = SQQQ()
+        df = pd.merge(df, SQQQdf, on=['date'])
+
+        #print(df.columns)
+
+
+        
+        ##################################################Create a new db for this data, this will be the main db that will have everything else join it###
+        engine = create_engine(config.engine)
+        # ############################# Create config.engine1 that has a different db loaction #######################
+        with engine.begin() as connection:
+            df.to_sql(name='ibpy', con=connection, if_exists='append', index=False)
+
+
+        
+
+        ib.disconnect()
 
 #df = dropna(df)
 
