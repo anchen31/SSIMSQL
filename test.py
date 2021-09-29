@@ -10,8 +10,8 @@ mycursor = mydb.cursor(buffered=True)
 
 #mycursor.execute("SELECT * FROM TwitterSent")
 #mycursor.execute("SELECT * FROM tweetdb")
-mycursor.execute("TRUNCATE TABLE TwitterSent")
-#mycursor.execute("TRUNCATE TABLE tweetdb") 
+#mycursor.execute("TRUNCATE TABLE TwitterSent")
+mycursor.execute("TRUNCATE TABLE tweetdb") 
 #// deletes all the data in table
 #mycursor.execute("DROP TABLE TwitterSent")
 #mycursor.execute("ALTER TABLE TwitterSent ADD sentiment VARCHAR(50)")

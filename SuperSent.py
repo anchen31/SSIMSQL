@@ -39,6 +39,11 @@ def main():
         print(res)
 
 
+
+    # put a while run loop and kill it when it hits market close
+    # save todays on a hard copy on a csv in a folder and then clear the sql queries
+
+
 if __name__ == '__main__':
     main()
 

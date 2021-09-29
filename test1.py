@@ -1,7 +1,16 @@
-import math
+import datetime
+from ib_insync import *
 
-def myround(x, base=5):
+ib = IB()
+ib.connect('127.0.0.1', 7497, clientId=1)
 
-    return base * math.floor(x/base)
+contract = Stock('TSLA', 'SMART', 'USD')
 
-print(myround(16))
+ib.reqHistoricalData(
+        contract,
+        endDateTime='',
+        durationStr='10 D',
+        barSizeSetting='1 min',
+        whatToShow='MIDPOINT',
+        useRTH=True,
+        formatDate=1)

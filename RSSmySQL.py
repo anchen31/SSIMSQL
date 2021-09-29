@@ -148,8 +148,7 @@ def df_resample_sizes():
 
 
 def main():
-    # run = True
-    # timeout = time.time() + 1
+
     timeCompare = getTime()
     print(timeCompare)
     timeNow = toDateTime(timeCompare[0])
@@ -189,15 +188,6 @@ def main():
         # df = df_resample_sizes()
         # df.plot('timestamp_ms', 'tweetsent')
         # plt.show()
-
-
-        # kills main after a certain amount of time
-        # test = 0
-        # if test == 5 or time.time() > timeout:
-        #     run = False
-        #     break
-        # test = test - 1
-
 
 
 
