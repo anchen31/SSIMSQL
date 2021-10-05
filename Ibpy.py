@@ -1,6 +1,7 @@
 from ib_insync import *
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from datetime import datetime
+import time
 import math
 import bisect
 import pymysql
@@ -220,8 +221,15 @@ def main():
     # loop it and have a time limit to kill it and disconnect from ib
     # add a time sleep mode that catches 
     # each time it makes 
+    counter = 0
 
-    while true:
+    while True:
+        now = datetime.now()
+
+        while now.second != 1:
+            time.sleep(1)
+            print(now.second)
+            now = datetime.now()
 
 
         df = datafrm()
@@ -313,18 +321,17 @@ def main():
 
         #print(df.columns)
 
-
+        print(df.tail())
         
         ##################################################Create a new db for this data, this will be the main db that will have everything else join it###
-        engine = create_engine(config.engine)
-        # ############################# Create config.engine1 that has a different db loaction #######################
-        with engine.begin() as connection:
-            df.to_sql(name='ibpy', con=connection, if_exists='append', index=False)
+        # engine = create_engine(config.engine)
+        # # ############################# Create config.engine1 that has a different db loaction #######################
+        # with engine.begin() as connection:
+        #     df.to_sql(name='ibpy', con=connection, if_exists='append', index=False)
 
+        #this counter will increase when it reaches 2 minutes
 
-        time.sleep(5)
-
-        ib.disconnect()
+    ib.disconnect()
 
 #df = dropna(df)
 
