@@ -80,7 +80,7 @@ def ltSR():
         whatToShow='TRADES',
         useRTH=RTH,
         formatDate=1,
-        keepUpToDate=True)
+        keepUpToDate=False)
 
     barsList.append(bars)
 
@@ -125,7 +125,7 @@ def datafrm():
         whatToShow='TRADES',
         useRTH=RTH,
         formatDate=1,
-        keepUpToDate=True)
+        keepUpToDate=False)
 
     barsList.append(bars)
 
@@ -150,7 +150,7 @@ def GLD():
         whatToShow='TRADES',
         useRTH=RTH,
         formatDate=1,
-        keepUpToDate=True)
+        keepUpToDate=False)
 
     barsList.append(bars)
 
@@ -177,7 +177,7 @@ def UVXY():
         whatToShow='TRADES',
         useRTH=RTH,
         formatDate=1,
-        keepUpToDate=True)
+        keepUpToDate=False)
 
     barsList.append(bars)
 
@@ -204,7 +204,7 @@ def SQQQ():
         whatToShow='TRADES',
         useRTH=RTH,
         formatDate=1,
-        keepUpToDate=True)
+        keepUpToDate=False)
 
     barsList.append(bars)
 
@@ -328,8 +328,6 @@ def main():
         # # ############################# Create config.engine1 that has a different db loaction #######################
         # with engine.begin() as connection:
         #     df.to_sql(name='ibpy', con=connection, if_exists='append', index=False)
-
-        #this counter will increase when it reaches 2 minutes
 
     ib.disconnect()
 
