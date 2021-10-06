@@ -142,6 +142,7 @@ def df_resample_sizes():
             Holder_List.append(float(row[1]))
             counter = counter + 1
 
+    #I would have to round this
     df1['tweetsent'] = df1['tweetsent'].rolling(int(len(df1)/5)).mean()
 
     return df1
