@@ -144,6 +144,7 @@ def df_resample_sizes():
 
     #I would have to round this
     df1['tweetsent'] = df1['tweetsent'].rolling(int(len(df1)/5)).mean()
+    df1['tweetsent'].round(decimals = 4)
 
     return df1
 
@@ -173,7 +174,7 @@ def main():
             df = df_resample_sizes()
             engine = create_engine(config.engine)
             with engine.begin() as connection:
-                df.to_sql(name='tweetdb', con=connection, if_exists='append', index=False)
+                df.to_sql(name='tweetdb', con=connection, if_exists='replace', index=False)
 
 
 

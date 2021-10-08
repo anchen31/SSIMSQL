@@ -327,7 +327,8 @@ def main():
         engine = create_engine(config.engine)
         ############################## Create config.engine1 that has a different db loaction #######################
         with engine.begin() as connection:
-            df.to_sql(name='ibpy', con=connection, if_exists='append', index=False)
+            #maybe "replace" fixes the missing values problem?
+            df.to_sql(name='ibpy', con=connection, if_exists='replace', index=False)
 
     ib.disconnect()
 
