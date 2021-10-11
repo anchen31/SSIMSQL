@@ -44,9 +44,10 @@ def connect(timestamp_ms, reddit_sentiment, reddit_comm_sentiment, news_sentimen
 
     return
 
-# changes a string to datetime format
+# changes a timestamp to datetime format
 def toDateTime(yabadabadoo):
-    toDateTime = datetime.strptime(yabadabadoo, '%Y-%m-%d %H:%M:%S')
+    #toDateTime = datetime.strptime(yabadabadoo, '%Y-%m-%d %H:%M:%S')
+    toDateTime = yabadabadoo.to_pydatetime()
     return toDateTime
 
 
@@ -108,7 +109,8 @@ def df_resample_sizes():
 
     Holder_List = []
     holder = df[0]
-    holder = toDateTime(holder[0])
+    #holder = toDateTime(holder[0])
+    holder = datetime.strptime(holder[0], '%Y-%m-%d %H:%M:%S')
     holder = holder.minute
     counter = 0
     total = 0
@@ -117,7 +119,8 @@ def df_resample_sizes():
     df1 = pd.DataFrame(columns = ['timestamp_ms', 'tweetsent'])
 
     for index, row in df.iterrows():
-        date1 = toDateTime(row[0])
+        #date1 = toDateTime(row[0])
+        date1 = datetime.strptime(row[0], '%Y-%m-%d %H:%M:%S')
         date = date1.minute
         if(date != holder):
             holder = date
@@ -151,20 +154,27 @@ def df_resample_sizes():
 
 def main():
 
+    time.sleep(70)
+
     timeCompare = getTime()
-    print(timeCompare)
     timeNow = toDateTime(timeCompare[0])
+
+    df = df_resample_sizes()
+
 
     # constantly refreshes to check if there is a new ticker update
     while(True):
+        time.sleep(1)
 
         timeCompare = getTime()
         timePast = toDateTime(timeCompare[1])
+        print(timePast)
 
         # whenever we detect that interactive brokers data has updated into the mysql database
         # we will add to our table and then join to it
         # IF THERE IS A NEW TICKER
         if timePast == timeNow:
+            print("bro?")
             #add
             timeNow = toDateTime(timeCompare[0])
             # GET THE SENTIMENT FROM THE TWITTER AND STORE IT ALL TOGETHER

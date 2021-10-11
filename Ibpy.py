@@ -231,7 +231,6 @@ def main():
             print(now.second)
             now = datetime.now()
 
-
         df = datafrm()
 
         indicator_bb = BollingerBands(close=df["close"], window=20, window_dev=2)
