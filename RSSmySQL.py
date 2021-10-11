@@ -51,39 +51,6 @@ def toDateTime(yabadabadoo):
     return toDateTime
 
 
-################################################### change to connect to the main df from ibpy
-# gets the time from the main database 
-def getTime():
-    date = []
-    try:
-        con = mysql.connector.connect(
-        host = 'localhost',
-        #database='ibpy',
-        database='twitterdb', 
-        user='root', 
-        password = password)
-
-        cursor = con.cursor()
-        #query = "select * from TwitterSent"
-        query = "select * from ibpy"
-        cursor.execute(query)
-        # get all records
-        db = cursor.fetchall()
-
-        df = pd.DataFrame(db)
-
-        date.append(df[0].iloc[-1])
-        date.append(df[0].iloc[-2])
-
-
-    except mysql.connector.Error as e:
-        print("Error reading data from MySQL table", e)
-
-    cursor.close()
-    con.close()
-
-    return date
-
 # returns a df of the twitter data organized by the minute
 def df_resample_sizes():
     try:
@@ -156,37 +123,25 @@ def main():
 
     time.sleep(70)
 
-    timeCompare = getTime()
-    timeNow = toDateTime(timeCompare[0])
-
-    df = df_resample_sizes()
-
-
     # constantly refreshes to check if there is a new ticker update
     while(True):
-        time.sleep(1)
 
-        timeCompare = getTime()
-        timePast = toDateTime(timeCompare[1])
-        print(timePast)
+        now = datetime.now()
 
-        # whenever we detect that interactive brokers data has updated into the mysql database
-        # we will add to our table and then join to it
-        # IF THERE IS A NEW TICKER
-        if timePast == timeNow:
-            print("bro?")
-            #add
-            timeNow = toDateTime(timeCompare[0])
-            # GET THE SENTIMENT FROM THE TWITTER AND STORE IT ALL TOGETHER
-            # STORE INTO MYSQL DB
+        # will add data after each minute and 5 seconds
+        while now.second != 5:
+            time.sleep(1)
+            print(now.second)
+            now = datetime.now()
 
-            #works LOL
-            df = df_resample_sizes()
-            engine = create_engine(config.engine)
-            with engine.begin() as connection:
-                df.to_sql(name='tweetdb', con=connection, if_exists='replace', index=False)
+        # GET THE SENTIMENT FROM THE TWITTER AND STORE IT ALL TOGETHER
+        # STORE INTO MYSQL DB
 
-
+        #works LOL
+        df = df_resample_sizes()
+        engine = create_engine(config.engine)
+        with engine.begin() as connection:
+            df.to_sql(name='tweetdb', con=connection, if_exists='replace', index=False)
 
 
             # use to connect method to store into the db
