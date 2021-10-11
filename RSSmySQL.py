@@ -13,43 +13,11 @@ import config
 
 password = config.password
 
-
-#connect to mysql method to add data to the IBKR
-def connect(timestamp_ms, reddit_sentiment, reddit_comm_sentiment, news_sentiment):
-
-    try:
-        con = mysql.connector.connect(
-        host = 'localhost',
-        #database='ibpy',
-        database='twitterdb', 
-        user='root', 
-        password = password)
-
-        if con.is_connected():
-
-            cursor = con.cursor()
-            # connect this to the IBKR DB
-            # CREATE IBKR DATA ON ibpy and then append to it
-            query = "INSERT INTO rednewsDB (timestamp_ms, reddit_sentiment, reddit_comm_sentiment, news_sentiment) VALUES (%s, %s, %s, %s)"
-            cursor.execute(query, (timestamp_ms, reddit_sentiment, reddit_comm_sentiment, news_sentiment))
-            con.commit()
-            
-            
-    except Error as e:
-    
-        print(e)
-
-    cursor.close()
-    con.close()
-
-    return
-
 # changes a timestamp to datetime format
 def toDateTime(yabadabadoo):
     #toDateTime = datetime.strptime(yabadabadoo, '%Y-%m-%d %H:%M:%S')
     toDateTime = yabadabadoo.to_pydatetime()
     return toDateTime
-
 
 # returns a df of the twitter data organized by the minute
 def df_resample_sizes():
@@ -142,6 +110,39 @@ def main():
         engine = create_engine(config.engine)
         with engine.begin() as connection:
             df.to_sql(name='tweetdb', con=connection, if_exists='replace', index=False)
+
+
+        #Fix this and test this out
+
+        try:
+                con = mysql.connector.connect(
+                host = 'localhost',
+                database='twitterdb', 
+                user='root', 
+                password = password)
+                print("You are connected to mySQL")
+                
+
+                if con.is_connected():
+                    """
+                    Insert twitter data
+                    """
+                    cursor = con.cursor("SELECT \
+                            users.date AS user, \
+                            products.date AS favorite \
+                            FROM users \
+                            INNER JOIN products ON users.fav = products.id")
+
+                    cursor.execute()
+                    con.commit()
+                    
+                    
+            except Error as e:
+            
+                print(e)
+
+            cursor.close()
+            con.close()
 
 
             # use to connect method to store into the db
