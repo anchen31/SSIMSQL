@@ -82,7 +82,7 @@ def df_resample_sizes():
 
     #I would have to round this
     df1['tweetsent'] = df1['tweetsent'].rolling(int(len(df1)/5)).mean()
-    df1['tweetsent'].round(decimals = 4)
+    df1['tweetsent'] = df1['tweetsent'].round(decimals = 4)
 
     return df1
 
@@ -114,35 +114,35 @@ def main():
 
         #Fix this and test this out
 
-        try:
-                con = mysql.connector.connect(
-                host = 'localhost',
-                database='twitterdb', 
-                user='root', 
-                password = password)
-                print("You are connected to mySQL")
+        # try:
+        #         con = mysql.connector.connect(
+        #         host = 'localhost',
+        #         database='twitterdb', 
+        #         user='root', 
+        #         password = password)
+        #         print("You are connected to mySQL")
                 
 
-                if con.is_connected():
-                    """
-                    Insert twitter data
-                    """
-                    cursor = con.cursor("SELECT \
-                            users.date AS user, \
-                            products.date AS favorite \
-                            FROM users \
-                            INNER JOIN products ON users.fav = products.id")
+        #         if con.is_connected():
+        #             """
+        #             Insert twitter data
+        #             """
+        #             cursor = con.cursor("SELECT \
+        #                     users.date AS user, \
+        #                     products.date AS favorite \
+        #                     FROM users \
+        #                     INNER JOIN products ON users.fav = products.id")
 
-                    cursor.execute()
-                    con.commit()
+        #             cursor.execute()
+        #             con.commit()
                     
                     
-            except Error as e:
+        #     except Error as e:
             
-                print(e)
+        #         print(e)
 
-            cursor.close()
-            con.close()
+        #     cursor.close()
+        #     con.close()
 
 
             # use to connect method to store into the db
