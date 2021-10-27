@@ -97,7 +97,7 @@ def main():
         now = datetime.now()
 
         # will add data after each minute and 5 seconds
-        while now.second != 5:
+        while now.second != 4:
             time.sleep(1)
             print(now.second)
             now = datetime.now()
@@ -111,6 +111,9 @@ def main():
         with engine.begin() as connection:
             df.to_sql(name='tweetdb', con=connection, if_exists='replace', index=False)
 
+
+        #Fix this and test this out
+        #Change 
 
         try:
             con = mysql.connector.connect(
@@ -161,12 +164,6 @@ def main():
 
 if name== 'main':
     main()
-
-
-
-if __name__== '__main__':
-    main()
-
 
 
 
