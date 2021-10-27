@@ -42,10 +42,13 @@ def df_resample_sizes():
     return df
 
 dataf = df_resample_sizes()
+dataf = dataf.drop([0], axis=1)
 print(dataf)
+dataf.to_csv('cool_data.csv')
 
 
-plt.imshow(dataf, cmap='hot', interpolation='nearest')
+#plt.imshow(dataf, cmap='hot', interpolation='nearest')
+
 
 
 

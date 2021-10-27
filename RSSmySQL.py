@@ -13,12 +13,6 @@ import config
 
 password = config.password
 
-# changes a timestamp to datetime format
-def toDateTime(yabadabadoo):
-    #toDateTime = datetime.strptime(yabadabadoo, '%Y-%m-%d %H:%M:%S')
-    toDateTime = yabadabadoo.to_pydatetime()
-    return toDateTime
-
 # returns a df of the twitter data organized by the minute
 def df_resample_sizes():
     try:
@@ -44,7 +38,6 @@ def df_resample_sizes():
 
     Holder_List = []
     holder = df[0]
-    #holder = toDateTime(holder[0])
     holder = datetime.strptime(holder[0], '%Y-%m-%d %H:%M:%S')
     holder = holder.minute
     counter = 0
@@ -54,7 +47,7 @@ def df_resample_sizes():
     df1 = pd.DataFrame(columns = ['timestamp_ms', 'tweetsent'])
 
     for index, row in df.iterrows():
-        #date1 = toDateTime(row[0])
+
         date1 = datetime.strptime(row[0], '%Y-%m-%d %H:%M:%S')
         date = date1.minute
         if(date != holder):
@@ -96,7 +89,7 @@ def main():
 
         now = datetime.now()
 
-        # will add data after each minute and 5 seconds
+        # will add data after each minute and 4 seconds
         while now.second != 4:
             time.sleep(1)
             print(now.second)
@@ -105,6 +98,7 @@ def main():
         # GET THE SENTIMENT FROM THE TWITTER AND STORE IT ALL TOGETHER
         # STORE INTO MYSQL DB
 
+        # Stores data onto mysql
         #works LOL
         df = df_resample_sizes()
         engine = create_engine(config.engine)
