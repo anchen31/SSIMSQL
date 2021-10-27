@@ -54,7 +54,4 @@ can add: ema cross over +2
 
 
 
-
-round the df in RSSmySQL
-Figure out what is wrogn with ibpy and why it stops at certain levels
 find out what is an efficent way to store and wipe out all of the db after each day
