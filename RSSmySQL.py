@@ -112,43 +112,43 @@ def main():
             df.to_sql(name='tweetdb', con=connection, if_exists='replace', index=False)
 
 
-        #Fix this and test this out
-
-        # try:
-        #         con = mysql.connector.connect(
-        #         host = 'localhost',
-        #         database='twitterdb', 
-        #         user='root', 
-        #         password = password)
-        #         print("You are connected to mySQL")
-                
-
-        #         if con.is_connected():
-        #             """
-        #             Insert twitter data
-        #             """
-        #             cursor = con.cursor("SELECT \
-        #                     users.date AS user, \
-        #                     products.date AS favorite \
-        #                     FROM users \
-        #                     INNER JOIN products ON users.fav = products.id")
-
-        #             cursor.execute()
-        #             con.commit()
-                    
-                    
-        #     except Error as e:
-            
-        #         print(e)
-
-        #     cursor.close()
-        #     con.close()
+        try:
+            con = mysql.connector.connect(
+            host = 'localhost',
+            database='twitterdb', 
+            user='root', 
+            password = password)
+            print("You are connected to mySQL")
 
 
-            # use to connect method to store into the db
-            # (timestamp, twitter, reddit, news on stock from finviz, overall stock news s&p500, s&p500 data?)
-            #connect(timeNow, )
-            # then join it to the main table
+            if con.is_connected():
+
+
+                cursor = con.cursor("SELECT \
+                        ibpy.date AS ibpy, \
+                        tweetdb.date AS tweetdb \
+                        FROM ibpy \
+                        LEFT JOIN tweetdb ON ibpy.date = products.id")
+
+                #Decide to use inner or left join above ^^
+
+
+
+                cursor.execute()
+                con.commit()
+
+
+            except Error as e:
+
+                print(e)
+
+            cursor.close()
+            con.close()
+
+
+
+
+
 
 
         # use if necessary
@@ -156,6 +156,11 @@ def main():
         # df = df_resample_sizes()
         # df.plot('timestamp_ms', 'tweetsent')
         # plt.show()
+
+
+
+if name== 'main':
+    main()
 
 
 
