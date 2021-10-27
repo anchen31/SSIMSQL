@@ -150,18 +150,6 @@ def main():
 
 
 
-        
-
-
-
-        # use if necessary
-        #time.sleep(1)
-        # df = df_resample_sizes()
-        # df.plot('timestamp_ms', 'tweetsent')
-        # plt.show()
-
-
-
 if __name__== '__main__':
     main()
 
