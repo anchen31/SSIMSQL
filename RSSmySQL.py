@@ -13,6 +13,32 @@ import config
 
 password = config.password
 
+
+def ibpyData():
+    try:
+        con = mysql.connector.connect(
+        host = 'localhost',
+        database='twitterdb', 
+        user='root', 
+        password = password)
+
+        cursor = con.cursor()
+        query = "select * from ibpy"
+        cursor.execute(query)
+        # get all records
+        db = cursor.fetchall()
+
+        df = pd.DataFrame(db)
+
+    except mysql.connector.Error as e:
+        print("Error reading data from MySQL table", e)
+
+    cursor.close()
+    con.close()
+    return df
+
+
+
 # returns a df of the twitter data organized by the minute
 def df_resample_sizes():
     try:
@@ -106,41 +132,18 @@ def main():
             df.to_sql(name='tweetdb', con=connection, if_exists='replace', index=False)
 
 
-        #Fix this and test this out
-        #Change 
-
-        try:
-            con = mysql.connector.connect(
-            host = 'localhost',
-            database='twitterdb', 
-            user='root', 
-            password = password)
-            print("You are connected to mySQL")
-            
-
-            if con.is_connected():
+        # we have twitter data in df form
+        # we also have ibpy data in db form
 
 
-                cursor = con.cursor("SELECT \
-                        ibpy.date AS ibpy, \
-                        tweetdb.date AS tweetdb \
-                        FROM ibpy \
-                        LEFT JOIN tweetdb ON ibpy.date = products.id")
-
-                #Decide to use inner or left join above ^^
-
+        # pull out ibpydata into a df
+        # write a method for this
+        id_df = ibpyData()
+        # merge twitter and ibpy data
+        # merge using df and then add into another db on mysql
+        # store into new data thing
 
 
-                cursor.execute()
-                con.commit()
-                
-                    
-            except Error as e:
-            
-                print(e)
-
-            cursor.close()
-            con.close()
 
 
 
