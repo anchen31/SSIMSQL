@@ -35,6 +35,14 @@ def ibpyData():
 
     cursor.close()
     con.close()
+
+    df = df.set_axis(['date', 'open', 'high', 
+                    'low', 'close', 'volume', 
+                    'average', 'barCount', 'bb_bbm', 
+                    'bb_bbh', 'bb_bbl', 'VWAP', 
+                    'RSI', 'STsupp', 'STres', 
+                    'LTsupp', 'LTres', 'GLD', 
+                    'UVXY', 'SQQQ'], axis=1, inplace=False)
     return df
 
 
@@ -70,7 +78,7 @@ def df_resample_sizes():
     total = 0
 
 
-    df1 = pd.DataFrame(columns = ['timestamp_ms', 'tweetsent'])
+    df1 = pd.DataFrame(columns = ['date', 'tweetsent'])
 
     for index, row in df.iterrows():
 
@@ -87,7 +95,7 @@ def df_resample_sizes():
 
 
             date1 = date1.replace(second=0)
-            df1 = df1.append({'timestamp_ms':date1, 'tweetsent':total}, ignore_index=True)
+            df1 = df1.append({'date':date1, 'tweetsent':total}, ignore_index=True)
             #print(date, total) #shows the condensed data organized
 
             #resets the params
@@ -121,9 +129,6 @@ def main():
             print(now.second)
             now = datetime.now()
 
-        # GET THE SENTIMENT FROM THE TWITTER AND STORE IT ALL TOGETHER
-        # STORE INTO MYSQL DB
-
         # Stores data onto mysql
         #works LOL
         df = df_resample_sizes()
@@ -131,16 +136,22 @@ def main():
         with engine.begin() as connection:
             df.to_sql(name='tweetdb', con=connection, if_exists='replace', index=False)
 
-
-        # we have twitter data in df form
-        # we also have ibpy data in db form
-
-
         # pull out ibpydata into a df
-        # write a method for this
-        id_df = ibpyData()
+        df1 = ibpyData()
         # merge twitter and ibpy data
-        # merge using df and then add into another db on mysql
+        result = pd.merge(df,df1, on='date', how='left')
+
+
+
+
+        ############################################### TEST THIS PART OUT LATER
+        # add into another db on mysql
+        engine = create_engine(config.engine)
+
+        # Create a new db to store result in
+        with engine.begin() as connection:
+            # rename ibpy to something else
+            result.to_sql(name='ibpy', con=connection, if_exists='replace', index=False)
         # store into new data thing
 
 
