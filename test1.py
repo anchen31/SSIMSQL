@@ -4,6 +4,7 @@ import numpy as np
 from datetime import datetime
 from sqlalchemy import create_engine
 import pymysql
+import seaborn as sns
 pymysql.install_as_MySQLdb()
 import mysql.connector
 from mysql.connector import Error
@@ -15,44 +16,24 @@ import config
 password = config.password
 
 
+df = pd.read_csv('cool_data.csv')
 
+corr = df.corr()
 
-def df_resample_sizes():
-    try:
-        con = mysql.connector.connect(
-        host = 'localhost',
-        database='twitterdb', 
-        user='root', 
-        password = password)
+ax = sns.heatmap(
+    corr,
+    vmin=-1, vmax=1, center=0,
+    cmap=sns.diverging_palette(20,220,n=200),
+    square=True
+)
 
-        cursor = con.cursor()
-        query = "select * from ibpy"
-        cursor.execute(query)
-        # get all records
-        db = cursor.fetchall()
+ax.set_xticklabels(
+    ax.get_xticklabels(),
+    rotation=45,
+    horizontalalignment='right')
 
-        df = pd.DataFrame(db)
-
-    except mysql.connector.Error as e:
-        print("Error reading data from MySQL table", e)
-
-    cursor.close()
-    con.close()
-
-    return df
-
-dataf = df_resample_sizes()
-dataf = dataf.drop([0], axis=1)
-print(dataf)
-dataf.to_csv('cool_data.csv')
-
-
-#plt.imshow(dataf, cmap='hot', interpolation='nearest')
-
-
-
-
-
+plt.show()
+#sns.heatmap(df)
 
 
 
