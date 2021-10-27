@@ -4,7 +4,7 @@ import numpy as np
 from datetime import datetime
 from sqlalchemy import create_engine
 import pymysql
-#import seaborn as sns
+import seaborn as sns
 pymysql.install_as_MySQLdb()
 import mysql.connector
 from mysql.connector import Error
@@ -16,24 +16,24 @@ import config
 password = config.password
 
 
-# df = pd.read_csv('cool_data.csv')
+df = pd.read_csv('cool_data.csv')
 
-# corr = df.corr()
+corr = df.corr()
 
-# ax = sns.heatmap(
-#     corr,
-#     vmin=-1, vmax=1, center=0,
-#     cmap=sns.diverging_palette(20,220,n=200),
-#     square=True
-# )
+ax = sns.heatmap(
+    corr,
+    vmin=-1, vmax=1, center=0,
+    cmap=sns.diverging_palette(20,220,n=200),
+    square=True
+)
 
-# ax.set_xticklabels(
-#     ax.get_xticklabels(),
-#     rotation=45,
-#     horizontalalignment='right')
+ax.set_xticklabels(
+    ax.get_xticklabels(),
+    rotation=45,
+    horizontalalignment='right')
 
-# plt.show()
-#sns.heatmap(df)
+plt.show()
+sns.heatmap(df)
 
 def ibpyData():
     try:
@@ -132,12 +132,12 @@ def df_resample_sizes():
     return df1
 
 
-df = ibpyData()
-df1 = df_resample_sizes()
+# df = ibpyData()
+# df1 = df_resample_sizes()
 
 
-result = pd.merge(df,df1, on='date', how='left')
-print(result.tail(30))
+# result = pd.merge(df,df1, on='date', how='left')
+# result.to_csv('even_coolerData.csv')
 
 
 
