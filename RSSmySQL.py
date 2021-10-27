@@ -97,7 +97,7 @@ def main():
         now = datetime.now()
 
         # will add data after each minute and 5 seconds
-        while now.second != 5:
+        while now.second != 4:
             time.sleep(1)
             print(now.second)
             now = datetime.now()
@@ -125,14 +125,17 @@ def main():
             
 
             if con.is_connected():
-                """
-                Insert twitter data
-                """
+
+
                 cursor = con.cursor("SELECT \
                         ibpy.date AS ibpy, \
                         tweetdb.date AS tweetdb \
                         FROM ibpy \
                         LEFT JOIN tweetdb ON ibpy.date = products.id")
+
+                #Decide to use inner or left join above ^^
+
+
 
                 cursor.execute()
                 con.commit()
@@ -147,6 +150,7 @@ def main():
 
 
 
+        
 
 
 
