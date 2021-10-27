@@ -4,8 +4,6 @@ import numpy as np
 from datetime import datetime
 from sqlalchemy import create_engine
 import pymysql
-import seaborn as sns
-
 pymysql.install_as_MySQLdb()
 import mysql.connector
 from mysql.connector import Error
@@ -41,7 +39,13 @@ def df_resample_sizes():
     cursor.close()
     con.close()
 
+    return df
 
+dataf = df_resample_sizes()
+print(dataf)
+
+
+plt.imshow(dataf, cmap='hot', interpolation='nearest')
 
 
 
