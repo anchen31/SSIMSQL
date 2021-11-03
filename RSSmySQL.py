@@ -141,7 +141,8 @@ def main():
         # merge twitter and ibpy data
         result = pd.merge(df,df1, on='date', how='left')
 
-
+        ### Get result and do a correlation plot with ith and see
+        
 
 
         ############################################### TEST THIS PART OUT LATER
