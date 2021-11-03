@@ -9,7 +9,7 @@ import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, LSTM, BatchNormalization
 from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 import matplotlib.pyplot as plt
 from sqlalchemy import create_engine
 import pymysql
@@ -21,6 +21,13 @@ import config
 
 password = config.password
 
+scaler = preprocessing.MinMaxScaler()
+min_max_scaler = preprocessing.MinMaxScaler()
+
+def scaleColumns(df, cols_to_scale):
+    for col in cols_to_scale:
+        df[col] = pd.DataFrame(min_max_scaler.fit_transform(pd.DataFrame(df[col])),columns=[col])
+    return df
 
 
 #pull the data and read it 
@@ -62,12 +69,24 @@ cols = list(df)[1:]
 
 df_for_training = df[cols].astype(float)
 
+
+scaled_df = scaleColumns(df_for_training,['open', 'high', 
+                    'low', 'close', 'volume', 
+                    'average', 'barCount', 'bb_bbm', 
+                    'bb_bbh', 'bb_bbl', 'VWAP', 
+                    'RSI', 'STsupp', 'STres', 
+                    'LTsupp', 'LTres', 'GLD', 
+                    'UVXY', 'SQQQ'])
+
 scaler = StandardScaler()
 
 scaler = scaler.fit(df_for_training)
 
 df_for_training_scaled = scaler.transform(df_for_training)
-print(type(df_for_training_scaled))
 
-plt.plot(df_for_training_scaled)
+scaled_df.plot()
 plt.show()
+
+
+# plt.plot(scaled_df)
+# plt.show()
