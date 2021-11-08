@@ -1,212 +1,69 @@
-import time
 import pandas as pd
 import numpy as np
-from datetime import datetime
-from sqlalchemy import create_engine
-import pymysql
-import seaborn as sns
-pymysql.install_as_MySQLdb()
-import mysql.connector
-from mysql.connector import Error
-
+import yfinance
+from mplfinance.original_flavor import candlestick_ohlc
+import matplotlib.dates as mpl_dates
 import matplotlib.pyplot as plt
 
-import config
+plt.rcParams['figure.figsize'] = [12, 7]
+plt.rc('font', size=14)
 
-password = config.password
-
-
-df = pd.read_csv('cool_data.csv')
-
-corr = df.corr()
-
-ax = sns.heatmap(
-    corr,
-    vmin=-1, vmax=1, center=0,
-    cmap=sns.diverging_palette(20,220,n=200),
-    square=True
-)
-
-ax.set_xticklabels(
-    ax.get_xticklabels(),
-    rotation=45,
-    horizontalalignment='right')
-
-plt.show()
-sns.heatmap(df)
-
-def ibpyData():
-    try:
-        con = mysql.connector.connect(
-        host = 'localhost',
-        database='twitterdb', 
-        user='root', 
-        password = password)
-
-        cursor = con.cursor()
-        query = "select * from ibpy"
-        cursor.execute(query)
-        # get all records
-        db = cursor.fetchall()
-
-        df = pd.DataFrame(db)
-
-    except mysql.connector.Error as e:
-        print("Error reading data from MySQL table", e)
-
-    cursor.close()
-    con.close()
-
-    df = df.set_axis(['date', 'open', 'high', 
-                    'low', 'close', 'volume', 
-                    'average', 'barCount', 'bb_bbm', 
-                    'bb_bbh', 'bb_bbl', 'VWAP', 
-                    'RSI', 'STsupp', 'STres', 
-                    'LTsupp', 'LTres', 'GLD', 
-                    'UVXY', 'SQQQ'], axis=1, inplace=False)
-    return df
-
-def df_resample_sizes():
-    try:
-        con = mysql.connector.connect(
-        host = 'localhost',
-        database='twitterdb', 
-        user='root', 
-        password = password)
-
-        cursor = con.cursor()
-        query = "select * from TwitterSent"
-        cursor.execute(query)
-        # get all records
-        db = cursor.fetchall()
-
-        df = pd.DataFrame(db)
-
-    except mysql.connector.Error as e:
-        print("Error reading data from MySQL table", e)
-
-    cursor.close()
-    con.close()
-
-    Holder_List = []
-    holder = df[0]
-    holder = datetime.strptime(holder[0], '%Y-%m-%d %H:%M:%S')
-    holder = holder.minute
-    counter = 0
-    total = 0
-
-
-    df1 = pd.DataFrame(columns = ['date', 'tweetsent'])
-
-    for index, row in df.iterrows():
-
-        date1 = datetime.strptime(row[0], '%Y-%m-%d %H:%M:%S')
-        date = date1.minute
-        if(date != holder):
-            holder = date
-            total = sum(Holder_List)
-            try:
-                total = total/counter  # will have to use later after i implement rounding on tssmysql     
-                total = round(total, 4)
-            except ZeroDivisionError as e:
-                pass
-
-
-            date1 = date1.replace(second=0)
-            df1 = df1.append({'date':date1, 'tweetsent':total}, ignore_index=True)
-            #print(date, total) #shows the condensed data organized
-
-            #resets the params
-            total = 0
-            Holder_List = []
-            counter = 0
-
-        else:
-            Holder_List.append(float(row[1]))
-            counter = counter + 1
-
-    #I would have to round this
-    df1['tweetsent'] = df1['tweetsent'].rolling(int(len(df1)/5)).mean()
-    df1['tweetsent'].round(decimals = 4)
-
-    return df1
-
-
-# df = ibpyData()
-# df1 = df_resample_sizes()
-
-
-# result = pd.merge(df,df1, on='date', how='left')
-# result.to_csv('even_coolerData.csv')
+name = 'SPY'
+ticker = yfinance.Ticker(name)
+df = ticker.history(interval="1d",start="2019-1-15", end="2020-07-15")
+df['Date'] = pd.to_datetime(df.index)
+df['Date'] = df['Date'].apply(mpl_dates.date2num)
+df = df.loc[:,['Date', 'Open', 'High', 'Low', 'Close']]
 
 
 
-# def df_resample_sizes():
-#     try:
-#         con = mysql.connector.connect(
-#         host = 'localhost',
-#         database='twitterdb', 
-#         user='root', 
-#         password = password)
+def isSupport(df,i):
+  support = df['Low'][i] < df['Low'][i-1]  and df['Low'][i] < df['Low'][i+1] and df['Low'][i+1] < df['Low'][i+2] and df['Low'][i-1] < df['Low'][i-2]
+  return support
+def isResistance(df,i):
+  resistance = df['High'][i] > df['High'][i-1]  and df['High'][i] > df['High'][i+1] and df['High'][i+1] > df['High'][i+2] and df['High'][i-1] > df['High'][i-2]
+  return resistance
 
-#         cursor = con.cursor()
-#         query = "select * from TwitterSent"
-#         cursor.execute(query)
-#         # get all records
-#         db = cursor.fetchall()
+support = []
+resistance = []
+for i in range(2,df.shape[0]-2):
+  if isSupport(df,i):
+    support.append((df['Date'][i],df['Low'][i]))
+  elif isResistance(df,i):
+    resistance.append((df['Date'][i],df['Low'][i]))
 
-#         df = pd.DataFrame(db)
-
-#     except mysql.connector.Error as e:
-#         print("Error reading data from MySQL table", e)
-
-#     cursor.close()
-#     con.close()
-
-#     Holder_List = []
-#     holder = df[0]
-#     #holder = toDateTime(holder[0])
-#     holder = datetime.strptime(holder[0], '%Y-%m-%d %H:%M:%S')
-#     holder = holder.minute
-#     counter = 0
-#     total = 0
+print(support)
 
 
-#     df1 = pd.DataFrame(columns = ['timestamp_ms', 'tweetsent'])
 
-#     for index, row in df.iterrows():
-#         #date1 = toDateTime(row[0])
-#         date1 = datetime.strptime(row[0], '%Y-%m-%d %H:%M:%S')
-#         date = date1.minute
-#         if(date != holder):
-#             holder = date
-#             total = sum(Holder_List)
-#             try:
-#                 total = total/counter  # will have to use later after i implement rounding on tssmysql     
-#                 total = round(total, 4)
-#             except ZeroDivisionError as e:
-#                 pass
+#print out levels and see lows and high and assign them a triangle
 
 
-#             date1 = date1.replace(second=0)
-#             df1 = df1.append({'timestamp_ms':date1, 'tweetsent':total}, ignore_index=True)
-#             #print(date, total) #shows the condensed data organized
+def plot_all():
+  fig, ax = plt.subplots()
+  candlestick_ohlc(ax,df.values,width=0.08, \
+                   colorup='green', colordown='red', alpha=0.8)
+  date_format = mpl_dates.DateFormatter('%d %b %Y')
+  ax.xaxis.set_major_formatter(date_format)
+  fig.autofmt_xdate()
+  fig.tight_layout()
+  for level in support:
+    plt.plot(level[0], level[1], marker='^', color='green')
+  for level in resistance:
+    plt.plot(level[0], level[1], marker='v', color='red')
 
-#             #resets the params
-#             total = 0
-#             Holder_List = []
-#             counter = 0
-
-#         else:
-#             Holder_List.append(float(row[1]))
-#             counter = counter + 1
-
-#     #I would have to round this
-#     df1['tweetsent'] = df1['tweetsent'].rolling(int(len(df1)/5)).mean()
-
-#     df1['tweetsent'] = df1['tweetsent'].round(decimals = 4)
-
-#     return df1['tweetsent']
+  # for level in support:
+  #   plt.plot(level, marker='^', color='green')
+  # for level in resistance:
+  #   plt.plot(level, marker='v', color='red')
 
 
-# print(df_resample_sizes())
+  plt.show()
+
+
+
+plot_all()
+
+
+
+

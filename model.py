@@ -68,7 +68,6 @@ train_dates = df['date']
 
 #cols = list(df)[1:]
 cols = list(df)[2:]
-print(cols)
 
 df_for_training = df[cols].astype(float)
 
