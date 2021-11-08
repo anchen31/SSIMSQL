@@ -226,7 +226,7 @@ def main():
     while True:
         now = datetime.now()
 
-        #pulls data after each minute and one second
+        #pulls data after each minute and one
         while now.second != 1:
             time.sleep(1)
             print(now.second)

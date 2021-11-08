@@ -30,9 +30,7 @@ for i in range(2,df.shape[0]-2):
   if isSupport(df,i):
     support.append((df['Date'][i],df['Low'][i]))
   elif isResistance(df,i):
-    resistance.append((df['Date'][i],df['Low'][i]))
-
-print(support)
+    resistance.append((df['Date'][i],df['High'][i]))
 
 
 
@@ -62,8 +60,22 @@ def plot_all():
 
 
 
-plot_all()
+#plot_all()
+
+total = 0
+count = 1
+
+for level in support:
+  for lev in resistance:
+    if level[0] <= lev[0]:
+      total += level[1]
+      count +=1
+    elif level[0] >=lev[0]:
+      while count > 0:
+        total -= lev[1]
+        count -= 1
 
 
+print(total)
 
 
