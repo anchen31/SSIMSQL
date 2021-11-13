@@ -24,13 +24,12 @@ def isResistance(df,i):
   resistance = df['High'][i] > df['High'][i-1]  and df['High'][i] > df['High'][i+1] and df['High'][i+1] > df['High'][i+2] and df['High'][i-1] > df['High'][i-2]
   return resistance
 
-support = []
-resistance = []
+data = []
 for i in range(2,df.shape[0]-2):
   if isSupport(df,i):
-    support.append((df['Date'][i],df['Low'][i]))
+    data.append((df['Date'][i],df['Low'][i], 1))
   elif isResistance(df,i):
-    resistance.append((df['Date'][i],df['High'][i]))
+    data.append((df['Date'][i],df['High'][i], -1))
 
 
 
@@ -45,40 +44,54 @@ def plot_all():
   ax.xaxis.set_major_formatter(date_format)
   fig.autofmt_xdate()
   fig.tight_layout()
-  for level in support:
-    plt.plot(level[0], level[1], marker='^', color='green')
-  for level in resistance:
-    plt.plot(level[0], level[1], marker='v', color='red')
-
-  # for level in support:
-  #   plt.plot(level, marker='^', color='green')
-  # for level in resistance:
-  #   plt.plot(level, marker='v', color='red')
-
+  for level in data:
+    if level[2] == -1:
+      plt.plot(level[0], level[1], marker='v', color='red')
+    if level[2] == 1:
+      plt.plot(level[0], level[1], marker='^', color='green')
 
   plt.show()
 
 
-
 #plot_all()
-
 total = 0
 count = 0
+count1 = 0
 
-for level in support:
-  for lev in resistance:
-    if level[0] <= lev[0]:
-      total += level[1]
-      count +=1
-      print('buy: ', total)
-    elif level[0] >=lev[0]:
-      while count > 0:
-        total -= lev[1]
-        count -= 1
-      print('sold, profit:', total)
+for stuff in data:
+  if stuff[2] == 1:
+    total -= stuff[1]
+    count += 1
+    print("buy: ", total, stuff[1])
+    while count1 > 0:
+      total -= stuff[1]
+      count1 -= 1
+    print("buy: ", total, stuff[1])
+
+  if stuff[2] == -1:
+    while count > 0:
+      total += stuff[1]
+      count -= 1
+    print("sell: ", total, stuff[1])
+    total += stuff[1]
+    count1 += 1
+    print("sell: ", total, stuff[1])
+
+
+# for stuff in data:
+#   if stuff[2] == 1:
+#     while count > 0:
+#       total -= stuff[1]
+#       count -= 1
+#     print("buy: ", total, count)
+#   if stuff[2] == -1:
+#     total += stuff[1]
+#     count += 1
+#     print("sell: ", total, count)
+
 
 
 
 print(total)
 
-
+plot_all()
