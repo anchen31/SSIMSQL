@@ -63,17 +63,20 @@ def plot_all():
 #plot_all()
 
 total = 0
-count = 1
+count = 0
 
 for level in support:
   for lev in resistance:
     if level[0] <= lev[0]:
       total += level[1]
       count +=1
+      print('buy: ', total)
     elif level[0] >=lev[0]:
       while count > 0:
         total -= lev[1]
         count -= 1
+      print('sold, profit:', total)
+
 
 
 print(total)
