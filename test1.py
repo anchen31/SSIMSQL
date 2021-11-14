@@ -10,7 +10,7 @@ plt.rc('font', size=14)
 
 name = 'SPY'
 ticker = yfinance.Ticker(name)
-df = ticker.history(interval="1d",start="2019-1-15", end="2020-07-15")
+df = ticker.history(interval="1d",start="2019-11-10", end="2020-11-10")
 df['Date'] = pd.to_datetime(df.index)
 df['Date'] = df['Date'].apply(mpl_dates.date2num)
 df = df.loc[:,['Date', 'Open', 'High', 'Low', 'Close']]
@@ -76,20 +76,6 @@ for stuff in data:
     total += stuff[1]
     count1 += 1
     print("sell: ", total, stuff[1])
-
-
-# for stuff in data:
-#   if stuff[2] == 1:
-#     while count > 0:
-#       total -= stuff[1]
-#       count -= 1
-#     print("buy: ", total, count)
-#   if stuff[2] == -1:
-#     total += stuff[1]
-#     count += 1
-#     print("sell: ", total, count)
-
-
 
 
 print(total)
