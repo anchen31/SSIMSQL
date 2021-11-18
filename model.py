@@ -71,11 +71,6 @@ def isResistance(df,i):
 df = pd.read_csv('data.csv')
 
 data = []
-# for i in range(2,df.shape[0]-2):
-#   if isSupport(df,i):
-#     data.append((df['date'][i],df['low'][i], 1))
-#   elif isResistance(df,i):
-#     data.append((df['date'][i],df['high'][i], -1))
 
 for i in range(2,df.shape[0]-2):
   if isSupport(df,i):
