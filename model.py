@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import os
 from sklearn import preprocessing
+import math
 # from collections import deque
 # import random
 # import time
@@ -70,12 +71,8 @@ def isResistance(df,i):
 
 df = pd.read_csv('data.csv')
 
+# stores support and resistance into data
 data = []
-# for i in range(2,df.shape[0]-2):
-#   if isSupport(df,i):
-#     data.append((df['date'][i],df['low'][i], 1))
-#   elif isResistance(df,i):
-#     data.append((df['date'][i],df['high'][i], -1))
 
 for i in range(2,df.shape[0]-2):
   if isSupport(df,i):
@@ -84,12 +81,9 @@ for i in range(2,df.shape[0]-2):
     data.append((i ,df['high'][i], -1))
 
 
-#cols = list(df)[1:]
+# normalizes data and also labels data from 0-1
 cols = list(df)[2:]
-
 df_for_training = df[cols].astype(float)
-
-
 scaled_df = scaleColumns(df_for_training,['open', 'high', 
                     'low', 'close', 'volume', 
                     'average', 'barCount', 'bb_bbm', 
@@ -98,31 +92,48 @@ scaled_df = scaleColumns(df_for_training,['open', 'high',
                     'LTsupp', 'LTres', 'GLD', 
                     'UVXY', 'SQQQ'])
 
-
-# scaler = StandardScaler()
-
-# scaler = scaler.fit(df_for_training)
-
-# df_for_training_scaled = scaler.transform(df_for_training)
-# print(type(df_for_training_scaled))
+# plots the buy/sell classifcation from the s/r data
 scaled_df['trade'] = 0.5
-
-
 for stuff in data:
 	if stuff[2] == 1:
 		scaled_df['trade'][stuff[0]] = 1
 	if stuff[2] == -1:
 		scaled_df['trade'][stuff[0]] = 0
 
-print(scaled_df['trade'].head(50))
 
-#rint(scaled_df.columns)
-
-
-scaled_df.plot()
-plt.show()
+# Create a new dataframe with only the 'Adj close column'
+new_data = scaled_df.filter(['trade'])
 
 
+# Convert the dataframe to a numpy array
+dataset = scaled_df.to_numpy()
+# Get the number of rows to train the model on
+len_train = math.ceil(len(dataset)*.67)
 
-# plt.plot(scaled_df)
+train = dataset[0:len_train, :].reshape(-1,1)
+test = dataset[len_train:len(dataset), :1].reshape(-1,1)
+
+print(train)
+
+
+# 
+
+X_train, y_train = [], []
+for i in range(len(train)-80-1):
+    a = train[i:(i+80), 0]
+    X_train.append(a)
+    y_train.append(train[i+80, 0])
+    X_train = np.array(X_train)
+    y_train = np.array(y_train)
+
+
+# print(scaled_df.columns)
+
+
+# scaled_df.plot()
 # plt.show()
+
+
+
+plt.plot(train)
+plt.show()
