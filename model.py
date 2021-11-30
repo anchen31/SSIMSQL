@@ -113,18 +113,26 @@ len_train = math.ceil(len(dataset)*.67)
 train = dataset[0:len_train, :].reshape(-1,1)
 test = dataset[len_train:len(dataset), :1].reshape(-1,1)
 
-print(train)
+trainX = []
+trainY = []
+
+n_future = 1   # Number of days we want to look into the future based on the past days.
+n_past = 14  # Number of past days we want to use to predict the future.
+
+#Reformat input data into a shape: (n_samples x timesteps x n_features)
+#In my example, my df_for_training_scaled has a shape (12823, 5)
+#12823 refers to the number of data points and 5 refers to the columns (multi-variables).
+for i in range(n_past, len(train) - n_future +1):
+    trainX.append(train[i - n_past:i, 0:train.shape[1]])
+    trainY.append(train[i + n_future - 1:i + n_future, 0])
+
+trainX, trainY = np.array(trainX), np.array(trainY)
+
+print('trainX shape == {}.'.format(trainX.shape))
+print('trainY shape == {}.'.format(trainY.shape))
 
 
-# 
 
-X_train, y_train = [], []
-for i in range(len(train)-80-1):
-    a = train[i:(i+80), 0]
-    X_train.append(a)
-    y_train.append(train[i+80, 0])
-    X_train = np.array(X_train)
-    y_train = np.array(y_train)
 
 
 # print(scaled_df.columns)
@@ -133,7 +141,5 @@ for i in range(len(train)-80-1):
 # scaled_df.plot()
 # plt.show()
 
-
-
-plt.plot(train)
-plt.show()
+# plt.plot(train)
+# plt.show()

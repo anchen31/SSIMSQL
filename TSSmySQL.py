@@ -5,7 +5,6 @@ import time
 import tweepy
 from datetime import datetime
 from unidecode import unidecode
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 import config
 
