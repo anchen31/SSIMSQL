@@ -71,6 +71,7 @@ def isResistance(df,i):
 
 df = pd.read_csv('data.csv')
 
+
 # stores support and resistance into data
 data = []
 
@@ -100,18 +101,15 @@ for stuff in data:
 	if stuff[2] == -1:
 		scaled_df['trade'][stuff[0]] = 0
 
-
-# Create a new dataframe with only the 'Adj close column'
-new_data = scaled_df.filter(['trade'])
-
-
 # Convert the dataframe to a numpy array
 dataset = scaled_df.to_numpy()
+
 # Get the number of rows to train the model on
 len_train = math.ceil(len(dataset)*.67)
 
-train = dataset[0:len_train, :].reshape(-1,1)
-test = dataset[len_train:len(dataset), :1].reshape(-1,1)
+# train = dataset[0:len_train, :].reshape(-1,1)
+# test = dataset[len_train:len(dataset), :1].reshape(-1,1)
+
 
 trainX = []
 trainY = []
@@ -122,40 +120,73 @@ n_past = 14  # Number of past days we want to use to predict the future.
 #Reformat input data into a shape: (n_samples x timesteps x n_features)
 #In my example, my df_for_training_scaled has a shape (12823, 5)
 #12823 refers to the number of data points and 5 refers to the columns (multi-variables).
-for i in range(n_past, len(train) - n_future +1):
-    trainX.append(train[i - n_past:i, 0:train.shape[1]])
-    trainY.append(train[i + n_future - 1:i + n_future, 0])
+for i in range(n_past, len(dataset) - n_future +1):
+    trainX.append(dataset[i - n_past:i, 0:dataset.shape[1]])
+    trainY.append(dataset[i + n_future - 1:i + n_future, 0])
 
 trainX, trainY = np.array(trainX), np.array(trainY)
 
 print('trainX shape == {}.'.format(trainX.shape))
 print('trainY shape == {}.'.format(trainY.shape))
 
-model = Sequential()
-model.add(LSTM(128, input_shape=trainX.shape[1:], return_sequences=True))
-model.add(Dropout(0.2))
-model.add(BatchNormalization())
+# model = Sequential()
+# model.add(LSTM(128, input_shape=trainX.shape[1:], return_sequences=True))
+# model.add(Dropout(0.2))
+# model.add(BatchNormalization())
 
-model.add(LSTM(128, input_shape=trainX.shape[1:], return_sequences=True))
-model.add(Dropout(0.1))
-model.add(BatchNormalization())
+# model.add(LSTM(128, input_shape=trainX.shape[1:], return_sequences=True))
+# model.add(Dropout(0.1))
+# model.add(BatchNormalization())
 
-model.add(LSTM(128, input_shape=trainX.shape[1:]))
-model.add(Dropout(0.2))
-model.add(BatchNormalization())
+# model.add(LSTM(128, input_shape=trainX.shape[1:]))
+# model.add(Dropout(0.2))
+# model.add(BatchNormalization())
 
-model.add(Dense(32, activation="relu"))
-model.add(Dropout(0.2))
+# model.add(Dense(32, activation="relu"))
+# model.add(Dropout(0.2))
 
-model.add(Dense(2, activation="softmax"))
+# model.add(Dense(2, activation="softmax"))
 
-opt = tf.keras.optimizers.Adam(lr=0.001, decay=1e-6)
+# opt = tf.keras.optimizers.Adam(lr=0.001, decay=1e-6)
 
-model.compile(loss='sparse_categorical_crossentropy',
-                optimizer=opt,
-                metrics=['accuracy'])
+# model.compile(loss='sparse_categorical_crossentropy',
+#                 optimizer=opt,
+#                 metrics=['accuracy'])
 
-model.fit(trainX, trainY, epochs=10, batch_size=32)
+# model.fit(trainX, trainY, epochs=10, batch_size=32)
+
+
+
+
+
+
+
+# model = Sequential()
+# #Adding the first LSTM layer and some Dropout regularisation
+# model.add(LSTM(units = 50, return_sequences = True, input_shape = (trainX.shape[1], 1)))
+# model.add(Dropout(0.2))
+# # Adding a second LSTM layer and some Dropout regularisation
+# model.add(LSTM(units = 50, return_sequences = True))
+# model.add(Dropout(0.2))
+# # Adding a third LSTM layer and some Dropout regularisation
+# model.add(LSTM(units = 50, return_sequences = True))
+# model.add(Dropout(0.2))
+# # Adding a fourth LSTM layer and some Dropout regularisation
+# model.add(LSTM(units = 50))
+# model.add(Dropout(0.2))
+# # Adding the output layer
+# model.add(Dense(units = 1))
+
+# # Compiling the RNN
+# model.compile(optimizer = 'adam', loss = 'mean_squared_error')
+
+# # Fitting the RNN to the Training set
+# model.fit(trainX, trainY, epochs = 10, batch_size = 32)
+
+
+
+
+
 
 
 # print(scaled_df.columns)
