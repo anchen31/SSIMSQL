@@ -3,20 +3,20 @@ import numpy as np
 import os
 from sklearn import preprocessing
 import math
-# from collections import deque
-# import random
-# import time
-# import tensorflow as tf
-# from tensorflow.keras.models import Sequential
-# from tensorflow.keras.layers import Dense, Dropout, LSTM, BatchNormalization
-# from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint
+from collections import deque
+import random
+import time
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout, LSTM, BatchNormalization
+from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 import matplotlib.pyplot as plt
-# from sqlalchemy import create_engine
-# import pymysql
-# pymysql.install_as_MySQLdb()
-# import mysql.connector
-# from mysql.connector import Error
+from sqlalchemy import create_engine
+import pymysql
+pymysql.install_as_MySQLdb()
+import mysql.connector
+from mysql.connector import Error
 
 import config
 
@@ -131,8 +131,31 @@ trainX, trainY = np.array(trainX), np.array(trainY)
 print('trainX shape == {}.'.format(trainX.shape))
 print('trainY shape == {}.'.format(trainY.shape))
 
+model = Sequential()
+model.add(LSTM(128, input_shape=trainX.shape[1:], return_sequences=True))
+model.add(Dropout(0.2))
+model.add(BatchNormalization())
 
+model.add(LSTM(128, input_shape=trainX.shape[1:], return_sequences=True))
+model.add(Dropout(0.1))
+model.add(BatchNormalization())
 
+model.add(LSTM(128, input_shape=trainX.shape[1:]))
+model.add(Dropout(0.2))
+model.add(BatchNormalization())
+
+model.add(Dense(32, activation="relu"))
+model.add(Dropout(0.2))
+
+model.add(Dense(2, activation="softmax"))
+
+opt = tf.keras.optimizers.Adam(lr=0.001, decay=1e-6)
+
+model.compile(loss='sparse_categorical_crossentropy',
+                optimizer=opt,
+                metrics=['accuracy'])
+
+model.fit(trainX, trainY, epochs=10, batch_size=32)
 
 
 # print(scaled_df.columns)

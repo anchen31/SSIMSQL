@@ -85,6 +85,9 @@ import matplotlib.pyplot as plt
 # print(total)
 
 # plot_all()
+
+
+
 import pandas as pd
 import seaborn as sns
 
