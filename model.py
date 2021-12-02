@@ -127,7 +127,10 @@ for i in range(n_past, len(dataset) - n_future +1):
 trainX, trainY = np.array(trainX), np.array(trainY)
 
 print('trainX shape == {}.'.format(trainX.shape))
+print(trainX)
 print('trainY shape == {}.'.format(trainY.shape))
+print(trainY)
+
 
 # model = Sequential()
 # model.add(LSTM(128, input_shape=trainX.shape[1:], return_sequences=True))
