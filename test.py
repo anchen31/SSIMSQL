@@ -57,7 +57,7 @@ import matplotlib.dates as mpl_dates
 import matplotlib.pyplot as plt
 
 
-barSze = '15 mins'
+barSze = '10 mins'
 durStrng = '1 Y'
 
 
