@@ -69,7 +69,7 @@ def isResistance(df,i):
 #                     'UVXY', 'SQQQ'], axis=1, inplace=False)
 
 
-df = pd.read_csv('data.csv')
+df = pd.read_csv('OPdata.csv')
 
 
 # stores support and resistance into data
@@ -111,8 +111,8 @@ len_train = math.ceil(len(dataset)*.67)
 # test = dataset[len_train:len(dataset), :1].reshape(-1,1)
 
 
-trainX = []
-trainY = []
+trainX = [] # the amount of samples and n features
+trainY = [] # the target shape
 
 n_future = 1   # Number of days we want to look into the future based on the past days.
 n_past = 14  # Number of past days we want to use to predict the future.
@@ -120,37 +120,24 @@ n_past = 14  # Number of past days we want to use to predict the future.
 #Reformat input data into a shape: (n_samples x timesteps x n_features)
 #In my example, my df_for_training_scaled has a shape (12823, 5)
 #12823 refers to the number of data points and 5 refers to the columns (multi-variables).
+
 for i in range(n_past, len(dataset) - n_future +1):
-    trainX.append(dataset[i - n_past:i, 0:dataset.shape[1]])
-    trainY.append(dataset[i + n_future - 1:i + n_future, 0])
+    # trainX.append(dataset[i - n_past:i, 0:dataset.shape[1]])
+    trainX.append(dataset[i - n_past:i, 0:19])
+    trainY.append(dataset[i + n_future - 1:i + n_future, 19]) # 19 is the column with the target that I want to test
 
 trainX, trainY = np.array(trainX), np.array(trainY)
 
 print('trainX shape == {}.'.format(trainX.shape))
-print(trainX)
 print('trainY shape == {}.'.format(trainY.shape))
-print(trainY)
-
 
 # model = Sequential()
-# model.add(LSTM(128, input_shape=trainX.shape[1:], return_sequences=True))
+# model.add(LSTM(64, activation='relu', input_shape=(trainX.shape[1], trainX.shape[2]), return_sequences=True))
+# model.add(LSTM(32, activation='relu', return_sequences=False))
 # model.add(Dropout(0.2))
-# model.add(BatchNormalization())
+# model.add(Dense(trainY.shape[1]))
 
-# model.add(LSTM(128, input_shape=trainX.shape[1:], return_sequences=True))
-# model.add(Dropout(0.1))
-# model.add(BatchNormalization())
-
-# model.add(LSTM(128, input_shape=trainX.shape[1:]))
-# model.add(Dropout(0.2))
-# model.add(BatchNormalization())
-
-# model.add(Dense(32, activation="relu"))
-# model.add(Dropout(0.2))
-
-# model.add(Dense(2, activation="softmax"))
-
-# opt = tf.keras.optimizers.Adam(lr=0.001, decay=1e-6)
+# opt = tf.keras.optimizers.Adam(lr=0.01, decay=1e-6)
 
 # model.compile(loss='sparse_categorical_crossentropy',
 #                 optimizer=opt,
@@ -159,8 +146,31 @@ print(trainY)
 # model.fit(trainX, trainY, epochs=10, batch_size=32)
 
 
+# model = Sequential()
+# model.add(LSTM(64, input_shape=trainX.shape[1:], return_sequences=True))
+# model.add(Dropout(0.2))
+# model.add(BatchNormalization())
 
+# model.add(LSTM(64, input_shape=trainX.shape[1:], return_sequences=True))
+# model.add(Dropout(0.1))
+# model.add(BatchNormalization())
 
+# model.add(LSTM(64, input_shape=trainX.shape[1:]))
+# model.add(Dropout(0.2))
+# model.add(BatchNormalization())
+
+# model.add(Dense(32, activation="relu"))
+# model.add(Dropout(0.2))
+
+# model.add(Dense(2, activation="softmax"))
+
+# opt = tf.keras.optimizers.Adam(lr=0.01, decay=1e-6)
+
+# model.compile(loss='sparse_categorical_crossentropy',
+#                 optimizer=opt,
+#                 metrics=['accuracy'])
+
+# model.fit(trainX, trainY, epochs=10, batch_size=32)
 
 
 
@@ -195,8 +205,11 @@ print(trainY)
 # print(scaled_df.columns)
 
 
-# scaled_df.plot()
-# plt.show()
+# scaled_df = scaled_df.filter(['open', 'STsupp', 'STres', 
+#                     'LTsupp', 'LTres'])
+del scaled_df['trade']
+scaled_df.plot()
+plt.show()
 
-# plt.plot(train)
+# plt.plot(trainY)
 # plt.show()

@@ -91,7 +91,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-df = pd.read_csv('cool_data.csv')
+df = pd.read_csv('OPdata.csv')
 
 df = df.set_axis(['date', 'open', 'high', 
   'low', 'close', 'volume', 

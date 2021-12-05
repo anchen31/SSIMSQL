@@ -18,6 +18,12 @@ from mplfinance.original_flavor import candlestick_ohlc
 import matplotlib.dates as mpl_dates
 import matplotlib.pyplot as plt
 
+
+barSze = '1 hour'
+durStrng = '8 M'
+
+
+
 ib = IB()
 ib.connect('127.0.0.1', 7497, clientId=2)
 #0.6 ms difference but can gather more data for the openning bars
@@ -75,7 +81,7 @@ def ltSR():
     bars = ib.reqHistoricalData(
         contract1, 
         endDateTime='',
-        durationStr='5 M',
+        durationStr='1 Y',
         barSizeSetting='1 day',
         whatToShow='TRADES',
         useRTH=RTH,
@@ -120,8 +126,8 @@ def datafrm():
     bars = ib.reqHistoricalData(
         contract1, 
         endDateTime='',
-        durationStr='1 D',
-        barSizeSetting='1 min',
+        durationStr=durStrng,
+        barSizeSetting=barSze,
         whatToShow='TRADES',
         useRTH=RTH,
         formatDate=1,
@@ -145,8 +151,8 @@ def GLD():
     bars = ib.reqHistoricalData(
         GLD1, 
         endDateTime='',
-        durationStr='1 D',
-        barSizeSetting='1 min',
+        durationStr=durStrng,
+        barSizeSetting=barSze,
         whatToShow='TRADES',
         useRTH=RTH,
         formatDate=1,
@@ -172,8 +178,8 @@ def UVXY():
     bars = ib.reqHistoricalData(
         UVXY1, 
         endDateTime='',
-        durationStr='1 D',
-        barSizeSetting='1 min',
+        durationStr=durStrng,
+        barSizeSetting=barSze,
         whatToShow='TRADES',
         useRTH=RTH,
         formatDate=1,
@@ -199,8 +205,8 @@ def SQQQ():
     bars = ib.reqHistoricalData(
         SQQQ1, 
         endDateTime='',
-        durationStr='1 D',
-        barSizeSetting='1 min',
+        durationStr=durStrng,
+        barSizeSetting=barSze,
         whatToShow='TRADES',
         useRTH=RTH,
         formatDate=1,
