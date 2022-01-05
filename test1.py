@@ -3,7 +3,7 @@
 # import yfinance
 # from mplfinance.original_flavor import candlestick_ohlc
 # import matplotlib.dates as mpl_dates
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 # plt.rcParams['figure.figsize'] = [12, 7]
 # plt.rc('font', size=14)
@@ -93,15 +93,19 @@
 import pandas as pd
 import seaborn as sns
 
-df = pd.read_csv('OPdata.csv')
+df = pd.read_csv('OPdata.csv', index_col=False)
+df = df.drop('Unnamed: 0',1)
+df = df.drop('date', 1)
 
-# df = df.set_axis(['date', 'open', 'high', 
-#   'low', 'close', 'volume', 
-#   'average', 'barCount', 'bb_bbm', 
-#   'bb_bbh', 'bb_bbl', 'VWAP', 
-#   'RSI', 'STsupp', 'STres', 
-#   'LTsupp', 'LTres', 'GLD', 
-#   'UVXY', 'SQQQ'], axis=1, inplace=False)
+df = df.set_axis(['open', 'high', 
+  'low', 'close', 'volume', 
+  'average', 'barCount', 'bb_bbm', 
+  'bb_bbh', 'bb_bbl', 'VWAP', 
+  'RSI', 'STsupp', 'STres', 
+  'LTsupp', 'LTres', 'GLD', 
+  'UVXY', 'SQQQ'], axis=1, inplace=False)
+
+
 
 corr = df.corr()
 
@@ -118,6 +122,6 @@ ax.set_xticklabels(
   rotation=45,
   horizontalalignment='right')
 
-plt.show()
 sns.heatmap(df)
+plt.show()
 
