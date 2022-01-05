@@ -15,16 +15,19 @@ import matplotlib.pyplot as plt
 # df['Date'] = df['Date'].apply(mpl_dates.date2num)
 # df = df.loc[:,['Date', 'Open', 'High', 'Low', 'Close']]
 
-# df = pd.read_csv('data.csv')
-
-
+# # df = pd.read_csv('data.csv')
+# # df = df.loc[:,['date', 'open', 'high', 'low', 'close']]
+# # df['date'] = pd.to_datetime(df.index)
+# # # df = df.loc[:,['open', 'high', 'low', 'close']]
+# # print(type(df['open'].values))
+# print(df)
 
 # def isSupport(df,i):
-#   support = df['Low'][i] < df['Low'][i-1]  and df['Low'][i] < df['Low'][i+1] and df['Low'][i+1] < df['Low'][i+2] and df['Low'][i-1] < df['Low'][i-2]
-#   return support
+#     support = df['Low'][i] < df['Low'][i-1]  and df['Low'][i] < df['Low'][i+1] and df['Low'][i+1] < df['Low'][i+2] and df['Low'][i-1] < df['Low'][i-2]
+#     return support
 # def isResistance(df,i):
-#   resistance = df['High'][i] > df['High'][i-1]  and df['High'][i] > df['High'][i+1] and df['High'][i+1] > df['High'][i+2] and df['High'][i-1] > df['High'][i-2]
-#   return resistance
+#     resistance = df['High'][i] > df['High'][i-1]  and df['High'][i] > df['High'][i+1] and df['High'][i+1] > df['High'][i+2] and df['High'][i-1] > df['High'][i-2]
+#     return resistance 
 
 # data = []
 # for i in range(2,df.shape[0]-2):
@@ -32,7 +35,6 @@ import matplotlib.pyplot as plt
 #     data.append((df['Date'][i],df['Low'][i], 1))
 #   elif isResistance(df,i):
 #     data.append((df['Date'][i],df['High'][i], -1))
-
 
 
 # #print out levels and see lows and high and assign them a triangle
@@ -47,10 +49,10 @@ import matplotlib.pyplot as plt
 #   fig.autofmt_xdate()
 #   fig.tight_layout()
 #   for level in data:
-#     if level[2] == -1:
-#       plt.plot(level[0], level[1], marker='v', color='red')
 #     if level[2] == 1:
 #       plt.plot(level[0], level[1], marker='^', color='green')
+#     elif level[2] == -1:
+#       plt.plot(level[0], level[1], marker='v', color='red')
 
 #   plt.show()
 
@@ -66,7 +68,6 @@ import matplotlib.pyplot as plt
 #     total -= stuff[1]
 #     count += 1
 
-
 #     while count1 > 0:
 #       total -= stuff[1]
 #       count1 -= 1
@@ -75,7 +76,6 @@ import matplotlib.pyplot as plt
 #     while count > 0:
 #       total += stuff[1]
 #       count -= 1
-
 
 #     total += stuff[1]
 #     count1 += 1
@@ -87,19 +87,25 @@ import matplotlib.pyplot as plt
 # plot_all()
 
 
+########################################################### heat map below #####
+
 
 import pandas as pd
 import seaborn as sns
 
-df = pd.read_csv('OPdata.csv')
+df = pd.read_csv('OPdata.csv', index_col=False)
+df = df.drop('Unnamed: 0',1)
+df = df.drop('date', 1)
 
-df = df.set_axis(['date', 'open', 'high', 
+df = df.set_axis(['open', 'high', 
   'low', 'close', 'volume', 
   'average', 'barCount', 'bb_bbm', 
   'bb_bbh', 'bb_bbl', 'VWAP', 
   'RSI', 'STsupp', 'STres', 
   'LTsupp', 'LTres', 'GLD', 
   'UVXY', 'SQQQ'], axis=1, inplace=False)
+
+
 
 corr = df.corr()
 
@@ -116,6 +122,6 @@ ax.set_xticklabels(
   rotation=45,
   horizontalalignment='right')
 
-plt.show()
 sns.heatmap(df)
+plt.show()
 

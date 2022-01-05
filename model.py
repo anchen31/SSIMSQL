@@ -3,20 +3,20 @@ import numpy as np
 import os
 from sklearn import preprocessing
 import math
-from collections import deque
+# from collections import deque
 import random
 import time
-import tensorflow as tf
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout, LSTM, BatchNormalization
-from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint
+# import tensorflow as tf
+# from tensorflow.keras.models import Sequential
+# from tensorflow.keras.layers import Dense, Dropout, LSTM, BatchNormalization
+# from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 import matplotlib.pyplot as plt
-from sqlalchemy import create_engine
-import pymysql
-pymysql.install_as_MySQLdb()
-import mysql.connector
-from mysql.connector import Error
+# from sqlalchemy import create_engine
+# import pymysql
+# pymysql.install_as_MySQLdb()
+# import mysql.connector
+# from mysql.connector import Error
 
 import config
 
