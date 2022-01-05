@@ -11,18 +11,14 @@ import pandas as pd
 import numpy as np
 from sqlalchemy import create_engine
 
-
 from ta.utils import dropna
 from ta.volatility import BollingerBands
 from mplfinance.original_flavor import candlestick_ohlc
 import matplotlib.dates as mpl_dates
 import matplotlib.pyplot as plt
 
-
 barSze = '1 hour'
 durStrng = '8 M'
-
-
 
 ib = IB()
 ib.connect('127.0.0.1', 7497, clientId=2)
@@ -284,7 +280,7 @@ def main():
               # levels.append((i,l))
               levels.append(l)
 
-        # Stores it into datafram
+        # Stores it into dataframe
         LTe = ltSR()
         df['STsupp'] = 0
         df['STres'] = 0
@@ -333,7 +329,7 @@ def main():
         engine = create_engine(config.engine)
         ############################## Create config.engine1 that has a different db loaction #######################
         with engine.begin() as connection:
-            #maybe "replace" fixes the missing values problem?
+            # maybe "replace" fixes the missing values problem?
             df.to_sql(name='ibpy', con=connection, if_exists='replace', index=False)
 
     ib.disconnect()

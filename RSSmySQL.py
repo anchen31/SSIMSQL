@@ -14,6 +14,10 @@ import config
 password = config.password
 
 
+# gets the raw twitter data from TSSmySQL and organizes it into one minute chunks and stores it in twitterdb
+# it also pulls data from ibpy db and merges twitter db and ibpy db together into ibpy db.
+# basically creates super db
+
 def ibpyData():
     try:
         con = mysql.connector.connect(
@@ -130,7 +134,7 @@ def main():
             now = datetime.now()
 
         # Stores data onto mysql
-        #works LOL
+        # works LOL
         df = df_resample_sizes()
         engine = create_engine(config.engine)
         with engine.begin() as connection:

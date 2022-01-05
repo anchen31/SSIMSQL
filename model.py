@@ -197,11 +197,6 @@ print('trainY shape == {}.'.format(trainY.shape))
 # model.fit(trainX, trainY, epochs = 10, batch_size = 32)
 
 
-
-
-
-
-
 # print(scaled_df.columns)
 
 
