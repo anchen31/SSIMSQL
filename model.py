@@ -122,8 +122,6 @@ def isResistance(df,i):
 
 
 df = pd.read_csv('OPdata.csv')
-# df['date'] = pd.to_datetime(df['date'])
-# df = df.set_index('date')
 df = df.loc[:, ~df.columns.str.contains('^Unnamed')] # removes the unamed df dolumn
 
 # stores support and resistance into data
@@ -131,85 +129,137 @@ data = []
 
 for i in range(2,df.shape[0]-2):
   if isSupport(df,i):
-    data.append((i ,df['low'][i], 1))
+    data.append((df['date'][i],df['low'][i], 1))
   elif isResistance(df,i):
-    data.append((i ,df['high'][i], -1))
+    data.append((df['date'][i] ,df['high'][i], -1))
+
+df['date'] = pd.to_datetime(df['date'])
+df = df.set_index('date')
+
+# print(df['date'].head(50))
 
 
+# # normalizes data and also labels data from 0-1
+# cols = list(df)[0:]
+# # print(cols)
 
-
-
-# normalizes data and also labels data from 0-1
-cols = list(df)[1:]
-# print(cols)
-
-# might not need this if the model and scale on its own
-df_for_training = df[cols].astype(float)
-# print(df_for_training)
-scaled_df = scaleColumns(df_for_training,['open', 'high', 
-                    'low', 'close', 'volume', 
-                    'average', 'barCount', 'bb_bbm', 
-                    'bb_bbh', 'bb_bbl', 'VWAP', 
-                    'RSI', 'STsupp', 'STres', 
-                    'LTsupp', 'LTres', 'GLD', 
-                    'UVXY', 'SQQQ'])
-# print(df_for_training)
+# # might not need this if the model and scale on its own
+# df_for_training = df[cols].astype(float)
+# # print(df_for_training)
+# scaled_df = scaleColumns(df_for_training,['open', 'high', 
+#                     'low', 'close', 'volume', 
+#                     'average', 'barCount', 'bb_bbm', 
+#                     'bb_bbh', 'bb_bbl', 'VWAP', 
+#                     'RSI', 'STsupp', 'STres', 
+#                     'LTsupp', 'LTres', 'GLD', 
+#                     'UVXY', 'SQQQ'])
+# # print(df_for_training)
 
 
 # plots the buy/sell classifcation from the s/r data
-df_for_training['trade'] = 0.5
+df['trade'] = 0.5
 for stuff in data:
 	if stuff[2] == 1:
-		df_for_training.at[stuff[0], 'trade'] = 1
+		df.at[stuff[0], 'trade'] = 1
 	if stuff[2] == -1:
-		df_for_training.at[stuff[0], 'trade'] = 0
+		df.at[stuff[0], 'trade'] = 0
 
 # Convert the dataframe to a numpy array
-dataset = df_for_training.to_numpy()
-
-# print(scaled_df.columns)
+dataset = df.to_numpy()
 
 
+print(df)
 
 # create time series object for target variable
-ts_P = TimeSeries.from_series(df_for_training["trade"]) 
+ts_P = TimeSeries.from_series(df["trade"], fill_missing_dates=True, freq=None) 
 
-# creates time series object covariate feature
-df_covF = df_for_training.loc[:, df_for_training.columns != "trade"]
-ts_covF = TimeSeries.from_dataframe(df_covF)
+# check attributes of the time series
+print("components:", ts_P.components)
+print("duration:",ts_P.duration)
+print("frequency:",ts_P.freq)
+print("frequency:",ts_P.freq_str)
+print("has date time index? (or else, it must have an integer index):",ts_P.has_datetime_index)
+print("deterministic:",ts_P.is_deterministic)
+print("univariate:",ts_P.is_univariate)
 
-# train/test split and scaling of target variable
-ts_train, ts_test = ts_P.split_after(SPLIT)
+# # creates time series object covariate feature
+# df_covF = df_for_training.loc[:, df_for_training.columns != "trade"]
+# ts_covF = TimeSeries.from_dataframe(df_covF)
 
-scalerP = Scaler()
-scalerP.fit_transform(ts_train)
-ts_ttrain = scalerP.transform(ts_train)
-ts_ttest = scalerP.transform(ts_test)    
-ts_t = scalerP.transform(ts_P)
+# # train/test split and scaling of target variable
+# ts_train, ts_test = ts_P.split_after(SPLIT)
 
-# make sure data are of type float
-ts_t = ts_t.astype(np.float32)
-ts_ttrain = ts_ttrain.astype(np.float32)
-ts_ttest = ts_ttest.astype(np.float32)
+# scalerP = Scaler()
+# scalerP.fit_transform(ts_train)
+# ts_ttrain = scalerP.transform(ts_train)
+# ts_ttest = scalerP.transform(ts_test)    
+# ts_t = scalerP.transform(ts_P)
 
-
-# train/test split and scaling of feature covariates
-covF_train, covF_test = ts_covF.split_after(SPLIT)
-
-scalerF = Scaler()
-scalerF.fit_transform(covF_train)
-covF_ttrain = scalerF.transform(covF_train) 
-covF_ttest = scalerF.transform(covF_test)   
-covF_t = scalerF.transform(ts_covF)  
-
-# make sure data are of type float
-covF_t = covF_t.astype(np.float32)
-covF_ttrain = covF_ttrain.astype(np.float32)
-covF_ttest = covF_ttest.astype(np.float32)
+# # make sure data are of type float
+# ts_t = ts_t.astype(np.float32)
+# ts_ttrain = ts_ttrain.astype(np.float32)
+# ts_ttest = ts_ttest.astype(np.float32)
 
 
+# # train/test split and scaling of feature covariates
+# covF_train, covF_test = ts_covF.split_after(SPLIT)
+
+# scalerF = Scaler()
+# scalerF.fit_transform(covF_train)
+# covF_ttrain = scalerF.transform(covF_train) 
+# covF_ttest = scalerF.transform(covF_test)   
+# covF_t = scalerF.transform(ts_covF)  
+
+# # make sure data are of type float
+# covF_t = covF_t.astype(np.float32)
+# covF_ttrain = covF_ttrain.astype(np.float32)
+# covF_ttest = covF_ttest.astype(np.float32)
 
 
+# model = TransformerModel(
+#                     input_chunk_length = INLEN,
+#                     output_chunk_length = N_FC,
+#                     batch_size = BATCH,
+#                     n_epochs = EPOCHS,
+#                     model_name = "Transformer_price",
+#                     nr_epochs_val_period = VALWAIT,
+#                     d_model = FEAT,
+#                     nhead = HEADS,
+#                     num_encoder_layers = ENCODE,
+#                     num_decoder_layers = DECODE,
+#                     dim_feedforward = DIM_FF,
+#                     dropout = DROPOUT,
+#                     activation = ACTF,
+#                     random_state=RAND,
+#                     likelihood=QuantileRegression(quantiles=QUANTILES), 
+#                     optimizer_kwargs={'lr': LEARN},
+#                     add_encoders={"cyclic": {"future": ["hour", "dayofweek", "month"]}},
+#                     save_checkpoints=True,
+#                     force_reset=True
+#                     )
+
+
+# # training: load a saved model or (re)train
+# if LOAD:
+#     print("have loaded a previously saved model from disk:" + mpath)
+#     model = TransformerModel.load_model(mpath)                            # load previously model from disk 
+# else:
+#     model.fit(  ts_ttrain, 
+#                 past_covariates=cov_t, 
+#                 verbose=True)
+#     print("have saved the model after training:", mpath)
+#     model.save_model(mpath)
+
+
+
+
+
+
+# covF_t = covF_t.pd_dataframe()
+# print(covF_t)
+
+# covF_t.plot()
+# plt.show()
 
 
 
@@ -328,9 +378,9 @@ trainX, trainY = np.array(trainX), np.array(trainY)
 
 # df_for_training = df_for_training.filter(['open', 'STsupp', 'STres', 
 #                     'LTsupp', 'LTres'])
-del scaled_df['trade']
-scaled_df.plot()
-plt.show()
+# del scaled_df['trade']
+# scaled_df.plot()
+# plt.show()
 
 # plt.plot(trainY)
 # plt.show()
