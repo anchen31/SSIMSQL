@@ -18,11 +18,63 @@ import matplotlib.pyplot as plt
 # import mysql.connector
 # from mysql.connector import Error
 
+
+from darts import TimeSeries, concatenate
+from darts.dataprocessing.transformers import Scaler
+# from darts.models import TransformerModel
+# from darts.metrics import mape, rmse
+# from darts.utils.timeseries_generation import datetime_attribute_timeseries
+# from darts.utils.likelihood_models import QuantileRegression
+
 import config
 
 password = config.password
 
 min_max_scaler = preprocessing.MinMaxScaler()
+
+
+
+LOAD = False         # True = load previously saved model from disk?  False = (re)train the model
+SAVE = ""   # file name to save the model under
+
+EPOCHS = 200
+INLEN = 32          # input size
+FEAT = 32           # d_model = number of expected features in the inputs, up to 512    
+HEADS = 4           # default 8
+ENCODE = 4          # encoder layers
+DECODE = 4          # decoder layers
+DIM_FF = 128        # dimensions of the feedforward network, default 2048
+BATCH = 32          # batch size
+ACTF = "relu"       # activation function, relu (default) or gelu
+SCHLEARN = None     # a PyTorch learning rate scheduler; None = constant rate
+LEARN = 1e-3        # learning rate
+VALWAIT = 1         # epochs to wait before evaluating the loss on the test/validation set
+DROPOUT = 0.1       # dropout rate
+N_FC = 1            # output size
+
+RAND = 42           # random seed
+N_SAMPLES = 100     # number of times a prediction is sampled from a probabilistic model
+N_JOBS = 3          # parallel processors to use;  -1 = all processors
+
+# default quantiles for QuantileRegression
+QUANTILES = [0.01, 0.1, 0.2, 0.5, 0.8, 0.9, 0.99]
+
+SPLIT = 0.7         # train/test %
+
+FIGSIZE = (9, 6)
+
+
+qL1, qL2 = 0.01, 0.10        # percentiles of predictions: lower bounds
+qU1, qU2 = 1-qL1, 1-qL2,     # upper bounds derived from lower bounds
+label_q1 = f'{int(qU1 * 100)} / {int(qL1 * 100)} percentile band'
+label_q2 = f'{int(qU2 * 100)} / {int(qL2 * 100)} percentile band'
+
+mpath = os.path.abspath(os.getcwd()) + SAVE     # path and file name to save the model
+
+
+
+
+
 
 def scaleColumns(df, cols_to_scale):
     for col in cols_to_scale:
@@ -70,7 +122,9 @@ def isResistance(df,i):
 
 
 df = pd.read_csv('OPdata.csv')
-
+# df['date'] = pd.to_datetime(df['date'])
+# df = df.set_index('date')
+df = df.loc[:, ~df.columns.str.contains('^Unnamed')] # removes the unamed df dolumn
 
 # stores support and resistance into data
 data = []
@@ -82,9 +136,16 @@ for i in range(2,df.shape[0]-2):
     data.append((i ,df['high'][i], -1))
 
 
+
+
+
 # normalizes data and also labels data from 0-1
-cols = list(df)[2:]
+cols = list(df)[1:]
+# print(cols)
+
+# might not need this if the model and scale on its own
 df_for_training = df[cols].astype(float)
+# print(df_for_training)
 scaled_df = scaleColumns(df_for_training,['open', 'high', 
                     'low', 'close', 'volume', 
                     'average', 'barCount', 'bb_bbm', 
@@ -92,17 +153,72 @@ scaled_df = scaleColumns(df_for_training,['open', 'high',
                     'RSI', 'STsupp', 'STres', 
                     'LTsupp', 'LTres', 'GLD', 
                     'UVXY', 'SQQQ'])
+# print(df_for_training)
+
 
 # plots the buy/sell classifcation from the s/r data
-scaled_df['trade'] = 0.5
+df_for_training['trade'] = 0.5
 for stuff in data:
 	if stuff[2] == 1:
-		scaled_df['trade'][stuff[0]] = 1
+		df_for_training.at[stuff[0], 'trade'] = 1
 	if stuff[2] == -1:
-		scaled_df['trade'][stuff[0]] = 0
+		df_for_training.at[stuff[0], 'trade'] = 0
 
 # Convert the dataframe to a numpy array
-dataset = scaled_df.to_numpy()
+dataset = df_for_training.to_numpy()
+
+# print(scaled_df.columns)
+
+
+
+# create time series object for target variable
+ts_P = TimeSeries.from_series(df_for_training["trade"]) 
+
+# creates time series object covariate feature
+df_covF = df_for_training.loc[:, df_for_training.columns != "trade"]
+ts_covF = TimeSeries.from_dataframe(df_covF)
+
+# train/test split and scaling of target variable
+ts_train, ts_test = ts_P.split_after(SPLIT)
+
+scalerP = Scaler()
+scalerP.fit_transform(ts_train)
+ts_ttrain = scalerP.transform(ts_train)
+ts_ttest = scalerP.transform(ts_test)    
+ts_t = scalerP.transform(ts_P)
+
+# make sure data are of type float
+ts_t = ts_t.astype(np.float32)
+ts_ttrain = ts_ttrain.astype(np.float32)
+ts_ttest = ts_ttest.astype(np.float32)
+
+
+# train/test split and scaling of feature covariates
+covF_train, covF_test = ts_covF.split_after(SPLIT)
+
+scalerF = Scaler()
+scalerF.fit_transform(covF_train)
+covF_ttrain = scalerF.transform(covF_train) 
+covF_ttest = scalerF.transform(covF_test)   
+covF_t = scalerF.transform(ts_covF)  
+
+# make sure data are of type float
+covF_t = covF_t.astype(np.float32)
+covF_ttrain = covF_ttrain.astype(np.float32)
+covF_ttest = covF_ttest.astype(np.float32)
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # Get the number of rows to train the model on
 len_train = math.ceil(len(dataset)*.67)
@@ -128,8 +244,18 @@ for i in range(n_past, len(dataset) - n_future +1):
 
 trainX, trainY = np.array(trainX), np.array(trainY)
 
-print('trainX shape == {}.'.format(trainX.shape))
-print('trainY shape == {}.'.format(trainY.shape))
+# print('trainX shape == {}.'.format(trainX.shape))
+# print('trainY shape == {}.'.format(trainY.shape))
+
+
+
+
+
+
+
+
+
+
 
 # model = Sequential()
 # model.add(LSTM(64, activation='relu', input_shape=(trainX.shape[1], trainX.shape[2]), return_sequences=True))
@@ -197,10 +323,10 @@ print('trainY shape == {}.'.format(trainY.shape))
 # model.fit(trainX, trainY, epochs = 10, batch_size = 32)
 
 
-# print(scaled_df.columns)
 
 
-# scaled_df = scaled_df.filter(['open', 'STsupp', 'STres', 
+
+# df_for_training = df_for_training.filter(['open', 'STsupp', 'STres', 
 #                     'LTsupp', 'LTres'])
 del scaled_df['trade']
 scaled_df.plot()

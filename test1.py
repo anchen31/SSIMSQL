@@ -107,21 +107,15 @@ df = df.set_axis(['open', 'high',
 
 
 
-corr = df.corr()
-
-ax = sns.heatmap(
-  corr,
-  vmin=-1, vmax=1, center=0,
-  cmap=sns.diverging_palette(20,220,n=200),
-  square=True
-)
-
-
-ax.set_xticklabels(
-  ax.get_xticklabels(),
-  rotation=45,
-  horizontalalignment='right')
-
-sns.heatmap(df)
+plt.figure(figsize = (15,15))
+sns.set(font_scale=0.75)
+ax = sns.heatmap(df.corr().round(3), 
+            annot=True, 
+            square=True, 
+            linewidths=.75, cmap="coolwarm", 
+            fmt = ".2f", 
+            annot_kws = {"size": 11})
+ax.xaxis.tick_bottom()
+plt.title("correlation matrix")
 plt.show()
 
