@@ -18,7 +18,6 @@ import matplotlib.pyplot as plt
 # import mysql.connector
 # from mysql.connector import Error
 
-
 from darts import TimeSeries, concatenate
 from darts.dataprocessing.transformers import Scaler
 # from darts.models import TransformerModel
@@ -136,25 +135,6 @@ for i in range(2,df.shape[0]-2):
 df['date'] = pd.to_datetime(df['date'])
 df = df.set_index('date')
 
-# print(df['date'].head(50))
-
-
-# # normalizes data and also labels data from 0-1
-# cols = list(df)[0:]
-# # print(cols)
-
-# # might not need this if the model and scale on its own
-# df_for_training = df[cols].astype(float)
-# # print(df_for_training)
-# scaled_df = scaleColumns(df_for_training,['open', 'high', 
-#                     'low', 'close', 'volume', 
-#                     'average', 'barCount', 'bb_bbm', 
-#                     'bb_bbh', 'bb_bbl', 'VWAP', 
-#                     'RSI', 'STsupp', 'STres', 
-#                     'LTsupp', 'LTres', 'GLD', 
-#                     'UVXY', 'SQQQ'])
-# # print(df_for_training)
-
 
 # plots the buy/sell classifcation from the s/r data
 df['trade'] = 0.5
@@ -207,41 +187,76 @@ covF_ttrain = covF_ttrain.astype(np.float32)
 covF_ttest = covF_ttest.astype(np.float32)
 
 
-# covF_ttrain = covF_ttrain.pd_dataframe()
-# print(covF_ttrain.head(50))
-
+df3 = covF_ttrain.pd_dataframe()
 # covF_ttrain.plot()
 # plt.show()
 
-# feature engineering - create time covariates: hour, weekday, month, year, country-specific holidays
-covT = datetime_attribute_timeseries(   ts_P.time_index, 
-                                        attribute="hour", 
-                                        until=pd.Timestamp("2019-01-04 22:00:00+00:00"), one_hot=False)
-covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="day_of_week", one_hot=False))
-covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="month", one_hot=False))
-covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="year", one_hot=False))
-
-covT = covT.add_holidays(country_code="ES")
-covT = covT.astype(np.float32)
 
 
-# train/test split
-covT_train, covT_test = covT.split_after(SPLIT)
 
 
-# rescale the covariates: fitting on the training set
-scalerT = Scaler()
-scalerT.fit(covT_train)
-covT_ttrain = scalerT.transform(covT_train)
-covT_ttest = scalerT.transform(covT_test)
-covT_t = scalerT.transform(covT)
+# additional datetime columns: feature engineering
+df3["month"] = df3.index.month
 
-covT_t = covT_t.astype(np.float32)
+df3["wday"] = df3.index.dayofweek
+dict_days = {0:"1_Mon", 1:"2_Tue", 2:"3_Wed", 3:"4_Thu", 4:"5_Fri", 5:"6_Sat", 6:"7_Sun"}
+df3["weekday"] = df3["wday"].apply(lambda x: dict_days[x])
+
+df3["hour"] = df3.index.hour
+
+df3 = df3.astype({"hour":float, "wday":float, "month": float})
+
+df3.iloc[[0, -1]]
 
 
-pd.options.display.float_format = '{:.0f}'.format
-print("first and last row of unscaled time covariates:")
-covT.pd_dataframe().iloc[[0,-1]]
+piv = pd.pivot_table(   df3, 
+                        values="price", 
+                        index="month", 
+                        columns="weekday", 
+                        aggfunc="mean", 
+                        margins=True, margins_name="Avg", 
+                        fill_value=0)
+pd.options.display.float_format = '{:,.0f}'.format
+
+plt.figure(figsize = (10,15))
+sns.set(font_scale=1)
+sns.heatmap(piv.round(0), annot=True, square = True, \
+            linewidths=.75, cmap="coolwarm", fmt = ".0f", annot_kws = {"size": 11})
+plt.title("price by weekday by month")
+plt.show()
+
+
+
+
+# # feature engineering - create time covariates: hour, weekday, month, year, country-specific holidays
+# covT = datetime_attribute_timeseries(   ts_P.time_index, 
+#                                         attribute="hour", 
+#                                         until=pd.Timestamp("2019-01-04 22:00:00+00:00"), one_hot=False)
+# covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="day_of_week", one_hot=False))
+# covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="month", one_hot=False))
+# covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="year", one_hot=False))
+
+# covT = covT.add_holidays(country_code="ES")
+# covT = covT.astype(np.float32)
+
+
+# # train/test split
+# covT_train, covT_test = covT.split_after(SPLIT)
+
+
+# # rescale the covariates: fitting on the training set
+# scalerT = Scaler()
+# scalerT.fit(covT_train)
+# covT_ttrain = scalerT.transform(covT_train)
+# covT_ttest = scalerT.transform(covT_test)
+# covT_t = scalerT.transform(covT)
+
+# covT_t = covT_t.astype(np.float32)
+
+
+# pd.options.display.float_format = '{:.0f}'.format
+# print("first and last row of unscaled time covariates:")
+# covT.pd_dataframe().iloc[[0,-1]]
 
 
 
