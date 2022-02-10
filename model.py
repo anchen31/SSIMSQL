@@ -168,52 +168,81 @@ for stuff in data:
 dataset = df.to_numpy()
 
 
-print(df)
+# print(df)
 
 # create time series object for target variable
-ts_P = TimeSeries.from_series(df["trade"], fill_missing_dates=True, freq=None) 
+ts_P = TimeSeries.from_series(df["trade"], fill_missing_dates=True, freq=None)
 
-# check attributes of the time series
-print("components:", ts_P.components)
-print("duration:",ts_P.duration)
-print("frequency:",ts_P.freq)
-print("frequency:",ts_P.freq_str)
-print("has date time index? (or else, it must have an integer index):",ts_P.has_datetime_index)
-print("deterministic:",ts_P.is_deterministic)
-print("univariate:",ts_P.is_univariate)
+# creates time series object covariate feature
+df_covF = df.loc[:, df.columns != "trade"]
+ts_covF = TimeSeries.from_dataframe(df_covF, fill_missing_dates=True, freq=None)
 
-# # creates time series object covariate feature
-# df_covF = df_for_training.loc[:, df_for_training.columns != "trade"]
-# ts_covF = TimeSeries.from_dataframe(df_covF)
+# train/test split and scaling of target variable
+ts_train, ts_test = ts_P.split_after(SPLIT)
 
-# # train/test split and scaling of target variable
-# ts_train, ts_test = ts_P.split_after(SPLIT)
+scalerP = Scaler()
+scalerP.fit_transform(ts_train)
+ts_ttrain = scalerP.transform(ts_train)
+ts_ttest = scalerP.transform(ts_test)    
+ts_t = scalerP.transform(ts_P)
 
-# scalerP = Scaler()
-# scalerP.fit_transform(ts_train)
-# ts_ttrain = scalerP.transform(ts_train)
-# ts_ttest = scalerP.transform(ts_test)    
-# ts_t = scalerP.transform(ts_P)
-
-# # make sure data are of type float
-# ts_t = ts_t.astype(np.float32)
-# ts_ttrain = ts_ttrain.astype(np.float32)
-# ts_ttest = ts_ttest.astype(np.float32)
+# make sure data are of type float
+ts_t = ts_t.astype(np.float32)
+ts_ttrain = ts_ttrain.astype(np.float32)
+ts_ttest = ts_ttest.astype(np.float32)
 
 
-# # train/test split and scaling of feature covariates
-# covF_train, covF_test = ts_covF.split_after(SPLIT)
+# train/test split and scaling of feature covariates
+covF_train, covF_test = ts_covF.split_after(SPLIT)
 
-# scalerF = Scaler()
-# scalerF.fit_transform(covF_train)
-# covF_ttrain = scalerF.transform(covF_train) 
-# covF_ttest = scalerF.transform(covF_test)   
-# covF_t = scalerF.transform(ts_covF)  
+scalerF = Scaler()
+scalerF.fit_transform(covF_train)
+covF_ttrain = scalerF.transform(covF_train) 
+covF_ttest = scalerF.transform(covF_test)   
+covF_t = scalerF.transform(ts_covF)  
 
-# # make sure data are of type float
-# covF_t = covF_t.astype(np.float32)
-# covF_ttrain = covF_ttrain.astype(np.float32)
-# covF_ttest = covF_ttest.astype(np.float32)
+# make sure data are of type float
+covF_t = covF_t.astype(np.float32)
+covF_ttrain = covF_ttrain.astype(np.float32)
+covF_ttest = covF_ttest.astype(np.float32)
+
+
+# covF_ttrain = covF_ttrain.pd_dataframe()
+# print(covF_ttrain.head(50))
+
+# covF_ttrain.plot()
+# plt.show()
+
+# feature engineering - create time covariates: hour, weekday, month, year, country-specific holidays
+covT = datetime_attribute_timeseries(   ts_P.time_index, 
+                                        attribute="hour", 
+                                        until=pd.Timestamp("2019-01-04 22:00:00+00:00"), one_hot=False)
+covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="day_of_week", one_hot=False))
+covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="month", one_hot=False))
+covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="year", one_hot=False))
+
+covT = covT.add_holidays(country_code="ES")
+covT = covT.astype(np.float32)
+
+
+# train/test split
+covT_train, covT_test = covT.split_after(SPLIT)
+
+
+# rescale the covariates: fitting on the training set
+scalerT = Scaler()
+scalerT.fit(covT_train)
+covT_ttrain = scalerT.transform(covT_train)
+covT_ttest = scalerT.transform(covT_test)
+covT_t = scalerT.transform(covT)
+
+covT_t = covT_t.astype(np.float32)
+
+
+pd.options.display.float_format = '{:.0f}'.format
+print("first and last row of unscaled time covariates:")
+covT.pd_dataframe().iloc[[0,-1]]
+
 
 
 # model = TransformerModel(
