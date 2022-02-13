@@ -6,6 +6,7 @@ import math
 # from collections import deque
 import random
 import time
+import seaborn as sns
 # import tensorflow as tf
 # from tensorflow.keras.models import Sequential
 # from tensorflow.keras.layers import Dense, Dropout, LSTM, BatchNormalization
@@ -144,11 +145,10 @@ for stuff in data:
 	if stuff[2] == -1:
 		df.at[stuff[0], 'trade'] = 0
 
-# Convert the dataframe to a numpy array
-dataset = df.to_numpy()
-
-
 # print(df)
+
+
+############################################################## create multiple time series object 
 
 # create time series object for target variable
 ts_P = TimeSeries.from_series(df["trade"], fill_missing_dates=True, freq=None)
@@ -157,7 +157,11 @@ ts_P = TimeSeries.from_series(df["trade"], fill_missing_dates=True, freq=None)
 df_covF = df.loc[:, df.columns != "trade"]
 ts_covF = TimeSeries.from_dataframe(df_covF, fill_missing_dates=True, freq=None)
 
-# train/test split and scaling of target variable
+
+
+############################################################## splits data into train or test data
+
+# train/test split and scaling of TARGET variable
 ts_train, ts_test = ts_P.split_after(SPLIT)
 
 scalerP = Scaler()
@@ -172,7 +176,7 @@ ts_ttrain = ts_ttrain.astype(np.float32)
 ts_ttest = ts_ttest.astype(np.float32)
 
 
-# train/test split and scaling of feature covariates
+# train/test split and scaling of FEATURE covariates
 covF_train, covF_test = ts_covF.split_after(SPLIT)
 
 scalerF = Scaler()
@@ -187,76 +191,77 @@ covF_ttrain = covF_ttrain.astype(np.float32)
 covF_ttest = covF_ttest.astype(np.float32)
 
 
-df3 = covF_ttrain.pd_dataframe()
-# covF_ttrain.plot()
+
+# #################################################################### graphs the cycles of the data
+# df3 = covF_ttrain.pd_dataframe()
+# # covF_ttrain.plot()
+# # plt.show()
+
+
+# # additional datetime columns: feature engineering
+# df3["month"] = df3.index.month
+
+# df3["wday"] = df3.index.dayofweek
+# dict_days = {0:"1_Mon", 1:"2_Tue", 2:"3_Wed", 3:"4_Thu", 4:"5_Fri", 5:"6_Sat", 6:"7_Sun"}
+# df3["weekday"] = df3["wday"].apply(lambda x: dict_days[x])
+
+# df3["hour"] = df3.index.hour
+
+# df3 = df3.astype({"hour":float, "wday":float, "month": float})
+
+# df3.iloc[[0, -1]]
+
+
+# piv = pd.pivot_table(   df3, 
+#                         values="open", 
+#                         index="hour", 
+#                         columns="weekday", 
+#                         aggfunc="mean", 
+#                         margins=True, margins_name="Avg", 
+#                         fill_value=0)
+# pd.options.display.float_format = '{:,.0f}'.format
+
+# plt.figure(figsize = (10,15))
+# sns.set(font_scale=1)
+# sns.heatmap(piv.round(0), annot=True, square = True, \
+#             linewidths=.75, cmap="coolwarm", fmt = ".0f", annot_kws = {"size": 11})
+# plt.title("price by weekday by month")
 # plt.show()
 
+###############################################################################################
 
 
+print(ts_P.time_index)
+
+# feature engineering - create time covariates: hour, weekday, month, year, country-specific holidays
+covT = datetime_attribute_timeseries(   ts_P.time_index, 
+                                        attribute="hour", 
+                                        until=pd.Timestamp("2022-01-04 22:00:00+00:00"), one_hot=False)
+covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="day_of_week", one_hot=False))
+covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="month", one_hot=False))
+covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="year", one_hot=False))
+
+covT = covT.add_holidays(country_code="US")
+covT = covT.astype(np.float32)
 
 
-# additional datetime columns: feature engineering
-df3["month"] = df3.index.month
-
-df3["wday"] = df3.index.dayofweek
-dict_days = {0:"1_Mon", 1:"2_Tue", 2:"3_Wed", 3:"4_Thu", 4:"5_Fri", 5:"6_Sat", 6:"7_Sun"}
-df3["weekday"] = df3["wday"].apply(lambda x: dict_days[x])
-
-df3["hour"] = df3.index.hour
-
-df3 = df3.astype({"hour":float, "wday":float, "month": float})
-
-df3.iloc[[0, -1]]
+# train/test split
+covT_train, covT_test = covT.split_after(SPLIT)
 
 
-piv = pd.pivot_table(   df3, 
-                        values="price", 
-                        index="month", 
-                        columns="weekday", 
-                        aggfunc="mean", 
-                        margins=True, margins_name="Avg", 
-                        fill_value=0)
-pd.options.display.float_format = '{:,.0f}'.format
+# rescale the covariates: fitting on the training set
+scalerT = Scaler()
+scalerT.fit(covT_train)
+covT_ttrain = scalerT.transform(covT_train)
+covT_ttest = scalerT.transform(covT_test)
+covT_t = scalerT.transform(covT)
 
-plt.figure(figsize = (10,15))
-sns.set(font_scale=1)
-sns.heatmap(piv.round(0), annot=True, square = True, \
-            linewidths=.75, cmap="coolwarm", fmt = ".0f", annot_kws = {"size": 11})
-plt.title("price by weekday by month")
-plt.show()
+covT_t = covT_t.astype(np.float32)
 
 
-
-
-# # feature engineering - create time covariates: hour, weekday, month, year, country-specific holidays
-# covT = datetime_attribute_timeseries(   ts_P.time_index, 
-#                                         attribute="hour", 
-#                                         until=pd.Timestamp("2019-01-04 22:00:00+00:00"), one_hot=False)
-# covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="day_of_week", one_hot=False))
-# covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="month", one_hot=False))
-# covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="year", one_hot=False))
-
-# covT = covT.add_holidays(country_code="ES")
-# covT = covT.astype(np.float32)
-
-
-# # train/test split
-# covT_train, covT_test = covT.split_after(SPLIT)
-
-
-# # rescale the covariates: fitting on the training set
-# scalerT = Scaler()
-# scalerT.fit(covT_train)
-# covT_ttrain = scalerT.transform(covT_train)
-# covT_ttest = scalerT.transform(covT_test)
-# covT_t = scalerT.transform(covT)
-
-# covT_t = covT_t.astype(np.float32)
-
-
-# pd.options.display.float_format = '{:.0f}'.format
-# print("first and last row of unscaled time covariates:")
-# covT.pd_dataframe().iloc[[0,-1]]
+pd.options.display.float_format = '{:.0f}'.format
+print("first and last row of unscaled time covariates:")
+covT.pd_dataframe().iloc[[0,-1]]
 
 
 
