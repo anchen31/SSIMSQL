@@ -23,7 +23,7 @@ from darts import TimeSeries, concatenate
 from darts.dataprocessing.transformers import Scaler
 # from darts.models import TransformerModel
 # from darts.metrics import mape, rmse
-# from darts.utils.timeseries_generation import datetime_attribute_timeseries
+from darts.utils.timeseries_generation import datetime_attribute_timeseries
 # from darts.utils.likelihood_models import QuantileRegression
 
 import config
