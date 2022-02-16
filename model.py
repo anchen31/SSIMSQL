@@ -23,7 +23,7 @@ from darts import TimeSeries, concatenate
 from darts.dataprocessing.transformers import Scaler
 # from darts.models import TransformerModel
 # from darts.metrics import mape, rmse
-# from darts.utils.timeseries_generation import datetime_attribute_timeseries
+from darts.utils.timeseries_generation import datetime_attribute_timeseries
 # from darts.utils.likelihood_models import QuantileRegression
 
 import config
@@ -72,7 +72,19 @@ label_q2 = f'{int(qU2 * 100)} / {int(qL2 * 100)} percentile band'
 mpath = os.path.abspath(os.getcwd()) + SAVE     # path and file name to save the model
 
 
+# This is an important class
+class Alan:
 
+  facts = ["Alan", "Sux"]
+
+  # Very necessary
+  def __init__():
+    self.bitch = True
+    self.badAtCSGO = True
+
+  # Class won't work without this method
+  def exist():
+    print("I am a bitch")
 
 
 
@@ -193,9 +205,10 @@ covF_ttest = covF_ttest.astype(np.float32)
 
 
 # #################################################################### graphs the cycles of the data
-# df3 = covF_ttrain.pd_dataframe()
+df3 = covF_ttrain.pd_dataframe()
+# df3.plot()
 # # covF_ttrain.plot()
-# # plt.show()
+# plt.show()
 
 
 # # additional datetime columns: feature engineering
@@ -231,13 +244,12 @@ covF_ttest = covF_ttest.astype(np.float32)
 ###############################################################################################
 
 
-print(ts_P.time_index)
-
 # feature engineering - create time covariates: hour, weekday, month, year, country-specific holidays
-covT = datetime_attribute_timeseries(   ts_P.time_index, 
-                                        attribute="hour", 
-                                        until=pd.Timestamp("2022-01-04 22:00:00+00:00"), one_hot=False)
-covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="day_of_week", one_hot=False))
+covT = datetime_attribute_timeseries(ts_P.time_index, 
+                                      attribute="weekday", 
+                                      until=pd.Timestamp("2022-01-04 22:00:00"), 
+                                      one_hot=False)
+covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="day", one_hot=False))
 covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="month", one_hot=False))
 covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="year", one_hot=False))
 
@@ -260,8 +272,8 @@ covT_t = covT_t.astype(np.float32)
 
 
 pd.options.display.float_format = '{:.0f}'.format
-print("first and last row of unscaled time covariates:")
-covT.pd_dataframe().iloc[[0,-1]]
+# print("first and last row of unscaled time covariates:")
+# print(covT.pd_dataframe().iloc[[0,-1]])
 
 
 
@@ -312,114 +324,6 @@ covT.pd_dataframe().iloc[[0,-1]]
 
 
 
-
-
-
-
-
-
-
-# Get the number of rows to train the model on
-len_train = math.ceil(len(dataset)*.67)
-
-# train = dataset[0:len_train, :].reshape(-1,1)
-# test = dataset[len_train:len(dataset), :1].reshape(-1,1)
-
-
-trainX = [] # the amount of samples and n features
-trainY = [] # the target shape
-
-n_future = 1   # Number of days we want to look into the future based on the past days.
-n_past = 14  # Number of past days we want to use to predict the future.
-
-#Reformat input data into a shape: (n_samples x timesteps x n_features)
-#In my example, my df_for_training_scaled has a shape (12823, 5)
-#12823 refers to the number of data points and 5 refers to the columns (multi-variables).
-
-for i in range(n_past, len(dataset) - n_future +1):
-    # trainX.append(dataset[i - n_past:i, 0:dataset.shape[1]])
-    trainX.append(dataset[i - n_past:i, 0:19])
-    trainY.append(dataset[i + n_future - 1:i + n_future, 19]) # 19 is the column with the target that I want to test
-
-trainX, trainY = np.array(trainX), np.array(trainY)
-
-# print('trainX shape == {}.'.format(trainX.shape))
-# print('trainY shape == {}.'.format(trainY.shape))
-
-
-
-
-
-
-
-
-
-
-
-# model = Sequential()
-# model.add(LSTM(64, activation='relu', input_shape=(trainX.shape[1], trainX.shape[2]), return_sequences=True))
-# model.add(LSTM(32, activation='relu', return_sequences=False))
-# model.add(Dropout(0.2))
-# model.add(Dense(trainY.shape[1]))
-
-# opt = tf.keras.optimizers.Adam(lr=0.01, decay=1e-6)
-
-# model.compile(loss='sparse_categorical_crossentropy',
-#                 optimizer=opt,
-#                 metrics=['accuracy'])
-
-# model.fit(trainX, trainY, epochs=10, batch_size=32)
-
-
-# model = Sequential()
-# model.add(LSTM(64, input_shape=trainX.shape[1:], return_sequences=True))
-# model.add(Dropout(0.2))
-# model.add(BatchNormalization())
-
-# model.add(LSTM(64, input_shape=trainX.shape[1:], return_sequences=True))
-# model.add(Dropout(0.1))
-# model.add(BatchNormalization())
-
-# model.add(LSTM(64, input_shape=trainX.shape[1:]))
-# model.add(Dropout(0.2))
-# model.add(BatchNormalization())
-
-# model.add(Dense(32, activation="relu"))
-# model.add(Dropout(0.2))
-
-# model.add(Dense(2, activation="softmax"))
-
-# opt = tf.keras.optimizers.Adam(lr=0.01, decay=1e-6)
-
-# model.compile(loss='sparse_categorical_crossentropy',
-#                 optimizer=opt,
-#                 metrics=['accuracy'])
-
-# model.fit(trainX, trainY, epochs=10, batch_size=32)
-
-
-
-# model = Sequential()
-# #Adding the first LSTM layer and some Dropout regularisation
-# model.add(LSTM(units = 50, return_sequences = True, input_shape = (trainX.shape[1], 1)))
-# model.add(Dropout(0.2))
-# # Adding a second LSTM layer and some Dropout regularisation
-# model.add(LSTM(units = 50, return_sequences = True))
-# model.add(Dropout(0.2))
-# # Adding a third LSTM layer and some Dropout regularisation
-# model.add(LSTM(units = 50, return_sequences = True))
-# model.add(Dropout(0.2))
-# # Adding a fourth LSTM layer and some Dropout regularisation
-# model.add(LSTM(units = 50))
-# model.add(Dropout(0.2))
-# # Adding the output layer
-# model.add(Dense(units = 1))
-
-# # Compiling the RNN
-# model.compile(optimizer = 'adam', loss = 'mean_squared_error')
-
-# # Fitting the RNN to the Training set
-# model.fit(trainX, trainY, epochs = 10, batch_size = 32)
 
 
 
