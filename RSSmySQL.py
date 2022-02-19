@@ -120,6 +120,7 @@ def df_resample_sizes():
 
 def main():
 
+    # first time sleep is to let the data load first
     time.sleep(70)
 
     # constantly refreshes to check if there is a new ticker update
@@ -147,6 +148,9 @@ def main():
 
         ### Get result and do a correlation plot with ith and see
         
+
+
+
 
 
         ############################################### TEST THIS PART OUT LATER
