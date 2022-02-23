@@ -277,27 +277,27 @@ pd.options.display.float_format = '{:.0f}'.format
 
 
 
-# model = TransformerModel(
-#                     input_chunk_length = INLEN,
-#                     output_chunk_length = N_FC,
-#                     batch_size = BATCH,
-#                     n_epochs = EPOCHS,
-#                     model_name = "Transformer_price",
-#                     nr_epochs_val_period = VALWAIT,
-#                     d_model = FEAT,
-#                     nhead = HEADS,
-#                     num_encoder_layers = ENCODE,
-#                     num_decoder_layers = DECODE,
-#                     dim_feedforward = DIM_FF,
-#                     dropout = DROPOUT,
-#                     activation = ACTF,
-#                     random_state=RAND,
-#                     likelihood=QuantileRegression(quantiles=QUANTILES), 
-#                     optimizer_kwargs={'lr': LEARN},
-#                     add_encoders={"cyclic": {"future": ["hour", "dayofweek", "month"]}},
-#                     save_checkpoints=True,
-#                     force_reset=True
-#                     )
+model = TransformerModel(
+                    input_chunk_length = INLEN,
+                    output_chunk_length = N_FC,
+                    batch_size = BATCH,
+                    n_epochs = EPOCHS,
+                    model_name = "Transformer_price",
+                    nr_epochs_val_period = VALWAIT,
+                    d_model = FEAT,
+                    nhead = HEADS,
+                    num_encoder_layers = ENCODE,
+                    num_decoder_layers = DECODE,
+                    dim_feedforward = DIM_FF,
+                    dropout = DROPOUT,
+                    activation = ACTF,
+                    random_state=RAND,
+                    likelihood=QuantileRegression(quantiles=QUANTILES), 
+                    optimizer_kwargs={'lr': LEARN},
+                    add_encoders={"cyclic": {"future": ["hour", "dayofweek", "month"]}},
+                    save_checkpoints=True,
+                    force_reset=True
+                    )
 
 
 # # training: load a saved model or (re)train
