@@ -12,6 +12,7 @@ import seaborn as sns
 # from tensorflow.keras.layers import Dense, Dropout, LSTM, BatchNormalization
 # from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 # from sqlalchemy import create_engine
 # import pymysql
@@ -34,10 +35,10 @@ min_max_scaler = preprocessing.MinMaxScaler()
 
 
 
-LOAD = False         # True = load previously saved model from disk?  False = (re)train the model
-SAVE = ""   # file name to save the model under
+LOAD = True         # True = load previously saved model from disk?  False = (re)train the model
+SAVE = "/_TForm_model10e.pth.tar"   # file name to save the model under
 
-EPOCHS = 200
+EPOCHS = 1
 INLEN = 32          # input size
 FEAT = 32           # d_model = number of expected features in the inputs, up to 512    
 HEADS = 4           # default 8
@@ -195,7 +196,7 @@ scalerF = Scaler()
 scalerF.fit_transform(covF_train)
 covF_ttrain = scalerF.transform(covF_train) 
 covF_ttest = scalerF.transform(covF_test)   
-covF_t = scalerF.transform(ts_covF)  
+covF_t = scalerF.transform(ts_covF)
 
 # make sure data are of type float
 covF_t = covF_t.astype(np.float32)
@@ -203,9 +204,18 @@ covF_ttrain = covF_ttrain.astype(np.float32)
 covF_ttest = covF_ttest.astype(np.float32)
 
 
+# print(covF_t.pd_dataframe().iloc[[0,-1]])
+#the past covariates must end at time step `2021-12-03 12:40:00`, whereas now they end at time step `2021-08-17 03:40:00`.
+# use heater sales as past covariates and transform data
+# covariates_heat = converted_series["heater"]
+# cov_heat_train, cov_heat_val = covariates_heat.split_before(training_cutoff_ice)
+# transformer_heat = Scaler()
+# transformer_heat.fit(cov_heat_train)
+# covariates_heat_transformed = transformer_heat.transform(covariates_heat)
 
 # #################################################################### graphs the cycles of the data
-df3 = covF_ttrain.pd_dataframe()
+# # df3 = df_covF.pd_dataframe()
+# df3 = df
 # df3.plot()
 # # covF_ttrain.plot()
 # plt.show()
@@ -227,7 +237,7 @@ df3 = covF_ttrain.pd_dataframe()
 
 # piv = pd.pivot_table(   df3, 
 #                         values="open", 
-#                         index="hour", 
+#                         index="month", 
 #                         columns="weekday", 
 #                         aggfunc="mean", 
 #                         margins=True, margins_name="Avg", 
@@ -271,9 +281,10 @@ covT_t = scalerT.transform(covT)
 covT_t = covT_t.astype(np.float32)
 
 
-pd.options.display.float_format = '{:.0f}'.format
+# pd.options.display.float_format = '{:.0f}'.format
 # print("first and last row of unscaled time covariates:")
-# print(covT.pd_dataframe().iloc[[0,-1]])
+# print(covT_t.pd_dataframe().iloc[[0,-1]])
+# print(covF_t.pd_dataframe().iloc[[0,-1]])
 
 
 
@@ -300,18 +311,21 @@ model = TransformerModel(
                     )
 
 
-# # training: load a saved model or (re)train
-# if LOAD:
-#     print("have loaded a previously saved model from disk:" + mpath)
-#     model = TransformerModel.load_model(mpath)                            # load previously model from disk 
-# else:
-#     model.fit(  ts_ttrain, 
-#                 past_covariates=cov_t, 
-#                 verbose=True)
-#     print("have saved the model after training:", mpath)
-#     model.save_model(mpath)
-
-
+# training: load a saved model or (re)train
+if LOAD:
+    print("have loaded a previously saved model from disk:" + mpath)
+    model = TransformerModel.load_model(mpath)                            # load previously model from disk 
+else:
+    model.fit(  ts_ttrain, 
+                past_covariates=covF_t, 
+                verbose=True)
+    print("have saved the model after training:", mpath)
+    model.save_model(mpath)
+# # testing: generate predictions
+ts_tpred = model.predict(   n=len(ts_ttest), 
+                            num_samples=N_SAMPLES,   
+                            n_jobs=N_JOBS, 
+                            verbose=True)
 
 
 
