@@ -38,7 +38,7 @@ min_max_scaler = preprocessing.MinMaxScaler()
 LOAD = True         # True = load previously saved model from disk?  False = (re)train the model
 SAVE = "/_TForm_model10e.pth.tar"   # file name to save the model under
 
-EPOCHS = 1
+EPOCHS = 5
 INLEN = 32          # input size
 FEAT = 32           # d_model = number of expected features in the inputs, up to 512    
 HEADS = 4           # default 8
@@ -136,41 +136,18 @@ def isResistance(df,i):
 
 df = pd.read_csv('OPdata.csv')
 df = df.loc[:, ~df.columns.str.contains('^Unnamed')] # removes the unamed df dolumn
-
-# stores support and resistance into data
-data = []
-
-for i in range(2,df.shape[0]-2):
-  if isSupport(df,i):
-    data.append((df['date'][i],df['low'][i], 1))
-  elif isResistance(df,i):
-    data.append((df['date'][i] ,df['high'][i], -1))
-
 df['date'] = pd.to_datetime(df['date'])
 df = df.set_index('date')
 
-
-# plots the buy/sell classifcation from the s/r data
-df['trade'] = 0.5
-for stuff in data:
-	if stuff[2] == 1:
-		df.at[stuff[0], 'trade'] = 1
-	if stuff[2] == -1:
-		df.at[stuff[0], 'trade'] = 0
-
-# print(df)
-
-
 ############################################################## create multiple time series object 
+fill = True
+# create time series object for target variable, This is univariate
+ts_P = TimeSeries.from_series(df["open"], fill_missing_dates=fill, freq=None)
 
-# create time series object for target variable
-ts_P = TimeSeries.from_series(df["trade"], fill_missing_dates=True, freq=None)
-
-# creates time series object covariate feature
-df_covF = df.loc[:, df.columns != "trade"]
-ts_covF = TimeSeries.from_dataframe(df_covF, fill_missing_dates=True, freq=None)
-
-
+# creates time series object covariate feature, This is multivariate
+df_covF = df.loc[:, df.columns != "open"]
+ts_covF = TimeSeries.from_dataframe(df_covF, fill_missing_dates=fill, freq=None)
+print("len:",len(ts_covF))
 
 ############################################################## splits data into train or test data
 
@@ -202,16 +179,6 @@ covF_t = scalerF.transform(ts_covF)
 covF_t = covF_t.astype(np.float32)
 covF_ttrain = covF_ttrain.astype(np.float32)
 covF_ttest = covF_ttest.astype(np.float32)
-
-
-# print(covF_t.pd_dataframe().iloc[[0,-1]])
-#the past covariates must end at time step `2021-12-03 12:40:00`, whereas now they end at time step `2021-08-17 03:40:00`.
-# use heater sales as past covariates and transform data
-# covariates_heat = converted_series["heater"]
-# cov_heat_train, cov_heat_val = covariates_heat.split_before(training_cutoff_ice)
-# transformer_heat = Scaler()
-# transformer_heat.fit(cov_heat_train)
-# covariates_heat_transformed = transformer_heat.transform(covariates_heat)
 
 # #################################################################### graphs the cycles of the data
 # # df3 = df_covF.pd_dataframe()
@@ -255,17 +222,16 @@ covF_ttest = covF_ttest.astype(np.float32)
 
 
 # feature engineering - create time covariates: hour, weekday, month, year, country-specific holidays
-covT = datetime_attribute_timeseries(ts_P.time_index, 
-                                      attribute="weekday", 
-                                      until=pd.Timestamp("2022-01-04 22:00:00"), 
+covT = datetime_attribute_timeseries( ts_P.time_index, 
+                                      attribute="hour", 
                                       one_hot=False)
-covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="day", one_hot=False))
+covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="day_of_week", one_hot=False))
 covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="month", one_hot=False))
 covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="year", one_hot=False))
 
 covT = covT.add_holidays(country_code="US")
 covT = covT.astype(np.float32)
-
+print("len: ", len(covT))
 
 # train/test split
 covT_train, covT_test = covT.split_after(SPLIT)
@@ -280,6 +246,10 @@ covT_t = scalerT.transform(covT)
 
 covT_t = covT_t.astype(np.float32)
 
+
+ts_cov = ts_covF.concatenate(covT, axis=1)                      # unscaled F+T
+cov_t = covF_t.concatenate(covT_t, axis=1)                      # scaled F+T
+cov_ttrain = covF_ttrain.concatenate(covT_ttrain, axis=1)       # scaled F+T training
 
 # pd.options.display.float_format = '{:.0f}'.format
 # print("first and last row of unscaled time covariates:")
@@ -311,24 +281,67 @@ model = TransformerModel(
                     )
 
 
-# training: load a saved model or (re)train
-if LOAD:
-    print("have loaded a previously saved model from disk:" + mpath)
-    model = TransformerModel.load_model(mpath)                            # load previously model from disk 
-else:
-    model.fit(  ts_ttrain, 
-                past_covariates=covF_t, 
-                verbose=True)
-    print("have saved the model after training:", mpath)
-    model.save_model(mpath)
-# # testing: generate predictions
-ts_tpred = model.predict(   n=len(ts_ttest), 
-                            num_samples=N_SAMPLES,   
-                            n_jobs=N_JOBS, 
-                            verbose=True)
+# # training: load a saved model or (re)train
+# if LOAD:
+#     print("have loaded a previously saved model from disk:" + mpath)
+#     model = TransformerModel.load_model(mpath)                            # load previously model from disk 
+# else:
+#     model.fit(  ts_ttrain, 
+#                 past_covariates=cov_t, 
+#                 verbose=True)
+#     print("have saved the model after training:", mpath)
+#     model.save_model(mpath)
+# # # testing: generate predictions
+# ts_tpred = model.predict(   n=len(ts_ttest), 
+#                             num_samples=N_SAMPLES,   
+#                             n_jobs=N_JOBS, 
+#                             verbose=True)
 
 
+# # retrieve forecast series for chosen quantiles, 
+# # inverse-transform each series,
+# # insert them as columns in a new dataframe dfY
+# q50_RMSE = np.inf
+# q50_MAPE = np.inf
+# ts_q50 = None
+# pd.options.display.float_format = '{:,.2f}'.format
+# dfY = pd.DataFrame()
+# dfY["Actual"] = TimeSeries.pd_series(ts_test)
 
+
+# # helper function: get forecast values for selected quantile q and insert them in dataframe dfY
+# def predQ(ts_t, q):
+#     ts_tq = ts_t.quantile_timeseries(q)
+#     ts_q = scalerP.inverse_transform(ts_tq)
+#     s = TimeSeries.pd_series(ts_q)
+#     header = "Q" + format(int(q*100), "02d")
+#     dfY[header] = s
+#     if q==0.5:
+#         ts_q50 = ts_q
+#         q50_RMSE = rmse(ts_q50, ts_test)
+#         q50_MAPE = mape(ts_q50, ts_test) 
+#         print("RMSE:", f'{q50_RMSE:.2f}')
+#         print("MAPE:", f'{q50_MAPE:.2f}')
+  
+    
+# # call helper function predQ, once for every quantile
+# _ = [predQ(ts_tpred, q) for q in QUANTILES]
+
+# # move Q50 column to the left of the Actual column
+# col = dfY.pop("Q50")
+# dfY.insert(1, col.name, col)
+# print(dfY)
+
+
+# plt.figure(100, figsize=(20, 7))
+# sns.set(font_scale=1.3)
+# # p = sns.lineplot(x="time", y="Q50", data=dfY, palette="coolwarm")
+# # sns.lineplot(x="time", y="Actual", data=dfY, palette="coolwarm")
+# # plt.legend(labels=["forecast median price Q50", "actual price"])
+# # p.set_ylabel("price")
+# # p.set_xlabel("")
+# # p.set_title("energy price");
+# plt.show()
 
 # covF_t = covF_t.pd_dataframe()
 # print(covF_t)
