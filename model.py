@@ -143,11 +143,16 @@ df = df.set_index('date')
 fill = True
 # create time series object for target variable, This is univariate
 ts_P = TimeSeries.from_series(df["open"], fill_missing_dates=fill, freq=None)
+ts_P = ts_P.pd_dataframe()  
+ts_P_1 = ts_P.fillna(method='ffill')
+ts_P = TimeSeries.from_series(ts_P_1)
 
 # creates time series object covariate feature, This is multivariate
 df_covF = df.loc[:, df.columns != "open"]
 ts_covF = TimeSeries.from_dataframe(df_covF, fill_missing_dates=fill, freq=None)
-print("len:",len(ts_covF))
+ts_covF = ts_covF.pd_dataframe()
+ts_covF_1 = ts_covF.fillna(method='ffill')
+ts_covF = TimeSeries.from_series(ts_covF_1)
 
 ############################################################## splits data into train or test data
 
@@ -180,47 +185,6 @@ covF_t = covF_t.astype(np.float32)
 covF_ttrain = covF_ttrain.astype(np.float32)
 covF_ttest = covF_ttest.astype(np.float32)
 
-# #################################################################### graphs the cycles of the data
-# # df3 = df_covF.pd_dataframe()
-# df3 = df
-# df3.plot()
-# # covF_ttrain.plot()
-# plt.show()
-
-
-# # additional datetime columns: feature engineering
-# df3["month"] = df3.index.month
-
-# df3["wday"] = df3.index.dayofweek
-# dict_days = {0:"1_Mon", 1:"2_Tue", 2:"3_Wed", 3:"4_Thu", 4:"5_Fri", 5:"6_Sat", 6:"7_Sun"}
-# df3["weekday"] = df3["wday"].apply(lambda x: dict_days[x])
-
-# df3["hour"] = df3.index.hour
-
-# df3 = df3.astype({"hour":float, "wday":float, "month": float})
-
-# df3.iloc[[0, -1]]
-
-
-# piv = pd.pivot_table(   df3, 
-#                         values="open", 
-#                         index="month", 
-#                         columns="weekday", 
-#                         aggfunc="mean", 
-#                         margins=True, margins_name="Avg", 
-#                         fill_value=0)
-# pd.options.display.float_format = '{:,.0f}'.format
-
-# plt.figure(figsize = (10,15))
-# sns.set(font_scale=1)
-# sns.heatmap(piv.round(0), annot=True, square = True, \
-#             linewidths=.75, cmap="coolwarm", fmt = ".0f", annot_kws = {"size": 11})
-# plt.title("price by weekday by month")
-# plt.show()
-
-###############################################################################################
-
-
 # feature engineering - create time covariates: hour, weekday, month, year, country-specific holidays
 covT = datetime_attribute_timeseries( ts_P.time_index, 
                                       attribute="hour", 
@@ -231,7 +195,6 @@ covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="year
 
 covT = covT.add_holidays(country_code="US")
 covT = covT.astype(np.float32)
-print("len: ", len(covT))
 
 # train/test split
 covT_train, covT_test = covT.split_after(SPLIT)
@@ -251,10 +214,47 @@ ts_cov = ts_covF.concatenate(covT, axis=1)                      # unscaled F+T
 cov_t = covF_t.concatenate(covT_t, axis=1)                      # scaled F+T
 cov_ttrain = covF_ttrain.concatenate(covT_ttrain, axis=1)       # scaled F+T training
 
-# pd.options.display.float_format = '{:.0f}'.format
-# print("first and last row of unscaled time covariates:")
-# print(covT_t.pd_dataframe().iloc[[0,-1]])
-# print(covF_t.pd_dataframe().iloc[[0,-1]])
+
+# #################################################################### graphs the cycles of the data
+# cov_t = cov_t.pd_dataframe()
+
+# df3 = cov_t
+# df3.plot()
+# # covF_ttrain.plot()
+# plt.show()
+
+# # additional datetime columns: feature engineering
+# df3["month"] = df3.index.month
+
+# df3["wday"] = df3.index.dayofweek
+# dict_days = {0:"1_Mon", 1:"2_Tue", 2:"3_Wed", 3:"4_Thu", 4:"5_Fri", 5:"6_Sat", 6:"7_Sun"}
+# df3["weekday"] = df3["wday"].apply(lambda x: dict_days[x])
+
+# df3["hour"] = df3.index.hour
+
+# df3 = df3.astype({"hour":float, "wday":float, "month": float})
+
+# df3.iloc[[0, -1]]
+
+
+# piv = pd.pivot_table(   df3, 
+#                         values="close", 
+#                         index="month", 
+#                         columns="weekday", 
+#                         aggfunc="mean", 
+#                         margins=True, margins_name="Avg", 
+#                         fill_value=0)
+# pd.options.display.float_format = '{:,.0f}'.format
+
+# plt.figure(figsize = (10,15))
+# sns.set(font_scale=1)
+# sns.heatmap(piv.round(0), annot=True, square = True, \
+#             linewidths=.75, cmap="coolwarm", fmt = ".0f", annot_kws = {"size": 11})
+# plt.title("price by weekday by month")
+# plt.show()
+
+###############################################################################################
+
 
 
 
