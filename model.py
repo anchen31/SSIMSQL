@@ -132,10 +132,23 @@ def isResistance(df,i):
 #                     'RSI', 'STsupp', 'STres', 
 #                     'LTsupp', 'LTres', 'GLD', 
 #                     'UVXY', 'SQQQ'], axis=1, inplace=False)
-
+data = []
 
 df = pd.read_csv('OPdata.csv')
 df = df.loc[:, ~df.columns.str.contains('^Unnamed')] # removes the unamed df dolumn
+for i in range(2,df.shape[0]-2):
+  if isSupport(df,i):
+    data.append((df['date'][i],df['low'][i], 1))
+  elif isResistance(df,i):
+    data.append((df['date'][i] ,df['high'][i], -1))
+
+# df['trade'] = 0.5
+# for stuff in data:
+#   if stuff[2] == 1:
+#     df.at[stuff[0], 'trade'] = 1
+#   if stuff[2] == -1:
+#     df.at[stuff[0], 'trade'] = 0
+
 df['date'] = pd.to_datetime(df['date'])
 df = df.set_index('date')
 
@@ -143,7 +156,7 @@ df = df.set_index('date')
 fill = True
 # create time series object for target variable, This is univariate
 ts_P = TimeSeries.from_series(df["open"], fill_missing_dates=fill, freq=None)
-ts_P = ts_P.pd_dataframe()  
+ts_P = ts_P.pd_dataframe()
 ts_P_1 = ts_P.fillna(method='ffill')
 ts_P = TimeSeries.from_series(ts_P_1)
 
@@ -152,6 +165,14 @@ df_covF = df.loc[:, df.columns != "open"]
 ts_covF = TimeSeries.from_dataframe(df_covF, fill_missing_dates=fill, freq=None)
 ts_covF = ts_covF.pd_dataframe()
 ts_covF_1 = ts_covF.fillna(method='ffill')
+
+ts_covF_1['trade'] = 0.5
+for stuff in data:
+  if stuff[2] == 1:
+    ts_covF_1.at[stuff[0], 'trade'] = 1
+  if stuff[2] == -1:
+    ts_covF_1.at[stuff[0], 'trade'] = 0
+
 ts_covF = TimeSeries.from_series(ts_covF_1)
 
 ############################################################## splits data into train or test data
@@ -216,42 +237,42 @@ cov_ttrain = covF_ttrain.concatenate(covT_ttrain, axis=1)       # scaled F+T tra
 
 
 # #################################################################### graphs the cycles of the data
-# cov_t = cov_t.pd_dataframe()
+cov_t = cov_t.pd_dataframe()
 
-# df3 = cov_t
-# df3.plot()
-# # covF_ttrain.plot()
-# plt.show()
+df3 = cov_t
+df3.plot()
+# covF_ttrain.plot()
+plt.show()
 
-# # additional datetime columns: feature engineering
-# df3["month"] = df3.index.month
+# additional datetime columns: feature engineering
+df3["month"] = df3.index.month
 
-# df3["wday"] = df3.index.dayofweek
-# dict_days = {0:"1_Mon", 1:"2_Tue", 2:"3_Wed", 3:"4_Thu", 4:"5_Fri", 5:"6_Sat", 6:"7_Sun"}
-# df3["weekday"] = df3["wday"].apply(lambda x: dict_days[x])
+df3["wday"] = df3.index.dayofweek
+dict_days = {0:"1_Mon", 1:"2_Tue", 2:"3_Wed", 3:"4_Thu", 4:"5_Fri", 5:"6_Sat", 6:"7_Sun"}
+df3["weekday"] = df3["wday"].apply(lambda x: dict_days[x])
 
-# df3["hour"] = df3.index.hour
+df3["hour"] = df3.index.hour
 
-# df3 = df3.astype({"hour":float, "wday":float, "month": float})
+df3 = df3.astype({"hour":float, "wday":float, "month": float})
 
-# df3.iloc[[0, -1]]
+df3.iloc[[0, -1]]
 
 
-# piv = pd.pivot_table(   df3, 
-#                         values="close", 
-#                         index="month", 
-#                         columns="weekday", 
-#                         aggfunc="mean", 
-#                         margins=True, margins_name="Avg", 
-#                         fill_value=0)
-# pd.options.display.float_format = '{:,.0f}'.format
+piv = pd.pivot_table(   df3, 
+                        values="close", 
+                        index="month", 
+                        columns="weekday", 
+                        aggfunc="mean", 
+                        margins=True, margins_name="Avg", 
+                        fill_value=0)
+pd.options.display.float_format = '{:,.0f}'.format
 
-# plt.figure(figsize = (10,15))
-# sns.set(font_scale=1)
-# sns.heatmap(piv.round(0), annot=True, square = True, \
-#             linewidths=.75, cmap="coolwarm", fmt = ".0f", annot_kws = {"size": 11})
-# plt.title("price by weekday by month")
-# plt.show()
+plt.figure(figsize = (10,15))
+sns.set(font_scale=1)
+sns.heatmap(piv.round(0), annot=True, square = True, \
+            linewidths=.75, cmap="coolwarm", fmt = ".0f", annot_kws = {"size": 11})
+plt.title("price by weekday by month")
+plt.show()
 
 ###############################################################################################
 
@@ -281,79 +302,85 @@ model = TransformerModel(
                     )
 
 
-# # training: load a saved model or (re)train
-# if LOAD:
-#     print("have loaded a previously saved model from disk:" + mpath)
-#     model = TransformerModel.load_model(mpath)                            # load previously model from disk 
-# else:
-#     model.fit(  ts_ttrain, 
-#                 past_covariates=cov_t, 
-#                 verbose=True)
-#     print("have saved the model after training:", mpath)
-#     model.save_model(mpath)
-# # # testing: generate predictions
-# ts_tpred = model.predict(   n=len(ts_ttest), 
-#                             num_samples=N_SAMPLES,   
-#                             n_jobs=N_JOBS, 
-#                             verbose=True)
+# training: load a saved model or (re)train
+if LOAD:
+    print("have loaded a previously saved model from disk:" + mpath)
+    model = TransformerModel.load_model(mpath)                            # load previously model from disk 
+else:
+    model.fit(  ts_ttrain, 
+                past_covariates=cov_t, 
+                verbose=True)
+    print("have saved the model after training:", mpath)
+    model.save_model(mpath)
+# # testing: generate predictions
+ts_tpred = model.predict(   n=len(ts_ttest), 
+                            num_samples=N_SAMPLES,   
+                            n_jobs=N_JOBS, 
+                            verbose=True)
 
 
-# # retrieve forecast series for chosen quantiles, 
-# # inverse-transform each series,
-# # insert them as columns in a new dataframe dfY
-# q50_RMSE = np.inf
-# q50_MAPE = np.inf
-# ts_q50 = None
-# pd.options.display.float_format = '{:,.2f}'.format
-# dfY = pd.DataFrame()
-# dfY["Actual"] = TimeSeries.pd_series(ts_test)
+# retrieve forecast series for chosen quantiles, 
+# inverse-transform each series,
+# insert them as columns in a new dataframe dfY
+q50_RMSE = np.inf
+q50_MAPE = np.inf
+ts_q50 = None
+pd.options.display.float_format = '{:,.2f}'.format
+dfY = pd.DataFrame()
+dfY["Actual"] = TimeSeries.pd_series(ts_test)
 
 
-# # helper function: get forecast values for selected quantile q and insert them in dataframe dfY
-# def predQ(ts_t, q):
-#     ts_tq = ts_t.quantile_timeseries(q)
-#     ts_q = scalerP.inverse_transform(ts_tq)
-#     s = TimeSeries.pd_series(ts_q)
-#     header = "Q" + format(int(q*100), "02d")
-#     dfY[header] = s
-#     if q==0.5:
-#         ts_q50 = ts_q
-#         q50_RMSE = rmse(ts_q50, ts_test)
-#         q50_MAPE = mape(ts_q50, ts_test) 
-#         print("RMSE:", f'{q50_RMSE:.2f}')
-#         print("MAPE:", f'{q50_MAPE:.2f}')
+# helper function: get forecast values for selected quantile q and insert them in dataframe dfY
+def predQ(ts_t, q):
+    ts_tq = ts_t.quantile_timeseries(q)
+    ts_q = scalerP.inverse_transform(ts_tq)
+    s = TimeSeries.pd_series(ts_q)
+    header = "Q" + format(int(q*100), "02d")
+    dfY[header] = s
+    if q==0.5:
+        ts_q50 = ts_q
+        q50_RMSE = rmse(ts_q50, ts_test)
+        q50_MAPE = mape(ts_q50, ts_test) 
+        print("RMSE:", f'{q50_RMSE:.2f}')
+        print("MAPE:", f'{q50_MAPE:.2f}')
   
     
-# # call helper function predQ, once for every quantile
-# _ = [predQ(ts_tpred, q) for q in QUANTILES]
+# call helper function predQ, once for every quantile
+_ = [predQ(ts_tpred, q) for q in QUANTILES]
 
-# # move Q50 column to the left of the Actual column
-# col = dfY.pop("Q50")
-# dfY.insert(1, col.name, col)
+# move Q50 column to the left of the Actual column
+col = dfY.pop("Q50")
+dfY.insert(1, col.name, col)
 # print(dfY)
 
 
-# plt.figure(100, figsize=(20, 7))
-# sns.set(font_scale=1.3)
-# # p = sns.lineplot(x="time", y="Q50", data=dfY, palette="coolwarm")
-# # sns.lineplot(x="time", y="Actual", data=dfY, palette="coolwarm")
-# # plt.legend(labels=["forecast median price Q50", "actual price"])
-# # p.set_ylabel("price")
-# # p.set_xlabel("")
-# # p.set_title("energy price");
-# plt.show()
+plt.figure(100, figsize=(20, 7))
+sns.set(font_scale=1.3)
+p = sns.lineplot(x="date", y="Q50", data=dfY, palette="coolwarm")
+sns.lineplot(x="date", y="Actual", data=dfY, palette="coolwarm")
+plt.legend(labels=["forecast median price Q50", "actual price"])
+p.set_ylabel("price")
+p.set_xlabel("")
+p.set_title("energy price")
+plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
 
 # covF_t = covF_t.pd_dataframe()
 # print(covF_t)
 
 # covF_t.plot()
 # plt.show()
-
-
-
-
-
-
 
 
 # df_for_training = df_for_training.filter(['open', 'STsupp', 'STres', 
