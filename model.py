@@ -32,20 +32,21 @@ import config
 password = config.password
 
 min_max_scaler = preprocessing.MinMaxScaler()
+scaler = MinMaxScaler(feature_range = (0,1))
 
 
 
-LOAD = True         # True = load previously saved model from disk?  False = (re)train the model
+LOAD = False         # True = load previously saved model from disk?  False = (re)train the model
 SAVE = "/_TForm_model10e.pth.tar"   # file name to save the model under
 
-EPOCHS = 5
+EPOCHS = 10
 INLEN = 32          # input size
 FEAT = 32           # d_model = number of expected features in the inputs, up to 512    
 HEADS = 4           # default 8
 ENCODE = 4          # encoder layers
 DECODE = 4          # decoder layers
-DIM_FF = 128        # dimensions of the feedforward network, default 2048
-BATCH = 32          # batch size
+DIM_FF = 64         # dimensions of the feedforward network, default 2048
+BATCH = 64          # batch size
 ACTF = "relu"       # activation function, relu (default) or gelu
 SCHLEARN = None     # a PyTorch learning rate scheduler; None = constant rate
 LEARN = 1e-3        # learning rate
@@ -60,15 +61,16 @@ N_JOBS = 3          # parallel processors to use;  -1 = all processors
 # default quantiles for QuantileRegression
 QUANTILES = [0.01, 0.1, 0.2, 0.5, 0.8, 0.9, 0.99]
 
-SPLIT = 0.7         # train/test %
+SPLIT = 0.8         # train/test %
 
 FIGSIZE = (9, 6)
 
 
-qL1, qL2 = 0.01, 0.10        # percentiles of predictions: lower bounds
-qU1, qU2 = 1-qL1, 1-qL2,     # upper bounds derived from lower bounds
+qL1, qL2, qL3 = 0.01, 0.05, 0.10        # percentiles of predictions: lower bounds
+qU1, qU2, qU3 = 1-qL1, 1-qL2, 1-qL3     # upper bounds derived from lower bounds
 label_q1 = f'{int(qU1 * 100)} / {int(qL1 * 100)} percentile band'
 label_q2 = f'{int(qU2 * 100)} / {int(qL2 * 100)} percentile band'
+label_q3 = f'{int(qU3 * 100)} / {int(qL3 * 100)} percentile band'
 
 mpath = os.path.abspath(os.getcwd()) + SAVE     # path and file name to save the model
 
@@ -134,23 +136,31 @@ def isResistance(df,i):
 #                     'UVXY', 'SQQQ'], axis=1, inplace=False)
 data = []
 
-df = pd.read_csv('OPdata.csv')
-df = df.loc[:, ~df.columns.str.contains('^Unnamed')] # removes the unamed df dolumn
-for i in range(2,df.shape[0]-2):
-  if isSupport(df,i):
-    data.append((df['date'][i],df['low'][i], 1))
-  elif isResistance(df,i):
-    data.append((df['date'][i] ,df['high'][i], -1))
+df1 = pd.read_csv('OPdata.csv')
+df1 = df1.loc[:, ~df1.columns.str.contains('^Unnamed')] # removes the unamed df dolumn
 
-# df['trade'] = 0.5
-# for stuff in data:
-#   if stuff[2] == 1:
-#     df.at[stuff[0], 'trade'] = 1
-#   if stuff[2] == -1:
-#     df.at[stuff[0], 'trade'] = 0
+# gets the local mins and maxes
+for i in range(2,df1.shape[0]-2):
+  if isSupport(df1, i):
+    data.append((i, df1['low'][i], 1))
+  elif isResistance(df1,i):
+    data.append((i, df1['high'][i], -1))
 
-df['date'] = pd.to_datetime(df['date'])
-df = df.set_index('date')
+df1['trade'] = 0.5
+for stuff in data:
+  if stuff[2] == 1:
+    df1.iat[stuff[0], 20] = 1
+  if stuff[2] == -1:
+    df1.iat[stuff[0], 20] = 0
+
+df1['date'] = pd.to_datetime(df1['date'])
+df1 = df1.set_index('date')
+
+df = df1.copy()
+
+# df = pd.DataFrame(scaler.fit_transform(df), columns=df.columns, index=df1.index)
+
+ts = TimeSeries.from_series(df1['open'], fill_missing_dates=True, freq=None)
 
 ############################################################## create multiple time series object 
 fill = True
@@ -165,14 +175,6 @@ df_covF = df.loc[:, df.columns != "open"]
 ts_covF = TimeSeries.from_dataframe(df_covF, fill_missing_dates=fill, freq=None)
 ts_covF = ts_covF.pd_dataframe()
 ts_covF_1 = ts_covF.fillna(method='ffill')
-
-ts_covF_1['trade'] = 0.5
-for stuff in data:
-  if stuff[2] == 1:
-    ts_covF_1.at[stuff[0], 'trade'] = 1
-  if stuff[2] == -1:
-    ts_covF_1.at[stuff[0], 'trade'] = 0
-
 ts_covF = TimeSeries.from_series(ts_covF_1)
 
 ############################################################## splits data into train or test data
@@ -186,10 +188,10 @@ ts_ttrain = scalerP.transform(ts_train)
 ts_ttest = scalerP.transform(ts_test)    
 ts_t = scalerP.transform(ts_P)
 
-# make sure data are of type float
-ts_t = ts_t.astype(np.float32)
-ts_ttrain = ts_ttrain.astype(np.float32)
-ts_ttest = ts_ttest.astype(np.float32)
+# # make sure data are of type float
+# ts_t = ts_t.astype(np.float32)
+# ts_ttrain = ts_ttrain.astype(np.float32)
+# ts_ttest = ts_ttest.astype(np.float32)
 
 
 # train/test split and scaling of FEATURE covariates
@@ -199,12 +201,12 @@ scalerF = Scaler()
 scalerF.fit_transform(covF_train)
 covF_ttrain = scalerF.transform(covF_train) 
 covF_ttest = scalerF.transform(covF_test)   
-covF_t = scalerF.transform(ts_covF)
+covF_t = scalerF.transform(ts_covF)  
 
-# make sure data are of type float
-covF_t = covF_t.astype(np.float32)
-covF_ttrain = covF_ttrain.astype(np.float32)
-covF_ttest = covF_ttest.astype(np.float32)
+# # make sure data are of type float
+# covF_ttrain = ts_ttrain.astype(np.float32)
+# covF_ttest = ts_ttest.astype(np.float32)
+
 
 # feature engineering - create time covariates: hour, weekday, month, year, country-specific holidays
 covT = datetime_attribute_timeseries( ts_P.time_index, 
@@ -215,69 +217,64 @@ covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="mont
 covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="year", one_hot=False))
 
 covT = covT.add_holidays(country_code="US")
+
 covT = covT.astype(np.float32)
 
 # train/test split
 covT_train, covT_test = covT.split_after(SPLIT)
 
-
-# rescale the covariates: fitting on the training set
 scalerT = Scaler()
 scalerT.fit(covT_train)
 covT_ttrain = scalerT.transform(covT_train)
 covT_ttest = scalerT.transform(covT_test)
 covT_t = scalerT.transform(covT)
-
 covT_t = covT_t.astype(np.float32)
-
 
 ts_cov = ts_covF.concatenate(covT, axis=1)                      # unscaled F+T
 cov_t = covF_t.concatenate(covT_t, axis=1)                      # scaled F+T
 cov_ttrain = covF_ttrain.concatenate(covT_ttrain, axis=1)       # scaled F+T training
 
 
+
 # #################################################################### graphs the cycles of the data
-cov_t = cov_t.pd_dataframe()
+# cov_t = cov_t.pd_dataframe()
 
-df3 = cov_t
-df3.plot()
-# covF_ttrain.plot()
-plt.show()
+# df3 = cov_t
+# df3.plot()
+# # covF_ttrain.plot()
+# plt.show()
 
-# additional datetime columns: feature engineering
-df3["month"] = df3.index.month
+# # additional datetime columns: feature engineering
+# df3["month"] = df3.index.month
 
-df3["wday"] = df3.index.dayofweek
-dict_days = {0:"1_Mon", 1:"2_Tue", 2:"3_Wed", 3:"4_Thu", 4:"5_Fri", 5:"6_Sat", 6:"7_Sun"}
-df3["weekday"] = df3["wday"].apply(lambda x: dict_days[x])
+# df3["wday"] = df3.index.dayofweek
+# dict_days = {0:"1_Mon", 1:"2_Tue", 2:"3_Wed", 3:"4_Thu", 4:"5_Fri", 5:"6_Sat", 6:"7_Sun"}
+# df3["weekday"] = df3["wday"].apply(lambda x: dict_days[x])
 
-df3["hour"] = df3.index.hour
+# df3["hour"] = df3.index.hour
 
-df3 = df3.astype({"hour":float, "wday":float, "month": float})
+# df3 = df3.astype({"hour":float, "wday":float, "month": float})
 
-df3.iloc[[0, -1]]
+# df3.iloc[[0, -1]]
 
 
-piv = pd.pivot_table(   df3, 
-                        values="close", 
-                        index="month", 
-                        columns="weekday", 
-                        aggfunc="mean", 
-                        margins=True, margins_name="Avg", 
-                        fill_value=0)
-pd.options.display.float_format = '{:,.0f}'.format
+# piv = pd.pivot_table(   df3, 
+#                         values="close", 
+#                         index="month", 
+#                         columns="weekday", 
+#                         aggfunc="mean", 
+#                         margins=True, margins_name="Avg", 
+#                         fill_value=0)
+# pd.options.display.float_format = '{:,.0f}'.format
 
-plt.figure(figsize = (10,15))
-sns.set(font_scale=1)
-sns.heatmap(piv.round(0), annot=True, square = True, \
-            linewidths=.75, cmap="coolwarm", fmt = ".0f", annot_kws = {"size": 11})
-plt.title("price by weekday by month")
-plt.show()
+# plt.figure(figsize = (10,15))
+# sns.set(font_scale=1)
+# sns.heatmap(piv.round(0), annot=True, square = True, \
+#             linewidths=.75, cmap="coolwarm", fmt = ".0f", annot_kws = {"size": 11})
+# plt.title("price by weekday by month")
+# plt.show()
 
 ###############################################################################################
-
-
-
 
 model = TransformerModel(
                     input_chunk_length = INLEN,
@@ -312,6 +309,7 @@ else:
                 verbose=True)
     print("have saved the model after training:", mpath)
     model.save_model(mpath)
+
 # # testing: generate predictions
 ts_tpred = model.predict(   n=len(ts_ttest), 
                             num_samples=N_SAMPLES,   
@@ -319,50 +317,75 @@ ts_tpred = model.predict(   n=len(ts_ttest),
                             verbose=True)
 
 
-# retrieve forecast series for chosen quantiles, 
-# inverse-transform each series,
-# insert them as columns in a new dataframe dfY
-q50_RMSE = np.inf
-q50_MAPE = np.inf
-ts_q50 = None
-pd.options.display.float_format = '{:,.2f}'.format
-dfY = pd.DataFrame()
-dfY["Actual"] = TimeSeries.pd_series(ts_test)
+
+# testing: helper function: plot predictions
+def plot_predict(ts_actual, ts_test, ts_pred):
+    
+    ## plot time series, limited to forecast horizon
+    plt.figure(figsize=FIGSIZE)
+    
+    ts_actual.plot(label="actual")                                       # plot actual
+    
+    ts_pred.plot(low_quantile=qL1, high_quantile=qU1, label=label_q1)    # plot U1 quantile band
+    #ts_pred.plot(low_quantile=qL2, high_quantile=qU2, label=label_q2)   # plot U2 quantile band
+    ts_pred.plot(low_quantile=qL3, high_quantile=qU3, label=label_q3)    # plot U3 quantile band
+    ts_pred.plot(central_quantile="mean", label="expected")              # plot "mean" or median=0.5
+    
+    plt.title("TFT: test set (MAPE: {:.2f}%)".format(mape(ts_test, ts_pred)))
+    plt.legend()
+    plt.show()    
 
 
-# helper function: get forecast values for selected quantile q and insert them in dataframe dfY
-def predQ(ts_t, q):
-    ts_tq = ts_t.quantile_timeseries(q)
-    ts_q = scalerP.inverse_transform(ts_tq)
-    s = TimeSeries.pd_series(ts_q)
-    header = "Q" + format(int(q*100), "02d")
-    dfY[header] = s
-    if q==0.5:
-        ts_q50 = ts_q
-        q50_RMSE = rmse(ts_q50, ts_test)
-        q50_MAPE = mape(ts_q50, ts_test) 
-        print("RMSE:", f'{q50_RMSE:.2f}')
-        print("MAPE:", f'{q50_MAPE:.2f}')
+ts_pred = scalerP.inverse_transform(ts_tpred)
+plot_predict(ts, ts_test, ts_pred)
+
+
+
+
+# # retrieve forecast series for chosen quantiles, 
+# # inverse-transform each series,
+# # insert them as columns in a new dataframe dfY
+# q50_RMSE = np.inf
+# q50_MAPE = np.inf
+# ts_q50 = None
+# pd.options.display.float_format = '{:,.2f}'.format
+# dfY = pd.DataFrame()
+# dfY["Actual"] = TimeSeries.pd_series(ts_test)
+
+
+# # helper function: get forecast values for selected quantile q and insert them in dataframe dfY
+# def predQ(ts_t, q):
+#     ts_tq = ts_t.quantile_timeseries(q)
+#     ts_q = scalerP.inverse_transform(ts_tq)
+#     s = TimeSeries.pd_series(ts_q)
+#     header = "Q" + format(int(q*100), "02d")
+#     dfY[header] = s
+#     if q==0.5:
+#         ts_q50 = ts_q
+#         q50_RMSE = rmse(ts_q50, ts_test)
+#         q50_MAPE = mape(ts_q50, ts_test) 
+#         print("RMSE:", f'{q50_RMSE:.2f}')
+#         print("MAPE:", f'{q50_MAPE:.2f}')
   
     
-# call helper function predQ, once for every quantile
-_ = [predQ(ts_tpred, q) for q in QUANTILES]
+# # call helper function predQ, once for every quantile
+# _ = [predQ(ts_tpred, q) for q in QUANTILES]
 
-# move Q50 column to the left of the Actual column
-col = dfY.pop("Q50")
-dfY.insert(1, col.name, col)
-# print(dfY)
+# # move Q50 column to the left of the Actual column
+# col = dfY.pop("Q50")
+# dfY.insert(1, col.name, col)
+# # print(dfY)
 
 
-plt.figure(100, figsize=(20, 7))
-sns.set(font_scale=1.3)
-p = sns.lineplot(x="date", y="Q50", data=dfY, palette="coolwarm")
-sns.lineplot(x="date", y="Actual", data=dfY, palette="coolwarm")
-plt.legend(labels=["forecast median price Q50", "actual price"])
-p.set_ylabel("price")
-p.set_xlabel("")
-p.set_title("energy price")
-plt.show()
+# plt.figure(100, figsize=(20, 7))
+# sns.set(font_scale=1.3)
+# p = sns.lineplot(x="date", y="Q50", data=dfY, palette="coolwarm")
+# sns.lineplot(x="date", y="Actual", data=dfY, palette="coolwarm")
+# plt.legend(labels=["forecast median price Q50", "actual price"])
+# p.set_ylabel("price")
+# p.set_xlabel("")
+# p.set_title("S&P price")
+# plt.show()
 
 
 

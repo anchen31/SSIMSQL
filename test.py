@@ -1,355 +1,340 @@
+import pandas as pd
+import numpy as np
+import os
+from sklearn import preprocessing
+import math
+# from collections import deque
+import random
+import time
+import seaborn as sns
+# import tensorflow as tf
+# from tensorflow.keras.models import Sequential
+# from tensorflow.keras.layers import Dense, Dropout, LSTM, BatchNormalization
+# from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
+# from sqlalchemy import create_engine
+# import pymysql
+# pymysql.install_as_MySQLdb()
 # import mysql.connector
+# from mysql.connector import Error
 
-# mydb = mysql.connector.connect(
+from darts import TimeSeries, concatenate
+from darts.dataprocessing.transformers import Scaler
+from darts.models import TransformerModel
+from darts.metrics import mape, rmse
+from darts.utils.timeseries_generation import datetime_attribute_timeseries
+from darts.utils.likelihood_models import QuantileRegression
+
+import config
+
+password = config.password
+
+min_max_scaler = preprocessing.MinMaxScaler()
+scaler = MinMaxScaler(feature_range = (0,1))
+
+
+
+LOAD = False         # True = load previously saved model from disk?  False = (re)train the model
+SAVE = "/_TForm_model10e.pth.tar"   # file name to save the model under
+
+EPOCHS = 10
+INLEN = 32          # input size
+FEAT = 32           # d_model = number of expected features in the inputs, up to 512    
+HEADS = 4           # default 8
+ENCODE = 4          # encoder layers
+DECODE = 4          # decoder layers
+DIM_FF = 64         # dimensions of the feedforward network, default 2048
+BATCH = 64          # batch size
+ACTF = "relu"       # activation function, relu (default) or gelu
+SCHLEARN = None     # a PyTorch learning rate scheduler; None = constant rate
+LEARN = 1e-4        # learning rate
+VALWAIT = 1         # epochs to wait before evaluating the loss on the test/validation set
+DROPOUT = 0.1       # dropout rate
+N_FC = 1            # output size
+
+RAND = 42           # random seed
+N_SAMPLES = 100     # number of times a prediction is sampled from a probabilistic model
+N_JOBS = 3          # parallel processors to use;  -1 = all processors
+
+# default quantiles for QuantileRegression
+QUANTILES = [0.01, 0.1, 0.2, 0.5, 0.8, 0.9, 0.99]
+
+SPLIT = 0.8         # train/test %
+
+FIGSIZE = (9, 6)
+
+
+qL1, qL2, qL3 = 0.01, 0.05, 0.10        # percentiles of predictions: lower bounds
+qU1, qU2, qU3 = 1-qL1, 1-qL2, 1-qL3     # upper bounds derived from lower bounds
+label_q1 = f'{int(qU1 * 100)} / {int(qL1 * 100)} percentile band'
+label_q2 = f'{int(qU2 * 100)} / {int(qL2 * 100)} percentile band'
+label_q3 = f'{int(qU3 * 100)} / {int(qL3 * 100)} percentile band'
+
+mpath = os.path.abspath(os.getcwd()) + SAVE     # path and file name to save the model
+
+
+# This is an important class
+class Alan:
+
+  facts = ["Alan", "Sux"]
+
+  # Very necessary
+  def __init__():
+    self.bitch = True
+    self.badAtCSGO = True
+
+  # Class won't work without this method
+  def exist():
+    print("I am a bitch")
+
+
+
+def scaleColumns(df, cols_to_scale):
+    for col in cols_to_scale:
+        df[col] = pd.DataFrame(min_max_scaler.fit_transform(pd.DataFrame(df[col])),columns=[col])
+    return df
+
+def isSupport(df,i):
+  support = df['low'][i] < df['low'][i-1]  and df['low'][i] < df['low'][i+1] and df['low'][i+1] < df['low'][i+2] and df['low'][i-1] < df['low'][i-2]
+  return support
+def isResistance(df,i):
+  resistance = df['high'][i] > df['high'][i-1]  and df['high'][i] > df['high'][i+1] and df['high'][i+1] > df['high'][i+2] and df['high'][i-1] > df['high'][i-2]
+  return resistance
+
+################################################################## pull the data and read it 
+
+# try:
+#     con = mysql.connector.connect(
 #     host = 'localhost',
 #     database='twitterdb', 
 #     user='root', 
-#     password = '@ndych3n1454L46i5Z9')
-
-# mycursor = mydb.cursor(buffered=True)
+#     password = password)
+
+#     cursor = con.cursor()
+#     # create data db with full data set
+#     query = "select * from ibpy"
+#     cursor.execute(query)
+#     # get all records
+#     db = cursor.fetchall()
+
+#     df = pd.DataFrame(db)
+
+# except mysql.connector.Error as e:
+#     print("Error reading data from MySQL table", e)
+
+#     cursor.close()
+#     con.close()
+
+# df = df.set_axis(['date', 'open', 'high', 
+#                     'low', 'close', 'volume', 
+#                     'average', 'barCount', 'bb_bbm', 
+#                     'bb_bbh', 'bb_bbl', 'VWAP', 
+#                     'RSI', 'STsupp', 'STres', 
+#                     'LTsupp', 'LTres', 'GLD', 
+#                     'UVXY', 'SQQQ'], axis=1, inplace=False)
+data = []
+
+df1 = pd.read_csv('OPdata.csv')
+df1 = df1.loc[:, ~df1.columns.str.contains('^Unnamed')] # removes the unamed df dolumn
 
-# #mycursor.execute("SELECT * FROM TwitterSent")
-# #mycursor.execute("SELECT * FROM tweetdb")
-# #mycursor.execute("TRUNCATE TABLE TwitterSent")
-# mycursor.execute("TRUNCATE TABLE tweetdb") 
-# #// deletes all the data in table
-# #mycursor.execute("DROP TABLE TwitterSent")
-# #mycursor.execute("ALTER TABLE TwitterSent ADD sentiment VARCHAR(50)")
-# #mycursor.execute("CREATE TABLE TwitterSent (timestamp_ms VARCHAR(20), sentiment VARCHAR(10))")
+# gets the local mins and maxes
+for i in range(2,df1.shape[0]-2):
+  if isSupport(df1, i):
+    data.append((i, df1['low'][i], 1))
+  elif isResistance(df1,i):
+    data.append((i, df1['high'][i], -1))
 
-# #mycursor.execute("CREATE TABLE rednewsDB (timestamp_ms VARCHAR(20), reddit_sentiment VARCHAR(10), reddit_comm_sentiment VARCHAR(10), news_sentiment VARCHAR(10))")
-# #mycursor.execute("DROP TABLE rednewsDB")
-# #mycursor.execute("TRUNCATE TABLE rednewsDB")
-# #mycursor.execute("SELECT * FROM rednewsDB")
-
-# # mycursor.execute("CREATE TABLE IBPY (date VARCHAR(20), open VARCHAR(10), high VARCHAR(10), low VARCHAR(10), \
-# #   close VARCHAR(10), volume VARCHAR(10), average VARCHAR(10), barCount VARCHAR(10), bb_bbm VARCHAR(10), bb_bbh VARCHAR(10), \
-# #   bb_bbl VARCHAR(10), VWAP VARCHAR(10), RSI VARCHAR(10), STsupp VARCHAR(10), STres VARCHAR(10), LTsupp VARCHAR(10), LTres VARCHAR(10), \
-# #   GLD VARCHAR(10), UVXY VARCHAR(10), SQQQ VARCHAR(10))")
-# #mycursor.execute("DROP TABLE IBPY")
-# #mycursor.execute("TRUNCATE TABLE IBPY")
-# #mycursor.execute("SELECT * FROM IBPY")
-
-
-# #myresult = mycursor.fetchall()
+df1['trade'] = 0.5
+for stuff in data:
+  if stuff[2] == 1:
+    df1.iat[stuff[0], 20] = 1
+  if stuff[2] == -1:
+    df1.iat[stuff[0], 20] = 0
 
-# #for x in myresult:
-# #  print(x)
+df1['date'] = pd.to_datetime(df1['date'])
+df1 = df1.set_index('date')
 
-from ib_insync import *
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-from datetime import datetime
-import time
-import math
-import bisect
-import pymysql
-import config
-pymysql.install_as_MySQLdb()
-import pandas as pd
-import numpy as np
-from sqlalchemy import create_engine
+df = df1.copy()
 
+# df = pd.DataFrame(scaler.fit_transform(df), columns=df.columns, index=df1.index)
 
-from ta.utils import dropna
-from ta.volatility import BollingerBands
-from mplfinance.original_flavor import candlestick_ohlc
-import matplotlib.dates as mpl_dates
-import matplotlib.pyplot as plt
+ts = TimeSeries.from_series(df1['open'], fill_missing_dates=True, freq=None)
 
+############################################################## create multiple time series object 
+fill = True
+# create time series object for target variable, This is univariate
+ts_P = TimeSeries.from_series(df["open"], fill_missing_dates=fill, freq=None)
+ts_P = ts_P.pd_dataframe()
+ts_P_1 = ts_P.fillna(method='ffill')
+ts_P = TimeSeries.from_series(ts_P_1)
 
-barSze = '10 mins'
-durStrng = '1 Y'
+# creates time series object covariate feature, This is multivariate
+df_covF = df.loc[:, df.columns != "open"]
+ts_covF = TimeSeries.from_dataframe(df_covF, fill_missing_dates=fill, freq=None)
+ts_covF = ts_covF.pd_dataframe()
+ts_covF_1 = ts_covF.fillna(method='ffill')
+ts_covF = TimeSeries.from_series(ts_covF_1)
 
+############################################################## splits data into train or test data
 
+# train/test split and scaling of TARGET variable
+ts_train, ts_test = ts_P.split_after(SPLIT)
 
-ib = IB()
-ib.connect('127.0.0.1', 7497, clientId=2)
-#0.6 ms difference but can gather more data for the openning bars
-RTH = True
-
-sia = SentimentIntensityAnalyzer()
-
-contract1 = Stock('SPY', 'SMART', 'USD')
-GLD1 = Stock('GLD', 'SMART', 'USD')
-UVXY1 = Stock('UVXY', 'SMART', 'USD')
-SQQQ1 = Stock('SQQQ', 'SMART', 'USD')
-
-levels = []
-
-def RoudUp(x, base=5):
-    return base * math.ceil(x/base)
-
-def RoudDown(x, base=5):
-    return base * math.floor(x/base)
-
-def isFarFromLevel(l):
-    return np.sum([abs(l-x) < s  for x in levels]) == 0
-
-def isSupport(df,i):
-    support = df['low'][i] < df['low'][i-1]  and df['low'][i] < df['low'][i+1] and df['low'][i+1] < df['low'][i+2] and df['low'][i-1] < df['low'][i-2]
-    return support
-
-
-def isResistance(df,i):
-    resistance = df['high'][i] > df['high'][i-1]  and df['high'][i] > df['high'][i+1] and df['high'][i+1] > df['high'][i+2] and df['high'][i-1] > df['high'][i-2]
-    return resistance 
-
-# takes in a List and finds the two values next to b, one value is higher if it exist and one value is lower
-def closest(lst, b):
-    lst = list(lst)
-    lst.sort()
-    n, j = len(lst), bisect.bisect_left(lst, b)
-    if b < lst[-1]:
-        if lst[j] > b:
-           return (None if j == 0 else lst[j-1]), lst[j] 
-        else:
-           return lst[j], (None if j >= n - 1 else lst[j + 1])
-    else:
-        return lst[len(lst)-1], None
-
-
-
-    n, j = len(lst), bisect.bisect_left(lst, b)
-    return ((None if j == 0 else lst[j-1]), lst[j]) if lst[j] > b else (lst[j], (None if j >= n - 1 else lst[j + 1]))
- 
-# Calculates the long term support/resistance and puts it into a list
-def ltSR():
-    barsList = []
-
-    bars = ib.reqHistoricalData(
-        contract1, 
-        endDateTime='',
-        durationStr='1 Y',
-        barSizeSetting='1 day',
-        whatToShow='TRADES',
-        useRTH=RTH,
-        formatDate=1,
-        keepUpToDate=False)
-
-    barsList.append(bars)
-
-    allBars = [b for bars in reversed(barsList) for b in bars]
-    df = util.df(allBars)
-
-    s =  np.mean(df['high'] - df['low'])
-
-    levels = []
-    for i in range(2,df.shape[0]-2):
-      if isSupport(df,i):
-        l = df['low'][i]
-
-        if isFarFromLevel(l):
-          # levels.append((i,l))
-          levels.append(l)
-
-      elif isResistance(df,i):
-        l = df['high'][i]
-
-        if isFarFromLevel(l):
-          # levels.append((i,l))
-          levels.append(l)
-
-    return levels
-
-# returns a df from ibkr highlighting it's price action
-def datafrm():
-    barsList = []
-
-    ib.reqMktData(contract1, '', False, False)
-    ticker = ib.ticker(contract1)
-    ib.sleep(0.1)
-
-    sPrice = ticker.marketPrice()
-
-    bars = ib.reqHistoricalData(
-        contract1, 
-        endDateTime='',
-        durationStr=durStrng,
-        barSizeSetting=barSze,
-        whatToShow='TRADES',
-        useRTH=RTH,
-        formatDate=1,
-        keepUpToDate=False)
-
-    barsList.append(bars)
-
-    allBars = [b for bars in reversed(barsList) for b in bars]
-    df = util.df(allBars)
-    return df
-
-def GLD():
-    barsList = []
-
-    ib.reqMktData(GLD1, '', False, False)
-    ticker = ib.ticker(GLD1)
-    ib.sleep(0.1)
-
-    sPrice = ticker.marketPrice()
-
-    bars = ib.reqHistoricalData(
-        GLD1, 
-        endDateTime='',
-        durationStr=durStrng,
-        barSizeSetting=barSze,
-        whatToShow='TRADES',
-        useRTH=RTH,
-        formatDate=1,
-        keepUpToDate=False)
-
-    barsList.append(bars)
-
-    allBars = [b for bars in reversed(barsList) for b in bars]
-    df = util.df(allBars)
-    df['GLD'] = df['close']
-
-    return df[['date', 'GLD']]
-
-def UVXY():
-    barsList = []
-
-    ib.reqMktData(UVXY1, '', False, False)
-    ticker = ib.ticker(UVXY1)
-    ib.sleep(0.1)
-
-    sPrice = ticker.marketPrice()
-
-    bars = ib.reqHistoricalData(
-        UVXY1, 
-        endDateTime='',
-        durationStr=durStrng,
-        barSizeSetting=barSze,
-        whatToShow='TRADES',
-        useRTH=RTH,
-        formatDate=1,
-        keepUpToDate=False)
-
-    barsList.append(bars)
-
-    allBars = [b for bars in reversed(barsList) for b in bars]
-    df = util.df(allBars)
-    df['UVXY'] = df['close']
-
-    return df[['date', 'UVXY']]
-
-def SQQQ():
-    barsList = []
-
-    ib.reqMktData(SQQQ1, '', False, False)
-    ticker = ib.ticker(SQQQ1)
-    ib.sleep(0.1)
-
-    sPrice = ticker.marketPrice()
-
-    bars = ib.reqHistoricalData(
-        SQQQ1, 
-        endDateTime='',
-        durationStr=durStrng,
-        barSizeSetting=barSze,
-        whatToShow='TRADES',
-        useRTH=RTH,
-        formatDate=1,
-        keepUpToDate=False)
-
-    barsList.append(bars)
-
-    allBars = [b for bars in reversed(barsList) for b in bars]
-    df = util.df(allBars)
-    df['SQQQ'] = df['close']
-
-    return df[['date', 'SQQQ']]
-
-
-def main():
-    df = datafrm()
-
-    indicator_bb = BollingerBands(close=df["close"], window=20, window_dev=2)
-
-    df['bb_bbm'] = round(indicator_bb.bollinger_mavg(), 4)
-    df['bb_bbh'] = round(indicator_bb.bollinger_hband(), 4)
-    df['bb_bbl'] = round(indicator_bb.bollinger_lband(), 4)
-
-    v = df['volume']
-    p = df['close']
-
-    df['VWAP'] = round(((v * p).cumsum() / v.cumsum()), 4)
-
-
-    delta = df['close'].diff()
-    up = delta.clip(lower=0)
-    down = -1*delta.clip(upper=0)
-    ema_up = up.ewm(com=13, adjust=False).mean()
-    ema_down = down.ewm(com=13, adjust=False).mean()
-    rs = ema_up/ema_down
-
-    df['RSI'] = round(100-(100/(1 + rs)), 4)
-
-    # most likely wont need these
-    # df['RSIup'] = 70
-    # df['RSIdown'] = 30
-
-    # LT AND ST S/R ##########################################################################################################################################
-    s =  np.mean(df['high'] - df['low'])
-
-    levels = []
-    for i in range(2,df.shape[0]-2):
-      if isSupport(df,i):
-        l = df['low'][i]
-
-        if isFarFromLevel(l):
-          # levels.append((i,l))
-          levels.append(l)
-
-      elif isResistance(df,i):
-        l = df['high'][i]
-
-        if isFarFromLevel(l):
-          # levels.append((i,l))
-          levels.append(l)
-
-    # Stores it into datafram
-    LTe = ltSR()
-    df['STsupp'] = 0
-    df['STres'] = 0
-    df['LTsupp'] = 0
-    df['LTres'] = 0
-
-    for ind in df.index:
-        price = df['close'][ind]
-        ST = closest(levels, price)
-        LT = closest(LTe, price)
-
-        #This will take care of Nan Values on the S/R
-        if (ST[0] == None):
-            df.loc[ind, ['STsupp']] = RoudDown(price)
-        else:
-            df.loc[ind, ['STsupp']] = ST[0]
-
-        if(ST[1] == None):
-            df.loc[ind, ['STres']] = RoudUp(price)
-        else:
-            df.loc[ind, ['STres']] = ST[1]
-
-        if(LT[0] == None):
-            df.loc[ind, ['LTsupp']] = RoudDown(price)
-        else:
-            df.loc[ind, ['LTsupp']] = LT[0]
-
-        if(LT[1] == None):
-            df.loc[ind, ['LTres']] = RoudUp(price)
-        else:
-            df.loc[ind, ['LTres']] = LT[1]
-
-    # Merge the tickers with the main df
-    GLDdf = GLD()
-    df = pd.merge(df, GLDdf, on=['date'])
-    UVXYdf = UVXY()
-    df = pd.merge(df, UVXYdf, on=['date'])
-    SQQQdf = SQQQ()
-    df = pd.merge(df, SQQQdf, on=['date'])
-
-    df.to_csv('OPdata.csv')
-
-
-if __name__== '__main__':
-    # put the loop logic here eto loop through everything accordingly
-    main()
+scalerP = Scaler()
+scalerP.fit_transform(ts_train)
+ts_ttrain = scalerP.transform(ts_train)
+ts_ttest = scalerP.transform(ts_test)    
+ts_t = scalerP.transform(ts_P)
+
+# # make sure data are of type float
+# ts_t = ts_t.astype(np.float32)
+# ts_ttrain = ts_ttrain.astype(np.float32)
+# ts_ttest = ts_ttest.astype(np.float32)
+
+
+# train/test split and scaling of FEATURE covariates
+covF_train, covF_test = ts_covF.split_after(SPLIT)
+
+scalerF = Scaler()
+scalerF.fit_transform(covF_train)
+covF_ttrain = scalerF.transform(covF_train) 
+covF_ttest = scalerF.transform(covF_test)   
+covF_t = scalerF.transform(ts_covF)  
+
+# # make sure data are of type float
+# covF_ttrain = ts_ttrain.astype(np.float32)
+# covF_ttest = ts_ttest.astype(np.float32)
+
+
+# feature engineering - create time covariates: hour, weekday, month, year, country-specific holidays
+covT = datetime_attribute_timeseries( ts_P.time_index, 
+                                      attribute="hour", 
+                                      one_hot=False)
+covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="day_of_week", one_hot=False))
+covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="month", one_hot=False))
+covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="year", one_hot=False))
+
+covT = covT.add_holidays(country_code="US")
+
+covT = covT.astype(np.float32)
+
+# train/test split
+covT_train, covT_test = covT.split_after(SPLIT)
+
+scalerT = Scaler()
+scalerT.fit(covT_train)
+covT_ttrain = scalerT.transform(covT_train)
+covT_ttest = scalerT.transform(covT_test)
+covT_t = scalerT.transform(covT)
+covT_t = covT_t.astype(np.float32)
+
+ts_cov = ts_covF.concatenate(covT, axis=1)                      # unscaled F+T
+cov_t = covF_t.concatenate(covT_t, axis=1)                      # scaled F+T
+cov_ttrain = covF_ttrain.concatenate(covT_ttrain, axis=1)       # scaled F+T training
+
+
+
+# #################################################################### graphs the cycles of the data
+# cov_t = cov_t.pd_dataframe()
+
+# df3 = cov_t
+# df3.plot()
+# # covF_ttrain.plot()
+# plt.show()
+
+# # additional datetime columns: feature engineering
+# df3["month"] = df3.index.month
+
+# df3["wday"] = df3.index.dayofweek
+# dict_days = {0:"1_Mon", 1:"2_Tue", 2:"3_Wed", 3:"4_Thu", 4:"5_Fri", 5:"6_Sat", 6:"7_Sun"}
+# df3["weekday"] = df3["wday"].apply(lambda x: dict_days[x])
+
+# df3["hour"] = df3.index.hour
+
+# df3 = df3.astype({"hour":float, "wday":float, "month": float})
+
+# df3.iloc[[0, -1]]
+
+
+# piv = pd.pivot_table(   df3, 
+#                         values="close", 
+#                         index="month", 
+#                         columns="weekday", 
+#                         aggfunc="mean", 
+#                         margins=True, margins_name="Avg", 
+#                         fill_value=0)
+# pd.options.display.float_format = '{:,.0f}'.format
+
+# plt.figure(figsize = (10,15))
+# sns.set(font_scale=1)
+# sns.heatmap(piv.round(0), annot=True, square = True, \
+#             linewidths=.75, cmap="coolwarm", fmt = ".0f", annot_kws = {"size": 11})
+# plt.title("price by weekday by month")
+# plt.show()
+
+###############################################################################################
+
+model = TransformerModel(
+                    input_chunk_length = INLEN,
+                    output_chunk_length = N_FC,
+                    batch_size = BATCH,
+                    n_epochs = EPOCHS,
+                    model_name = "Transformer_price",
+                    nr_epochs_val_period = VALWAIT,
+                    d_model = FEAT,
+                    nhead = HEADS,
+                    num_encoder_layers = ENCODE,
+                    num_decoder_layers = DECODE,
+                    dim_feedforward = DIM_FF,
+                    dropout = DROPOUT,
+                    activation = ACTF,
+                    random_state=RAND,
+                    likelihood=QuantileRegression(quantiles=QUANTILES), 
+                    optimizer_kwargs={'lr': LEARN},
+                    add_encoders={"cyclic": {"future": ["hour", "dayofweek", "month"]}},
+                    save_checkpoints=True,
+                    force_reset=True
+                    )
+
+
+# training: load a saved model or (re)train
+if LOAD:
+    print("have loaded a previously saved model from disk:" + mpath)
+    model = TransformerModel.load_model(mpath)                            # load previously model from disk 
+else:
+    model.fit(  ts_ttrain, 
+                past_covariates=cov_t, 
+                verbose=True)
+    print("have saved the model after training:", mpath)
+    model.save_model(mpath)
+
+# # testing: generate predictions
+ts_tpred = model.predict(   n=len(ts_ttest), 
+                            num_samples=N_SAMPLES,   
+                            n_jobs=N_JOBS, 
+                            verbose=True)
+
+
+
+# testing: helper function: plot predictions
+def plot_predict(ts_actual, ts_test, ts_pred):
+    
+    ## plot time series, limited to forecast horizon
+    plt.figure(figsize=FIGSIZE)
+    
+    ts_actual.plot(label="actual")                                       # plot actual
+    
+    ts_pred.plot(low_quantile=qL1, high_quantile=qU1, label=label_q1)    # plot U1 quantile band
+    #ts_pred.plot(low_quantile=qL2, high_quantile=qU2, label=label_q2)   # plot U2 quantile band
+    ts_pred.plot(low_quantile=qL3, high_quantile=qU3, label=label_q3)    # plot U3 quantile band
+    ts_pred.plot(central_quantile="mean", label="expected")              # plot "mean" or median=0.5
+    
+    plt.title("TFT: test set (MAPE: {:.2f}%)".format(mape(ts_test, ts_pred)))
+    plt.legend()
+    plt.show()    
+
+
+ts_pred = scalerP.inverse_transform(ts_tpred)
+plot_predict(ts, ts_test, ts_pred)
