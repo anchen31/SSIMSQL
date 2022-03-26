@@ -36,17 +36,17 @@ scaler = MinMaxScaler(feature_range = (0,1))
 
 
 
-LOAD = False         # True = load previously saved model from disk?  False = (re)train the model
+LOAD = True         # True = load previously saved model from disk?  False = (re)train the model
 SAVE = "/_TForm_model10e.pth.tar"   # file name to save the model under
 
-EPOCHS = 10
+EPOCHS = 40
 INLEN = 32          # input size
 FEAT = 32           # d_model = number of expected features in the inputs, up to 512    
 HEADS = 4           # default 8
-ENCODE = 4          # encoder layers
-DECODE = 4          # decoder layers
-DIM_FF = 64         # dimensions of the feedforward network, default 2048
-BATCH = 64          # batch size
+ENCODE = 5          # encoder layers
+DECODE = 5          # decoder layers
+DIM_FF = 64        # dimensions of the feedforward network, default 2048
+BATCH = 32          # batch size
 ACTF = "relu"       # activation function, relu (default) or gelu
 SCHLEARN = None     # a PyTorch learning rate scheduler; None = constant rate
 LEARN = 1e-4        # learning rate
@@ -146,24 +146,33 @@ for i in range(2,df1.shape[0]-2):
   elif isResistance(df1,i):
     data.append((i, df1['high'][i], -1))
 
-df1['trade'] = 0.5
+df1['trade'] = 5
 for stuff in data:
   if stuff[2] == 1:
-    df1.iat[stuff[0], 20] = 1
+    df1.iat[stuff[0], 20] = 6
   if stuff[2] == -1:
-    df1.iat[stuff[0], 20] = 0
+    df1.iat[stuff[0], 20] = 4
 
-df1['date'] = pd.to_datetime(df1['date'])
-df1 = df1.set_index('date')
+# df1['date'] = pd.to_datetime(df1['date'])
+# df1 = df1.set_index('date')
+ts = df1['open']
+trade = df1['trade']
+
+# df1 = df1.reset_index()
+# xaxis = df1['date'].values.tolist()
+# x = range(len(df1))
+
+
+df1 = df1.drop(columns=['date'])
+
+
 
 df = df1.copy()
 
 # df = pd.DataFrame(scaler.fit_transform(df), columns=df.columns, index=df1.index)
 
-ts = TimeSeries.from_series(df1['open'], fill_missing_dates=True, freq=None)
-
 ############################################################## create multiple time series object 
-fill = True
+fill = False
 # create time series object for target variable, This is univariate
 ts_P = TimeSeries.from_series(df["open"], fill_missing_dates=fill, freq=None)
 ts_P = ts_P.pd_dataframe()
@@ -183,7 +192,8 @@ ts_covF = TimeSeries.from_series(ts_covF_1)
 ts_train, ts_test = ts_P.split_after(SPLIT)
 
 scalerP = Scaler()
-scalerP.fit_transform(ts_train)
+# scalerP.fit_transform(ts_train)
+scalerP.fit_transform(ts_P) # LETS SEE IF THIS WORKSSSSS
 ts_ttrain = scalerP.transform(ts_train)
 ts_ttest = scalerP.transform(ts_test)    
 ts_t = scalerP.transform(ts_P)
@@ -198,7 +208,8 @@ ts_t = scalerP.transform(ts_P)
 covF_train, covF_test = ts_covF.split_after(SPLIT)
 
 scalerF = Scaler()
-scalerF.fit_transform(covF_train)
+# scalerF.fit_transform(covF_train)
+scalerF.fit_transform(ts_covF) # LETS SEE IF THIS WORKSSSSS
 covF_ttrain = scalerF.transform(covF_train) 
 covF_ttest = scalerF.transform(covF_test)   
 covF_t = scalerF.transform(ts_covF)  
@@ -209,70 +220,17 @@ covF_t = scalerF.transform(ts_covF)
 
 
 # feature engineering - create time covariates: hour, weekday, month, year, country-specific holidays
-covT = datetime_attribute_timeseries( ts_P.time_index, 
-                                      attribute="hour", 
-                                      one_hot=False)
-covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="day_of_week", one_hot=False))
-covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="month", one_hot=False))
-covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="year", one_hot=False))
-
-covT = covT.add_holidays(country_code="US")
-
-covT = covT.astype(np.float32)
-
-# train/test split
-covT_train, covT_test = covT.split_after(SPLIT)
-
-scalerT = Scaler()
-scalerT.fit(covT_train)
-covT_ttrain = scalerT.transform(covT_train)
-covT_ttest = scalerT.transform(covT_test)
-covT_t = scalerT.transform(covT)
-covT_t = covT_t.astype(np.float32)
-
-ts_cov = ts_covF.concatenate(covT, axis=1)                      # unscaled F+T
-cov_t = covF_t.concatenate(covT_t, axis=1)                      # scaled F+T
-cov_ttrain = covF_ttrain.concatenate(covT_ttrain, axis=1)       # scaled F+T training
 
 
 
-# #################################################################### graphs the cycles of the data
-# cov_t = cov_t.pd_dataframe()
+# # #################################################################### graphs the cycles of the data
+# covF_t = scalerF.fit_transform(covF_t)
 
+# cov_t = covF_t.pd_dataframe()
 # df3 = cov_t
 # df3.plot()
-# # covF_ttrain.plot()
 # plt.show()
 
-# # additional datetime columns: feature engineering
-# df3["month"] = df3.index.month
-
-# df3["wday"] = df3.index.dayofweek
-# dict_days = {0:"1_Mon", 1:"2_Tue", 2:"3_Wed", 3:"4_Thu", 4:"5_Fri", 5:"6_Sat", 6:"7_Sun"}
-# df3["weekday"] = df3["wday"].apply(lambda x: dict_days[x])
-
-# df3["hour"] = df3.index.hour
-
-# df3 = df3.astype({"hour":float, "wday":float, "month": float})
-
-# df3.iloc[[0, -1]]
-
-
-# piv = pd.pivot_table(   df3, 
-#                         values="close", 
-#                         index="month", 
-#                         columns="weekday", 
-#                         aggfunc="mean", 
-#                         margins=True, margins_name="Avg", 
-#                         fill_value=0)
-# pd.options.display.float_format = '{:,.0f}'.format
-
-# plt.figure(figsize = (10,15))
-# sns.set(font_scale=1)
-# sns.heatmap(piv.round(0), annot=True, square = True, \
-#             linewidths=.75, cmap="coolwarm", fmt = ".0f", annot_kws = {"size": 11})
-# plt.title("price by weekday by month")
-# plt.show()
 
 ###############################################################################################
 
@@ -281,7 +239,7 @@ model = TransformerModel(
                     output_chunk_length = N_FC,
                     batch_size = BATCH,
                     n_epochs = EPOCHS,
-                    model_name = "Transformer_price",
+                    model_name = "Transformer_price_noFill",
                     nr_epochs_val_period = VALWAIT,
                     d_model = FEAT,
                     nhead = HEADS,
@@ -293,7 +251,6 @@ model = TransformerModel(
                     random_state=RAND,
                     likelihood=QuantileRegression(quantiles=QUANTILES), 
                     optimizer_kwargs={'lr': LEARN},
-                    add_encoders={"cyclic": {"future": ["hour", "dayofweek", "month"]}},
                     save_checkpoints=True,
                     force_reset=True
                     )
@@ -305,7 +262,7 @@ if LOAD:
     model = TransformerModel.load_model(mpath)                            # load previously model from disk 
 else:
     model.fit(  ts_ttrain, 
-                past_covariates=cov_t, 
+                past_covariates=covF_t, 
                 verbose=True)
     print("have saved the model after training:", mpath)
     model.save_model(mpath)
@@ -321,20 +278,35 @@ ts_tpred = model.predict(   n=len(ts_ttest),
 # testing: helper function: plot predictions
 def plot_predict(ts_actual, ts_test, ts_pred):
     
-    ## plot time series, limited to forecast horizon
+    # plot time series, limited to forecast horizon
     plt.figure(figsize=FIGSIZE)
     
-    ts_actual.plot(label="actual")                                       # plot actual
-    
+    ts_actual.plot(label="actual price")                                       # plot actual
+    # trade.plot(label="actual trade")
     ts_pred.plot(low_quantile=qL1, high_quantile=qU1, label=label_q1)    # plot U1 quantile band
-    #ts_pred.plot(low_quantile=qL2, high_quantile=qU2, label=label_q2)   # plot U2 quantile band
+    ts_pred.plot(low_quantile=qL2, high_quantile=qU2, label=label_q2)   # plot U2 quantile band
     ts_pred.plot(low_quantile=qL3, high_quantile=qU3, label=label_q3)    # plot U3 quantile band
     ts_pred.plot(central_quantile="mean", label="expected")              # plot "mean" or median=0.5
-    
+
     plt.title("TFT: test set (MAPE: {:.2f}%)".format(mape(ts_test, ts_pred)))
-    plt.legend()
-    plt.show()    
+    
+
+    # fig, ax1 = plt.subplots()
+
+    # ax2 = ax1.twinx()
+    # ax3 = ax1.twinx()
+
+    # ax1.plot(ts_actual)
+    # ts_pred = ts_pred.quantile_df()
+    # ax2.plot(ts_pred, color = 'red')
+    # ts_pred = TimeSeries.from_dataframe(ts_pred, fill_missing_dates=fill, freq=None)
+    # ax3.plot(trade, color = 'green')
+    # plt.title("TFT: test set (MAPE: {:.2f}%)".format(mape(ts_test, ts_pred)))
+
+    # plt.legend()
+    plt.show()
 
 
 ts_pred = scalerP.inverse_transform(ts_tpred)
+print(type(ts_pred))
 plot_predict(ts, ts_test, ts_pred)

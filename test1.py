@@ -1,8 +1,8 @@
-# import pandas as pd
-# import numpy as np
-# import yfinance
-# from mplfinance.original_flavor import candlestick_ohlc
-# import matplotlib.dates as mpl_dates
+import pandas as pd
+import numpy as np
+import yfinance
+from mplfinance.original_flavor import candlestick_ohlc
+import matplotlib.dates as mpl_dates
 import matplotlib.pyplot as plt
 
 # plt.rcParams['figure.figsize'] = [12, 7]
@@ -57,7 +57,7 @@ import matplotlib.pyplot as plt
 #   plt.show()
 
 
-# #plot_all()
+# plot_all()
 # total = 0
 # total1 = 0
 # count = 0
@@ -93,8 +93,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-df = pd.read_csv('OPdata.csv', index_col=False)
-df = df.drop('Unnamed: 0',1)
+df = pd.read_csv('four_year_data.csv', index_col=False)
+# df = df.drop('Unnamed: 0',1)
 df = df.drop('date', 1)
 
 df = df.set_axis(['open', 'high', 

@@ -17,8 +17,8 @@ from mplfinance.original_flavor import candlestick_ohlc
 import matplotlib.dates as mpl_dates
 import matplotlib.pyplot as plt
 
-barSze = '1 hour'
-durStrng = '8 M'
+barSze = '1 day'
+durStrng = '4 Y'
 
 ib = IB()
 ib.connect('127.0.0.1', 7497, clientId=2)
@@ -324,13 +324,16 @@ def main():
         #print(df.columns)
 
         print(df.tail())
+
+        # df.to_csv('two_year_date.csv', index=False)
+
         
         #################################################Create a new db for this data, this will be the main db that will have everything else join it###
-        engine = create_engine(config.engine)
-        ############################## Create config.engine1 that has a different db loaction #######################
-        with engine.begin() as connection:
-            # maybe "replace" fixes the missing values problem?
-            df.to_sql(name='ibpy', con=connection, if_exists='replace', index=False)
+        # engine = create_engine(config.engine)
+        # ############################## Create config.engine1 that has a different db loaction #######################
+        # with engine.begin() as connection:
+        #     # maybe "replace" fixes the missing values problem?
+        #     df.to_sql(name='ibpy', con=connection, if_exists='replace', index=False)
 
     ib.disconnect()
 

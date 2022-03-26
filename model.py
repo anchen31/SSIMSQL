@@ -36,20 +36,22 @@ scaler = MinMaxScaler(feature_range = (0,1))
 
 
 
-LOAD = False         # True = load previously saved model from disk?  False = (re)train the model
-SAVE = "/_TForm_model10e.pth.tar"   # file name to save the model under
+LOAD = True         # True = load previously saved model from disk?  False = (re)train the model
+# SAVE = "/_TForm_model10e.pth.tar"   # file name to save the model under
 
-EPOCHS = 10
+SAVE = "/_TForm_model_trade10e.pth.tar"   # file name to save the model under
+
+EPOCHS = 30
 INLEN = 32          # input size
 FEAT = 32           # d_model = number of expected features in the inputs, up to 512    
-HEADS = 4           # default 8
-ENCODE = 4          # encoder layers
-DECODE = 4          # decoder layers
+HEADS = 8           # default 8
+ENCODE = 6          # encoder layers
+DECODE = 6          # decoder layers
 DIM_FF = 64         # dimensions of the feedforward network, default 2048
-BATCH = 64          # batch size
+BATCH = 32          # batch size
 ACTF = "relu"       # activation function, relu (default) or gelu
 SCHLEARN = None     # a PyTorch learning rate scheduler; None = constant rate
-LEARN = 1e-3        # learning rate
+LEARN = 1e-4        # learning rate
 VALWAIT = 1         # epochs to wait before evaluating the loss on the test/validation set
 DROPOUT = 0.1       # dropout rate
 N_FC = 1            # output size
@@ -57,6 +59,7 @@ N_FC = 1            # output size
 RAND = 42           # random seed
 N_SAMPLES = 100     # number of times a prediction is sampled from a probabilistic model
 N_JOBS = 3          # parallel processors to use;  -1 = all processors
+
 
 # default quantiles for QuantileRegression
 QUANTILES = [0.01, 0.1, 0.2, 0.5, 0.8, 0.9, 0.99]
@@ -136,7 +139,7 @@ def isResistance(df,i):
 #                     'UVXY', 'SQQQ'], axis=1, inplace=False)
 data = []
 
-df1 = pd.read_csv('OPdata.csv')
+df1 = pd.read_csv('four_year_data.csv')
 df1 = df1.loc[:, ~df1.columns.str.contains('^Unnamed')] # removes the unamed df dolumn
 
 # gets the local mins and maxes
@@ -155,35 +158,34 @@ for stuff in data:
 
 df1['date'] = pd.to_datetime(df1['date'])
 df1 = df1.set_index('date')
-
 df = df1.copy()
 
 # df = pd.DataFrame(scaler.fit_transform(df), columns=df.columns, index=df1.index)
 
-ts = TimeSeries.from_series(df1['open'], fill_missing_dates=True, freq=None)
+ts = TimeSeries.from_series(df1['open'], fill_missing_dates=True, freq='D')
 
 ############################################################## create multiple time series object 
-fill = True
 # create time series object for target variable, This is univariate
-ts_P = TimeSeries.from_series(df["open"], fill_missing_dates=fill, freq=None)
+ts_P = TimeSeries.from_series(df["open"], fill_missing_dates=True, freq='D')
 ts_P = ts_P.pd_dataframe()
 ts_P_1 = ts_P.fillna(method='ffill')
 ts_P = TimeSeries.from_series(ts_P_1)
 
 # creates time series object covariate feature, This is multivariate
 df_covF = df.loc[:, df.columns != "open"]
-ts_covF = TimeSeries.from_dataframe(df_covF, fill_missing_dates=fill, freq=None)
+ts_covF = TimeSeries.from_dataframe(df_covF, fill_missing_dates=True, freq='D')
 ts_covF = ts_covF.pd_dataframe()
-ts_covF_1 = ts_covF.fillna(method='ffill')
+ts_covF_1 = ts_covF.fillna(method='bfill')
 ts_covF = TimeSeries.from_series(ts_covF_1)
+
 
 ############################################################## splits data into train or test data
 
 # train/test split and scaling of TARGET variable
 ts_train, ts_test = ts_P.split_after(SPLIT)
 
-scalerP = Scaler()
-scalerP.fit_transform(ts_train)
+scalerP = Scaler(scaler)
+scalerP.fit_transform(ts_P)
 ts_ttrain = scalerP.transform(ts_train)
 ts_ttest = scalerP.transform(ts_test)    
 ts_t = scalerP.transform(ts_P)
@@ -197,8 +199,8 @@ ts_t = scalerP.transform(ts_P)
 # train/test split and scaling of FEATURE covariates
 covF_train, covF_test = ts_covF.split_after(SPLIT)
 
-scalerF = Scaler()
-scalerF.fit_transform(covF_train)
+scalerF = Scaler(scaler)
+scalerF.fit_transform(ts_covF)
 covF_ttrain = scalerF.transform(covF_train) 
 covF_ttest = scalerF.transform(covF_test)   
 covF_t = scalerF.transform(ts_covF)  
@@ -210,9 +212,9 @@ covF_t = scalerF.transform(ts_covF)
 
 # feature engineering - create time covariates: hour, weekday, month, year, country-specific holidays
 covT = datetime_attribute_timeseries( ts_P.time_index, 
-                                      attribute="hour", 
+                                      attribute="day_of_week", 
                                       one_hot=False)
-covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="day_of_week", one_hot=False))
+# covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="day_of_week", one_hot=False))
 covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="month", one_hot=False))
 covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="year", one_hot=False))
 
@@ -223,8 +225,8 @@ covT = covT.astype(np.float32)
 # train/test split
 covT_train, covT_test = covT.split_after(SPLIT)
 
-scalerT = Scaler()
-scalerT.fit(covT_train)
+scalerT = Scaler(scaler)
+scalerT.fit_transform(covT)
 covT_ttrain = scalerT.transform(covT_train)
 covT_ttest = scalerT.transform(covT_test)
 covT_t = scalerT.transform(covT)
@@ -240,8 +242,9 @@ cov_ttrain = covF_ttrain.concatenate(covT_ttrain, axis=1)       # scaled F+T tra
 # cov_t = cov_t.pd_dataframe()
 
 # df3 = cov_t
+
 # df3.plot()
-# # covF_ttrain.plot()
+# # # covF_ttrain.plot()
 # plt.show()
 
 # # additional datetime columns: feature engineering
@@ -293,7 +296,7 @@ model = TransformerModel(
                     random_state=RAND,
                     likelihood=QuantileRegression(quantiles=QUANTILES), 
                     optimizer_kwargs={'lr': LEARN},
-                    add_encoders={"cyclic": {"future": ["hour", "dayofweek", "month"]}},
+                    add_encoders={"cyclic": {"future": ["dayofweek", "month"]}},
                     save_checkpoints=True,
                     force_reset=True
                     )
@@ -342,6 +345,8 @@ plot_predict(ts, ts_test, ts_pred)
 
 
 
+
+
 # # retrieve forecast series for chosen quantiles, 
 # # inverse-transform each series,
 # # insert them as columns in a new dataframe dfY
@@ -385,32 +390,4 @@ plot_predict(ts, ts_test, ts_pred)
 # p.set_ylabel("price")
 # p.set_xlabel("")
 # p.set_title("S&P price")
-# plt.show()
-
-
-
-
-
-
-
-
-
-
-
-
-
-# covF_t = covF_t.pd_dataframe()
-# print(covF_t)
-
-# covF_t.plot()
-# plt.show()
-
-
-# df_for_training = df_for_training.filter(['open', 'STsupp', 'STres', 
-#                     'LTsupp', 'LTres'])
-# del scaled_df['trade']
-# scaled_df.plot()
-# plt.show()
-
-# plt.plot(trainY)
 # plt.show()
