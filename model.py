@@ -247,35 +247,35 @@ df3.plot()
 # # covF_ttrain.plot()
 plt.show()
 
-# # additional datetime columns: feature engineering
-# df3["month"] = df3.index.month
+# additional datetime columns: feature engineering
+df3["month"] = df3.index.month
 
-# df3["wday"] = df3.index.dayofweek
-# dict_days = {0:"1_Mon", 1:"2_Tue", 2:"3_Wed", 3:"4_Thu", 4:"5_Fri", 5:"6_Sat", 6:"7_Sun"}
-# df3["weekday"] = df3["wday"].apply(lambda x: dict_days[x])
+df3["wday"] = df3.index.dayofweek
+dict_days = {0:"1_Mon", 1:"2_Tue", 2:"3_Wed", 3:"4_Thu", 4:"5_Fri", 5:"6_Sat", 6:"7_Sun"}
+df3["weekday"] = df3["wday"].apply(lambda x: dict_days[x])
 
-# df3["hour"] = df3.index.hour
+df3["hour"] = df3.index.hour
 
-# df3 = df3.astype({"hour":float, "wday":float, "month": float})
+df3 = df3.astype({"hour":float, "wday":float, "month": float})
 
-# df3.iloc[[0, -1]]
+df3.iloc[[0, -1]]
 
 
-# piv = pd.pivot_table(   df3, 
-#                         values="close", 
-#                         index="month", 
-#                         columns="weekday", 
-#                         aggfunc="mean", 
-#                         margins=True, margins_name="Avg", 
-#                         fill_value=0)
-# pd.options.display.float_format = '{:,.0f}'.format
+piv = pd.pivot_table(   df3, 
+                        values="close", 
+                        index="month", 
+                        columns="weekday", 
+                        aggfunc="mean", 
+                        margins=True, margins_name="Avg", 
+                        fill_value=0)
+pd.options.display.float_format = '{:,.0f}'.format
 
-# plt.figure(figsize = (10,15))
-# sns.set(font_scale=1)
-# sns.heatmap(piv.round(0), annot=True, square = True, \
-#             linewidths=.75, cmap="coolwarm", fmt = ".0f", annot_kws = {"size": 11})
-# plt.title("price by weekday by month")
-# plt.show()
+plt.figure(figsize = (10,15))
+sns.set(font_scale=1)
+sns.heatmap(piv.round(0), annot=True, square = True, \
+            linewidths=.75, cmap="coolwarm", fmt = ".0f", annot_kws = {"size": 11})
+plt.title("price by weekday by month")
+plt.show()
 
 ###############################################################################################
 
