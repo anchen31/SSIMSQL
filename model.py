@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 
 from darts import TimeSeries, concatenate
 from darts.dataprocessing.transformers import Scaler
-from darts.models import TransformerModel
+# from darts.models import TransformerModel
 from darts.metrics import mape, rmse
 from darts.utils.timeseries_generation import datetime_attribute_timeseries
 from darts.utils.likelihood_models import QuantileRegression
@@ -64,7 +64,7 @@ N_JOBS = 3          # parallel processors to use;  -1 = all processors
 # default quantiles for QuantileRegression
 QUANTILES = [0.01, 0.1, 0.2, 0.5, 0.8, 0.9, 0.99]
 
-SPLIT = 0.8         # train/test %
+SPLIT = 0.9         # train/test %
 
 FIGSIZE = (9, 6)
 
@@ -239,13 +239,13 @@ cov_ttrain = covF_ttrain.concatenate(covT_ttrain, axis=1)       # scaled F+T tra
 
 
 # #################################################################### graphs the cycles of the data
-# cov_t = cov_t.pd_dataframe()
+cov_t = cov_t.pd_dataframe()
 
-# df3 = cov_t
+df3 = cov_t
 
-# df3.plot()
-# # # covF_ttrain.plot()
-# plt.show()
+df3.plot()
+# # covF_ttrain.plot()
+plt.show()
 
 # # additional datetime columns: feature engineering
 # df3["month"] = df3.index.month
@@ -279,68 +279,68 @@ cov_ttrain = covF_ttrain.concatenate(covT_ttrain, axis=1)       # scaled F+T tra
 
 ###############################################################################################
 
-model = TransformerModel(
-                    input_chunk_length = INLEN,
-                    output_chunk_length = N_FC,
-                    batch_size = BATCH,
-                    n_epochs = EPOCHS,
-                    model_name = "Transformer_price",
-                    nr_epochs_val_period = VALWAIT,
-                    d_model = FEAT,
-                    nhead = HEADS,
-                    num_encoder_layers = ENCODE,
-                    num_decoder_layers = DECODE,
-                    dim_feedforward = DIM_FF,
-                    dropout = DROPOUT,
-                    activation = ACTF,
-                    random_state=RAND,
-                    likelihood=QuantileRegression(quantiles=QUANTILES), 
-                    optimizer_kwargs={'lr': LEARN},
-                    add_encoders={"cyclic": {"future": ["dayofweek", "month"]}},
-                    save_checkpoints=True,
-                    force_reset=True
-                    )
+# model = TransformerModel(
+#                     input_chunk_length = INLEN,
+#                     output_chunk_length = N_FC,
+#                     batch_size = BATCH,
+#                     n_epochs = EPOCHS,
+#                     model_name = "Transformer_price",
+#                     nr_epochs_val_period = VALWAIT,
+#                     d_model = FEAT,
+#                     nhead = HEADS,
+#                     num_encoder_layers = ENCODE,
+#                     num_decoder_layers = DECODE,
+#                     dim_feedforward = DIM_FF,
+#                     dropout = DROPOUT,
+#                     activation = ACTF,
+#                     random_state=RAND,
+#                     likelihood=QuantileRegression(quantiles=QUANTILES), 
+#                     optimizer_kwargs={'lr': LEARN},
+#                     add_encoders={"cyclic": {"future": ["dayofweek", "month"]}},
+#                     save_checkpoints=True,
+#                     force_reset=True
+#                     )
 
 
-# training: load a saved model or (re)train
-if LOAD:
-    print("have loaded a previously saved model from disk:" + mpath)
-    model = TransformerModel.load_model(mpath)                            # load previously model from disk 
-else:
-    model.fit(  ts_ttrain, 
-                past_covariates=cov_t, 
-                verbose=True)
-    print("have saved the model after training:", mpath)
-    model.save_model(mpath)
+# # training: load a saved model or (re)train
+# if LOAD:
+#     print("have loaded a previously saved model from disk:" + mpath)
+#     model = TransformerModel.load_model(mpath)                            # load previously model from disk 
+# else:
+#     model.fit(  ts_ttrain, 
+#                 past_covariates=cov_t, 
+#                 verbose=True)
+#     print("have saved the model after training:", mpath)
+#     model.save_model(mpath)
 
-# # testing: generate predictions
-ts_tpred = model.predict(   n=len(ts_ttest), 
-                            num_samples=N_SAMPLES,   
-                            n_jobs=N_JOBS, 
-                            verbose=True)
+# # # testing: generate predictions
+# ts_tpred = model.predict(   n=len(ts_ttest), 
+#                             num_samples=N_SAMPLES,   
+#                             n_jobs=N_JOBS, 
+#                             verbose=True)
 
 
 
-# testing: helper function: plot predictions
-def plot_predict(ts_actual, ts_test, ts_pred):
+# # testing: helper function: plot predictions
+# def plot_predict(ts_actual, ts_test, ts_pred):
     
-    ## plot time series, limited to forecast horizon
-    plt.figure(figsize=FIGSIZE)
+#     ## plot time series, limited to forecast horizon
+#     plt.figure(figsize=FIGSIZE)
     
-    ts_actual.plot(label="actual")                                       # plot actual
+#     ts_actual.plot(label="actual")                                       # plot actual
     
-    ts_pred.plot(low_quantile=qL1, high_quantile=qU1, label=label_q1)    # plot U1 quantile band
-    #ts_pred.plot(low_quantile=qL2, high_quantile=qU2, label=label_q2)   # plot U2 quantile band
-    ts_pred.plot(low_quantile=qL3, high_quantile=qU3, label=label_q3)    # plot U3 quantile band
-    ts_pred.plot(central_quantile="mean", label="expected")              # plot "mean" or median=0.5
+#     ts_pred.plot(low_quantile=qL1, high_quantile=qU1, label=label_q1)    # plot U1 quantile band
+#     #ts_pred.plot(low_quantile=qL2, high_quantile=qU2, label=label_q2)   # plot U2 quantile band
+#     ts_pred.plot(low_quantile=qL3, high_quantile=qU3, label=label_q3)    # plot U3 quantile band
+#     ts_pred.plot(central_quantile="mean", label="expected")              # plot "mean" or median=0.5
     
-    plt.title("TFT: test set (MAPE: {:.2f}%)".format(mape(ts_test, ts_pred)))
-    plt.legend()
-    plt.show()    
+#     plt.title("TFT: test set (MAPE: {:.2f}%)".format(mape(ts_test, ts_pred)))
+#     plt.legend()
+#     plt.show()    
 
 
-ts_pred = scalerP.inverse_transform(ts_tpred)
-plot_predict(ts, ts_test, ts_pred)
+# ts_pred = scalerP.inverse_transform(ts_tpred)
+# plot_predict(ts, ts_test, ts_pred)
 
 
 

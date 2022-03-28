@@ -61,7 +61,7 @@ N_JOBS = 3          # parallel processors to use;  -1 = all processors
 # default quantiles for QuantileRegression
 QUANTILES = [0.01, 0.1, 0.2, 0.5, 0.8, 0.9, 0.99]
 
-SPLIT = 0.8         # train/test %
+SPLIT = 0.9         # train/test %
 
 FIGSIZE = (9, 6)
 
