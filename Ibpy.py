@@ -216,6 +216,22 @@ def SQQQ():
 
     return df[['date', 'SQQQ']]
 
+
+
+# add comodities here oil, wheat, grain, etc 
+    # there are 4 sectors of commodities so ther eare at least 4 new components to add
+
+
+
+# with commodities, include bond yields and infaltionary data
+    # learn more about bond tields and how they affect it
+    
+# there are 4 driving factors that I should test
+#
+
+
+
+
 # does all of the ta stuff and puts it into a mysql db
 def main():
 
