@@ -1,7 +1,7 @@
 # spyHedger
 This application trades/predicts the s&p500 
 
-- SuperSent.py
+- **SuperSent.py**
   - strings all of the files together with multiprocessing
 
     - will truncate all of todays data and rest the dbs except for super db, where that is saved and serialized into hard drive. Then clean out super db.
