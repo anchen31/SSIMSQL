@@ -36,12 +36,12 @@ scaler = MinMaxScaler(feature_range = (0,1))
 
 
 
-LOAD = True         # True = load previously saved model from disk?  False = (re)train the model
+LOAD = False         # True = load previously saved model from disk?  False = (re)train the model
 # SAVE = "/_TForm_model10e.pth.tar"   # file name to save the model under
 
 SAVE = "/_TForm_model_trade10e.pth.tar"   # file name to save the model under
 
-EPOCHS = 30
+EPOCHS = 40
 INLEN = 32          # input size
 FEAT = 32           # d_model = number of expected features in the inputs, up to 512    
 HEADS = 8           # default 8
