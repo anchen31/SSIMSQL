@@ -31,6 +31,13 @@ contract1 = Stock('SPY', 'SMART', 'USD')
 GLD1 = Stock('GLD', 'SMART', 'USD')
 UVXY1 = Stock('UVXY', 'SMART', 'USD')
 SQQQ1 = Stock('SQQQ', 'SMART', 'USD')
+CVX1 = Stock('CVX', 'SMART', 'USD')
+RIO1 = Stock('RIO', 'SMART', 'USD')
+NUE1 = Stock('NUE', 'SMART', 'USD')
+LWAY1 = Stock('LWAY', 'SMART', 'USD')
+TSN1 = Stock('TSN', 'SMART', 'USD')
+NTR1 = Stock('NTR', 'SMART', 'USD')
+ADM1 = Stock('ADM', 'SMART', 'USD')
 
 levels = []
 
@@ -216,6 +223,195 @@ def SQQQ():
 
     return df[['date', 'SQQQ']]
 
+def CVX():
+    barsList = []
+
+    ib.reqMktData(CVX1, '', False, False)
+    ticker = ib.ticker(CVX1)
+    ib.sleep(0.1)
+
+    sPrice = ticker.marketPrice()
+
+    bars = ib.reqHistoricalData(
+        CVX1, 
+        endDateTime='',
+        durationStr=durStrng,
+        barSizeSetting=barSze,
+        whatToShow='TRADES',
+        useRTH=RTH,
+        formatDate=1,
+        keepUpToDate=False)
+
+    barsList.append(bars)
+
+    allBars = [b for bars in reversed(barsList) for b in bars]
+    df = util.df(allBars)
+    df['CVX'] = df['close']
+
+    return df[['date', 'CVX']]
+
+def RIO():
+    barsList = []
+
+    ib.reqMktData(RIO1, '', False, False)
+    ticker = ib.ticker(RIO1)
+    ib.sleep(0.1)
+
+    sPrice = ticker.marketPrice()
+
+    bars = ib.reqHistoricalData(
+        RIO1, 
+        endDateTime='',
+        durationStr=durStrng,
+        barSizeSetting=barSze,
+        whatToShow='TRADES',
+        useRTH=RTH,
+        formatDate=1,
+        keepUpToDate=False)
+
+    barsList.append(bars)
+
+    allBars = [b for bars in reversed(barsList) for b in bars]
+    df = util.df(allBars)
+    df['RIO'] = df['close']
+
+    return df[['date', 'RIO']]
+
+def NUE():
+    barsList = []
+
+    ib.reqMktData(NUE1, '', False, False)
+    ticker = ib.ticker(NUE1)
+    ib.sleep(0.1)
+
+    sPrice = ticker.marketPrice()
+
+    bars = ib.reqHistoricalData(
+        NUE1, 
+        endDateTime='',
+        durationStr=durStrng,
+        barSizeSetting=barSze,
+        whatToShow='TRADES',
+        useRTH=RTH,
+        formatDate=1,
+        keepUpToDate=False)
+
+    barsList.append(bars)
+
+    allBars = [b for bars in reversed(barsList) for b in bars]
+    df = util.df(allBars)
+    df['NUE'] = df['close']
+
+    return df[['date', 'NUE']]
+
+def LWAY():
+    barsList = []
+
+    ib.reqMktData(LWAY1, '', False, False)
+    ticker = ib.ticker(LWAY1)
+    ib.sleep(0.1)
+
+    sPrice = ticker.marketPrice()
+
+    bars = ib.reqHistoricalData(
+        LWAY1, 
+        endDateTime='',
+        durationStr=durStrng,
+        barSizeSetting=barSze,
+        whatToShow='TRADES',
+        useRTH=RTH,
+        formatDate=1,
+        keepUpToDate=False)
+
+    barsList.append(bars)
+
+    allBars = [b for bars in reversed(barsList) for b in bars]
+    df = util.df(allBars)
+    df['LWAY'] = df['close']
+
+    return df[['date', 'LWAY']]
+
+def TSN():
+    barsList = []
+
+    ib.reqMktData(TSN1, '', False, False)
+    ticker = ib.ticker(TSN1)
+    ib.sleep(0.1)
+
+    sPrice = ticker.marketPrice()
+
+    bars = ib.reqHistoricalData(
+        TSN1, 
+        endDateTime='',
+        durationStr=durStrng,
+        barSizeSetting=barSze,
+        whatToShow='TRADES',
+        useRTH=RTH,
+        formatDate=1,
+        keepUpToDate=False)
+
+    barsList.append(bars)
+
+    allBars = [b for bars in reversed(barsList) for b in bars]
+    df = util.df(allBars)
+    df['TSN'] = df['close']
+
+    return df[['date', 'TSN']]
+
+def NTR():
+    barsList = []
+
+    ib.reqMktData(NTR1, '', False, False)
+    ticker = ib.ticker(NTR1)
+    ib.sleep(0.1)
+
+    sPrice = ticker.marketPrice()
+
+    bars = ib.reqHistoricalData(
+        NTR1, 
+        endDateTime='',
+        durationStr=durStrng,
+        barSizeSetting=barSze,
+        whatToShow='TRADES',
+        useRTH=RTH,
+        formatDate=1,
+        keepUpToDate=False)
+
+    barsList.append(bars)
+
+    allBars = [b for bars in reversed(barsList) for b in bars]
+    df = util.df(allBars)
+    df['NTR'] = df['close']
+
+    return df[['date', 'NTR']]
+
+def ADM():
+    barsList = []
+
+    ib.reqMktData(ADM1, '', False, False)
+    ticker = ib.ticker(ADM1)
+    ib.sleep(0.1)
+
+    sPrice = ticker.marketPrice()
+
+    bars = ib.reqHistoricalData(
+        ADM1, 
+        endDateTime='',
+        durationStr=durStrng,
+        barSizeSetting=barSze,
+        whatToShow='TRADES',
+        useRTH=RTH,
+        formatDate=1,
+        keepUpToDate=False)
+
+    barsList.append(bars)
+
+    allBars = [b for bars in reversed(barsList) for b in bars]
+    df = util.df(allBars)
+    df['ADM'] = df['close']
+
+    return df[['date', 'ADM']]
+
 
 
 # add comodities here oil, wheat, grain, etc 
@@ -336,12 +532,25 @@ def main():
         df = pd.merge(df, UVXYdf, on=['date'])
         SQQQdf = SQQQ()
         df = pd.merge(df, SQQQdf, on=['date'])
-
+        CVXdf = CVX()
+        df = pd.merge(df, CVXdf, on=['date'])
+        RIOdf = RIO()
+        df = pd.merge(df, RIOdf, on=['date'])
+        NUEdf = NUE()
+        df = pd.merge(df, NUEdf, on=['date'])
+        LWAYdf = LWAY()
+        df = pd.merge(df, LWAYdf, on=['date'])
+        TSNdf = TSN()
+        df = pd.merge(df, TSNdf, on=['date'])
+        NTRdf = NTR()
+        df = pd.merge(df, NTRdf, on=['date'])
+        ADMdf = ADM()
+        df = pd.merge(df, ADMdf, on=['date'])
         #print(df.columns)
 
         print(df.tail())
 
-        # df.to_csv('two_year_date.csv', index=False)
+        # df.to_csv('four_year_date.csv', index=False)
 
         
         #################################################Create a new db for this data, this will be the main db that will have everything else join it###

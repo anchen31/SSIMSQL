@@ -88,8 +88,8 @@ import matplotlib.pyplot as plt
 
 
 ########################################################### heat map below #####
-
-
+# with 4 year data, it is more responsive to the indexes such as gld 
+# with the intrad day data, it is less efficent
 
 import pandas as pd
 import seaborn as sns
