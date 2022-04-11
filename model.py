@@ -11,7 +11,7 @@ import seaborn as sns
 # from tensorflow.keras.models import Sequential
 # from tensorflow.keras.layers import Dense, Dropout, LSTM, BatchNormalization
 # from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler, RobustScaler
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 # from sqlalchemy import create_engine
@@ -32,7 +32,8 @@ import config
 password = config.password
 
 min_max_scaler = preprocessing.MinMaxScaler()
-scaler = MinMaxScaler(feature_range = (0,1))
+# scaler = MinMaxScaler(feature_range = (0,1))
+scaler = StandardScaler()
 
 
 
@@ -45,10 +46,10 @@ EPOCHS = 40
 INLEN = 32          # input size
 FEAT = 32           # d_model = number of expected features in the inputs, up to 512    
 HEADS = 8           # default 8
-ENCODE = 6          # encoder layers
-DECODE = 6          # decoder layers
+ENCODE = 4          # encoder layers
+DECODE = 4          # decoder layers
 DIM_FF = 64         # dimensions of the feedforward network, default 2048
-BATCH = 32          # batch size
+BATCH = 4           # batch size
 ACTF = "relu"       # activation function, relu (default) or gelu
 SCHLEARN = None     # a PyTorch learning rate scheduler; None = constant rate
 LEARN = 1e-4        # learning rate
@@ -139,7 +140,7 @@ def isResistance(df,i):
 #                     'UVXY', 'SQQQ'], axis=1, inplace=False)
 data = []
 
-df1 = pd.read_csv('four_year_data.csv')
+df1 = pd.read_csv('four_year_date.csv')
 df1 = df1.loc[:, ~df1.columns.str.contains('^Unnamed')] # removes the unamed df dolumn
 
 # gets the local mins and maxes
@@ -161,19 +162,19 @@ df1 = df1.set_index('date')
 df = df1.copy()
 
 # df = pd.DataFrame(scaler.fit_transform(df), columns=df.columns, index=df1.index)
-
-ts = TimeSeries.from_series(df1['open'], fill_missing_dates=True, freq='D')
+fill = False
+ts = TimeSeries.from_series(df1['open'], fill_missing_dates=fill, freq='D')
 
 ############################################################## create multiple time series object 
 # create time series object for target variable, This is univariate
-ts_P = TimeSeries.from_series(df["open"], fill_missing_dates=True, freq='D')
+ts_P = TimeSeries.from_series(df["open"], fill_missing_dates=fill, freq='D')
 ts_P = ts_P.pd_dataframe()
 ts_P_1 = ts_P.fillna(method='ffill')
 ts_P = TimeSeries.from_series(ts_P_1)
 
 # creates time series object covariate feature, This is multivariate
 df_covF = df.loc[:, df.columns != "open"]
-ts_covF = TimeSeries.from_dataframe(df_covF, fill_missing_dates=True, freq='D')
+ts_covF = TimeSeries.from_dataframe(df_covF, fill_missing_dates=fill, freq='D')
 ts_covF = ts_covF.pd_dataframe()
 ts_covF_1 = ts_covF.fillna(method='bfill')
 ts_covF = TimeSeries.from_series(ts_covF_1)
@@ -211,41 +212,42 @@ covF_t = scalerF.transform(ts_covF)
 
 
 # feature engineering - create time covariates: hour, weekday, month, year, country-specific holidays
-covT = datetime_attribute_timeseries( ts_P.time_index, 
-                                      attribute="day_of_week", 
-                                      one_hot=False)
-# covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="day_of_week", one_hot=False))
-covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="month", one_hot=False))
-covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="year", one_hot=False))
+# covT = datetime_attribute_timeseries( ts_P.time_index, 
+#                                       attribute="day_of_week", 
+#                                       one_hot=False)
+# # covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="day_of_week", one_hot=False))
+# covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="month", one_hot=False))
+# covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="year", one_hot=False))
 
-covT = covT.add_holidays(country_code="US")
+# covT = covT.add_holidays(country_code="US")
 
-covT = covT.astype(np.float32)
+# covT = covT.astype(np.float32)
 
-# train/test split
-covT_train, covT_test = covT.split_after(SPLIT)
+# # train/test split
+# covT_train, covT_test = covT.split_after(SPLIT)
 
-scalerT = Scaler(scaler)
-scalerT.fit_transform(covT)
-covT_ttrain = scalerT.transform(covT_train)
-covT_ttest = scalerT.transform(covT_test)
-covT_t = scalerT.transform(covT)
-covT_t = covT_t.astype(np.float32)
+# scalerT = Scaler(scaler)
+# scalerT.fit_transform(covT)
+# covT_ttrain = scalerT.transform(covT_train)
+# covT_ttest = scalerT.transform(covT_test)
+# covT_t = scalerT.transform(covT)
+# covT_t = covT_t.astype(np.float32)
 
-ts_cov = ts_covF.concatenate(covT, axis=1)                      # unscaled F+T
-cov_t = covF_t.concatenate(covT_t, axis=1)                      # scaled F+T
-cov_ttrain = covF_ttrain.concatenate(covT_ttrain, axis=1)       # scaled F+T training
+# ts_cov = ts_covF.concatenate(covT, axis=1)                      # unscaled F+T
+# cov_t = covF_t.concatenate(covT_t, axis=1)                      # scaled F+T
+# cov_ttrain = covF_ttrain.concatenate(covT_ttrain, axis=1)       # scaled F+T training
 
 
 
 # #################################################################### graphs the cycles of the data
-# cov_t = cov_t.pd_dataframe()
+cov_t = covF_t.pd_dataframe()
 
-# df3 = cov_t
+df3 = cov_t
+print(len(df3))
 
-# df3.plot()
-# # # covF_ttrain.plot()
-# plt.show()
+df3.plot()
+# # covF_ttrain.plot()
+plt.show()
 
 # # additional datetime columns: feature engineering
 # df3["month"] = df3.index.month
@@ -279,68 +281,68 @@ cov_ttrain = covF_ttrain.concatenate(covT_ttrain, axis=1)       # scaled F+T tra
 
 ###############################################################################################
 
-model = TransformerModel(
-                    input_chunk_length = INLEN,
-                    output_chunk_length = N_FC,
-                    batch_size = BATCH,
-                    n_epochs = EPOCHS,
-                    model_name = "Transformer_price",
-                    nr_epochs_val_period = VALWAIT,
-                    d_model = FEAT,
-                    nhead = HEADS,
-                    num_encoder_layers = ENCODE,
-                    num_decoder_layers = DECODE,
-                    dim_feedforward = DIM_FF,
-                    dropout = DROPOUT,
-                    activation = ACTF,
-                    random_state=RAND,
-                    likelihood=QuantileRegression(quantiles=QUANTILES), 
-                    optimizer_kwargs={'lr': LEARN},
-                    add_encoders={"cyclic": {"future": ["dayofweek", "month"]}},
-                    save_checkpoints=True,
-                    force_reset=True
-                    )
+# model = TransformerModel(
+#                     input_chunk_length = INLEN,
+#                     output_chunk_length = N_FC,
+#                     batch_size = BATCH,
+#                     n_epochs = EPOCHS,
+#                     model_name = "Transformer_price",
+#                     nr_epochs_val_period = VALWAIT,
+#                     d_model = FEAT,
+#                     nhead = HEADS,
+#                     num_encoder_layers = ENCODE,
+#                     num_decoder_layers = DECODE,
+#                     dim_feedforward = DIM_FF,
+#                     dropout = DROPOUT,
+#                     activation = ACTF,
+#                     random_state=RAND,
+#                     likelihood=QuantileRegression(quantiles=QUANTILES), 
+#                     optimizer_kwargs={'lr': LEARN},
+#                     add_encoders={"cyclic": {"future": ["dayofweek", "month"]}},
+#                     save_checkpoints=True,
+#                     force_reset=True
+#                     )
 
 
-# training: load a saved model or (re)train
-if LOAD:
-    print("have loaded a previously saved model from disk:" + mpath)
-    model = TransformerModel.load_model(mpath)                            # load previously model from disk 
-else:
-    model.fit(  ts_ttrain, 
-                past_covariates=cov_t, 
-                verbose=True)
-    print("have saved the model after training:", mpath)
-    model.save_model(mpath)
+# # training: load a saved model or (re)train
+# if LOAD:
+#     print("have loaded a previously saved model from disk:" + mpath)
+#     model = TransformerModel.load_model(mpath)                            # load previously model from disk 
+# else:
+#     model.fit(  ts_ttrain, 
+#                 past_covariates=covF_t, 
+#                 verbose=True)
+#     print("have saved the model after training:", mpath)
+#     model.save_model(mpath)
 
-# # testing: generate predictions
-ts_tpred = model.predict(   n=len(ts_ttest), 
-                            num_samples=N_SAMPLES,   
-                            n_jobs=N_JOBS, 
-                            verbose=True)
+# # # testing: generate predictions
+# ts_tpred = model.predict(   n=len(ts_ttest), 
+#                             num_samples=N_SAMPLES,   
+#                             n_jobs=N_JOBS, 
+#                             verbose=True)
 
 
 
-# testing: helper function: plot predictions
-def plot_predict(ts_actual, ts_test, ts_pred):
+# # testing: helper function: plot predictions
+# def plot_predict(ts_actual, ts_test, ts_pred):
     
-    ## plot time series, limited to forecast horizon
-    plt.figure(figsize=FIGSIZE)
+#     ## plot time series, limited to forecast horizon
+#     plt.figure(figsize=FIGSIZE)
     
-    ts_actual.plot(label="actual")                                       # plot actual
+#     ts_actual.plot(label="actual")                                       # plot actual
     
-    ts_pred.plot(low_quantile=qL1, high_quantile=qU1, label=label_q1)    # plot U1 quantile band
-    #ts_pred.plot(low_quantile=qL2, high_quantile=qU2, label=label_q2)   # plot U2 quantile band
-    ts_pred.plot(low_quantile=qL3, high_quantile=qU3, label=label_q3)    # plot U3 quantile band
-    ts_pred.plot(central_quantile="mean", label="expected")              # plot "mean" or median=0.5
+#     ts_pred.plot(low_quantile=qL1, high_quantile=qU1, label=label_q1)    # plot U1 quantile band
+#     #ts_pred.plot(low_quantile=qL2, high_quantile=qU2, label=label_q2)   # plot U2 quantile band
+#     ts_pred.plot(low_quantile=qL3, high_quantile=qU3, label=label_q3)    # plot U3 quantile band
+#     ts_pred.plot(central_quantile="mean", label="expected")              # plot "mean" or median=0.5
     
-    plt.title("TFT: test set (MAPE: {:.2f}%)".format(mape(ts_test, ts_pred)))
-    plt.legend()
-    plt.show()    
+#     plt.title("TFT: test set (MAPE: {:.2f}%)".format(mape(ts_test, ts_pred)))
+#     plt.legend()
+#     plt.show()    
 
 
-ts_pred = scalerP.inverse_transform(ts_tpred)
-plot_predict(ts, ts_test, ts_pred)
+# ts_pred = scalerP.inverse_transform(ts_tpred)
+# plot_predict(ts, ts_test, ts_pred)
 
 
 

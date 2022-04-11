@@ -32,11 +32,11 @@ import config
 password = config.password
 
 min_max_scaler = preprocessing.MinMaxScaler()
-scaler = MinMaxScaler(feature_range = (0,1))
+# scaler = MinMaxScaler(feature_range = (0,1))
+scaler = StandardScaler()
 
 
-
-LOAD = True         # True = load previously saved model from disk?  False = (re)train the model
+LOAD = False         # True = load previously saved model from disk?  False = (re)train the model
 SAVE = "/_TForm_model10e.pth.tar"   # file name to save the model under
 
 EPOCHS = 40
@@ -138,6 +138,9 @@ data = []
 
 df1 = pd.read_csv('OPdata.csv')
 df1 = df1.loc[:, ~df1.columns.str.contains('^Unnamed')] # removes the unamed df dolumn
+del df1['volume']
+del df1['barCount']
+del df1['RSI']
 
 # gets the local mins and maxes
 for i in range(2,df1.shape[0]-2):
@@ -146,17 +149,17 @@ for i in range(2,df1.shape[0]-2):
   elif isResistance(df1,i):
     data.append((i, df1['high'][i], -1))
 
-df1['trade'] = 5
-for stuff in data:
-  if stuff[2] == 1:
-    df1.iat[stuff[0], 20] = 6
-  if stuff[2] == -1:
-    df1.iat[stuff[0], 20] = 4
+# df1['trade'] = 5
+# for stuff in data:
+#   if stuff[2] == 1:
+#     df1.iat[stuff[0], 18] = 6
+#   if stuff[2] == -1:
+#     df1.iat[stuff[0], 18] = 4
 
 # df1['date'] = pd.to_datetime(df1['date'])
 # df1 = df1.set_index('date')
 ts = df1['open']
-trade = df1['trade']
+# trade = df1['trade']
 
 # df1 = df1.reset_index()
 # xaxis = df1['date'].values.tolist()
@@ -191,7 +194,7 @@ ts_covF = TimeSeries.from_series(ts_covF_1)
 # train/test split and scaling of TARGET variable
 ts_train, ts_test = ts_P.split_after(SPLIT)
 
-scalerP = Scaler()
+scalerP = Scaler(scaler)
 # scalerP.fit_transform(ts_train)
 scalerP.fit_transform(ts_P) # LETS SEE IF THIS WORKSSSSS
 ts_ttrain = scalerP.transform(ts_train)
@@ -207,7 +210,7 @@ ts_t = scalerP.transform(ts_P)
 # train/test split and scaling of FEATURE covariates
 covF_train, covF_test = ts_covF.split_after(SPLIT)
 
-scalerF = Scaler()
+scalerF = Scaler(scaler)
 # scalerF.fit_transform(covF_train)
 scalerF.fit_transform(ts_covF) # LETS SEE IF THIS WORKSSSSS
 covF_ttrain = scalerF.transform(covF_train) 
@@ -224,12 +227,26 @@ covF_t = scalerF.transform(ts_covF)
 
 
 # # #################################################################### graphs the cycles of the data
-# covF_t = scalerF.fit_transform(covF_t)
 
 # cov_t = covF_t.pd_dataframe()
 # df3 = cov_t
+# print(len(df3))
 # df3.plot()
 # plt.show()
+
+
+# plt.figure(figsize = (15,15))
+# sns.set(font_scale=0.75)
+# ax = sns.heatmap(df3.corr().round(3), 
+#             annot=True, 
+#             square=True, 
+#             linewidths=.75, cmap="coolwarm", 
+#             fmt = ".2f", 
+#             annot_kws = {"size": 11})
+# ax.xaxis.tick_bottom()
+# plt.title("correlation matrix")
+# plt.show()
+
 
 
 ###############################################################################################
@@ -293,7 +310,7 @@ def plot_predict(ts_actual, ts_test, ts_pred):
 
     # fig, ax1 = plt.subplots()
 
-    # ax2 = ax1.twinx()
+    # ax2 = ax1.twinx()y
     # ax3 = ax1.twinx()
 
     # ax1.plot(ts_actual)

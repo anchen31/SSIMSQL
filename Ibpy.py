@@ -17,8 +17,8 @@ from mplfinance.original_flavor import candlestick_ohlc
 import matplotlib.dates as mpl_dates
 import matplotlib.pyplot as plt
 
-barSze = '1 day'
-durStrng = '4 Y'
+barSze = '10 mins'
+durStrng = '1 Y'
 
 ib = IB()
 ib.connect('127.0.0.1', 7497, clientId=2)
@@ -38,6 +38,9 @@ LWAY1 = Stock('LWAY', 'SMART', 'USD')
 TSN1 = Stock('TSN', 'SMART', 'USD')
 NTR1 = Stock('NTR', 'SMART', 'USD')
 ADM1 = Stock('ADM', 'SMART', 'USD')
+HYG1 = Stock('HYG', 'SMART', 'USD')
+SRLN1 = Stock('SRLN', 'SMART', 'USD')
+JNK1 = Stock('JNK', 'SMART', "USD")
 
 levels = []
 
@@ -120,12 +123,6 @@ def ltSR():
 def datafrm():
     barsList = []
 
-    ib.reqMktData(contract1, '', False, False)
-    ticker = ib.ticker(contract1)
-    ib.sleep(0.1)
-
-    sPrice = ticker.marketPrice()
-
     bars = ib.reqHistoricalData(
         contract1, 
         endDateTime='',
@@ -144,12 +141,6 @@ def datafrm():
 
 def GLD():
     barsList = []
-
-    ib.reqMktData(GLD1, '', False, False)
-    ticker = ib.ticker(GLD1)
-    ib.sleep(0.1)
-
-    sPrice = ticker.marketPrice()
 
     bars = ib.reqHistoricalData(
         GLD1, 
@@ -172,12 +163,6 @@ def GLD():
 def UVXY():
     barsList = []
 
-    ib.reqMktData(UVXY1, '', False, False)
-    ticker = ib.ticker(UVXY1)
-    ib.sleep(0.1)
-
-    sPrice = ticker.marketPrice()
-
     bars = ib.reqHistoricalData(
         UVXY1, 
         endDateTime='',
@@ -198,12 +183,6 @@ def UVXY():
 
 def SQQQ():
     barsList = []
-
-    ib.reqMktData(SQQQ1, '', False, False)
-    ticker = ib.ticker(SQQQ1)
-    ib.sleep(0.1)
-
-    sPrice = ticker.marketPrice()
 
     bars = ib.reqHistoricalData(
         SQQQ1, 
@@ -226,12 +205,6 @@ def SQQQ():
 def CVX():
     barsList = []
 
-    ib.reqMktData(CVX1, '', False, False)
-    ticker = ib.ticker(CVX1)
-    ib.sleep(0.1)
-
-    sPrice = ticker.marketPrice()
-
     bars = ib.reqHistoricalData(
         CVX1, 
         endDateTime='',
@@ -252,12 +225,6 @@ def CVX():
 
 def RIO():
     barsList = []
-
-    ib.reqMktData(RIO1, '', False, False)
-    ticker = ib.ticker(RIO1)
-    ib.sleep(0.1)
-
-    sPrice = ticker.marketPrice()
 
     bars = ib.reqHistoricalData(
         RIO1, 
@@ -280,12 +247,6 @@ def RIO():
 def NUE():
     barsList = []
 
-    ib.reqMktData(NUE1, '', False, False)
-    ticker = ib.ticker(NUE1)
-    ib.sleep(0.1)
-
-    sPrice = ticker.marketPrice()
-
     bars = ib.reqHistoricalData(
         NUE1, 
         endDateTime='',
@@ -306,12 +267,6 @@ def NUE():
 
 def LWAY():
     barsList = []
-
-    ib.reqMktData(LWAY1, '', False, False)
-    ticker = ib.ticker(LWAY1)
-    ib.sleep(0.1)
-
-    sPrice = ticker.marketPrice()
 
     bars = ib.reqHistoricalData(
         LWAY1, 
@@ -334,12 +289,6 @@ def LWAY():
 def TSN():
     barsList = []
 
-    ib.reqMktData(TSN1, '', False, False)
-    ticker = ib.ticker(TSN1)
-    ib.sleep(0.1)
-
-    sPrice = ticker.marketPrice()
-
     bars = ib.reqHistoricalData(
         TSN1, 
         endDateTime='',
@@ -360,12 +309,6 @@ def TSN():
 
 def NTR():
     barsList = []
-
-    ib.reqMktData(NTR1, '', False, False)
-    ticker = ib.ticker(NTR1)
-    ib.sleep(0.1)
-
-    sPrice = ticker.marketPrice()
 
     bars = ib.reqHistoricalData(
         NTR1, 
@@ -388,12 +331,6 @@ def NTR():
 def ADM():
     barsList = []
 
-    ib.reqMktData(ADM1, '', False, False)
-    ticker = ib.ticker(ADM1)
-    ib.sleep(0.1)
-
-    sPrice = ticker.marketPrice()
-
     bars = ib.reqHistoricalData(
         ADM1, 
         endDateTime='',
@@ -411,6 +348,49 @@ def ADM():
     df['ADM'] = df['close']
 
     return df[['date', 'ADM']]
+
+def HYG():
+    barsList = []
+
+    bars = ib.reqHistoricalData(
+        HYG1, 
+        endDateTime='',
+        durationStr=durStrng,
+        barSizeSetting=barSze,
+        whatToShow='TRADES',
+        useRTH=RTH,
+        formatDate=1,
+        keepUpToDate=False)
+
+    barsList.append(bars)
+
+    allBars = [b for bars in reversed(barsList) for b in bars]
+    df = util.df(allBars)
+    df['HYG'] = df['close']
+
+    return df[['date', 'HYG']]
+
+def SRLN():
+    barsList = []
+
+    bars = ib.reqHistoricalData(
+        SRLN1, 
+        endDateTime='',
+        durationStr=durStrng,
+        barSizeSetting=barSze,
+        whatToShow='TRADES',
+        useRTH=RTH,
+        formatDate=1,
+        keepUpToDate=False)
+
+    barsList.append(bars)
+
+    allBars = [b for bars in reversed(barsList) for b in bars]
+    df = util.df(allBars)
+    df['SRLN'] = df['close']
+
+    return df[['date', 'SRLN']]
+
 
 
 
@@ -546,11 +526,22 @@ def main():
         df = pd.merge(df, NTRdf, on=['date'])
         ADMdf = ADM()
         df = pd.merge(df, ADMdf, on=['date'])
+        HYGdf = HYG()
+        df = pd.merge(df, HYGdf, on=['date'])
+        SRLNdf = SRLN()
+        df = pd.merge(df, SRLNdf, on=['date'])
+
+
+
+
+
         #print(df.columns)
 
         print(df.tail())
 
-        # df.to_csv('four_year_date.csv', index=False)
+
+        df.to_csv('OPdata.csv', index=False)
+
 
         
         #################################################Create a new db for this data, this will be the main db that will have everything else join it###
