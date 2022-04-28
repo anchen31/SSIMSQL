@@ -40,7 +40,23 @@ NTR1 = Stock('NTR', 'SMART', 'USD')
 ADM1 = Stock('ADM', 'SMART', 'USD')
 HYG1 = Stock('HYG', 'SMART', 'USD')
 SRLN1 = Stock('SRLN', 'SMART', 'USD')
-JNK1 = Stock('JNK', 'SMART', "USD")
+JNK1 = Stock('JNK', 'SMART', 'USD')
+
+EWH1 = Stock('EWH', 'SMART', 'USD')
+GBTC1 = Stock('GBTC', 'SMART', 'USD')
+USO1 = Stock('USO', 'SMART', 'USD')
+DIA1 = Stock('DIA', 'SMART', 'USD')
+QQQ1 = Stock('QQQ', 'SMART', 'USD')
+IWM1 = Stock('IWM', 'SMART', 'USD')
+IEF1 = Stock('IEF', 'SMART', 'USD')
+SIVR1 = Stock('SIVR', 'SMART', 'USD')
+FXB1 = Stock('FXB', 'SMART', 'USD')
+FXE1 = Stock('FXE', 'SMART', 'USD')
+
+
+
+
+
 
 levels = []
 
@@ -391,19 +407,216 @@ def SRLN():
 
     return df[['date', 'SRLN']]
 
+def EWH():
+    barsList = []
 
+    bars = ib.reqHistoricalData(
+        EWH1, 
+        endDateTime='',
+        durationStr=durStrng,
+        barSizeSetting=barSze,
+        whatToShow='TRADES',
+        useRTH=RTH,
+        formatDate=1,
+        keepUpToDate=False)
 
+    barsList.append(bars)
 
-# add comodities here oil, wheat, grain, etc 
-    # there are 4 sectors of commodities so ther eare at least 4 new components to add
+    allBars = [b for bars in reversed(barsList) for b in bars]
+    df = util.df(allBars)
+    df['EWH'] = df['close']
 
+    return df[['date', 'EWH']]
 
+def GBTC():
+    barsList = []
 
-# with commodities, include bond yields and infaltionary data
-    # learn more about bond tields and how they affect it
-    
-# there are 4 driving factors that I should test
-#
+    bars = ib.reqHistoricalData(
+        GBTC1, 
+        endDateTime='',
+        durationStr=durStrng,
+        barSizeSetting=barSze,
+        whatToShow='TRADES',
+        useRTH=RTH,
+        formatDate=1,
+        keepUpToDate=False)
+
+    barsList.append(bars)
+
+    allBars = [b for bars in reversed(barsList) for b in bars]
+    df = util.df(allBars)
+    df['GBTC'] = df['close']
+
+    return df[['date', 'GBTC']]
+
+def USO():
+    barsList = []
+
+    bars = ib.reqHistoricalData(
+        USO1, 
+        endDateTime='',
+        durationStr=durStrng,
+        barSizeSetting=barSze,
+        whatToShow='TRADES',
+        useRTH=RTH,
+        formatDate=1,
+        keepUpToDate=False)
+
+    barsList.append(bars)
+
+    allBars = [b for bars in reversed(barsList) for b in bars]
+    df = util.df(allBars)
+    df['USO'] = df['close']
+
+    return df[['date', 'USO']]
+
+def DIA():
+    barsList = []
+
+    bars = ib.reqHistoricalData(
+        DIA1, 
+        endDateTime='',
+        durationStr=durStrng,
+        barSizeSetting=barSze,
+        whatToShow='TRADES',
+        useRTH=RTH,
+        formatDate=1,
+        keepUpToDate=False)
+
+    barsList.append(bars)
+
+    allBars = [b for bars in reversed(barsList) for b in bars]
+    df = util.df(allBars)
+    df['DIA'] = df['close']
+
+    return df[['date', 'DIA']]
+
+def QQQ():
+    barsList = []
+
+    bars = ib.reqHistoricalData(
+        QQQ1, 
+        endDateTime='',
+        durationStr=durStrng,
+        barSizeSetting=barSze,
+        whatToShow='TRADES',
+        useRTH=RTH,
+        formatDate=1,
+        keepUpToDate=False)
+
+    barsList.append(bars)
+
+    allBars = [b for bars in reversed(barsList) for b in bars]
+    df = util.df(allBars)
+    df['QQQ'] = df['close']
+
+    return df[['date', 'QQQ']]
+
+def IWM():
+    barsList = []
+
+    bars = ib.reqHistoricalData(
+        IWM1, 
+        endDateTime='',
+        durationStr=durStrng,
+        barSizeSetting=barSze,
+        whatToShow='TRADES',
+        useRTH=RTH,
+        formatDate=1,
+        keepUpToDate=False)
+
+    barsList.append(bars)
+
+    allBars = [b for bars in reversed(barsList) for b in bars]
+    df = util.df(allBars)
+    df['IWM'] = df['close']
+
+    return df[['date', 'IWM']]
+
+def IEF():
+    barsList = []
+
+    bars = ib.reqHistoricalData(
+        IEF1, 
+        endDateTime='',
+        durationStr=durStrng,
+        barSizeSetting=barSze,
+        whatToShow='TRADES',
+        useRTH=RTH,
+        formatDate=1,
+        keepUpToDate=False)
+
+    barsList.append(bars)
+
+    allBars = [b for bars in reversed(barsList) for b in bars]
+    df = util.df(allBars)
+    df['IEF'] = df['close']
+
+    return df[['date', 'IEF']]
+
+def SIVR():
+    barsList = []
+
+    bars = ib.reqHistoricalData(
+        SIVR, 
+        endDateTime='',
+        durationStr=durStrng,
+        barSizeSetting=barSze,
+        whatToShow='TRADES',
+        useRTH=RTH,
+        formatDate=1,
+        keepUpToDate=False)
+
+    barsList.append(bars)
+
+    allBars = [b for bars in reversed(barsList) for b in bars]
+    df = util.df(allBars)
+    df['SIVR'] = df['close']
+
+    return df[['date', 'SIVR']]
+
+def FXB():
+    barsList = []
+
+    bars = ib.reqHistoricalData(
+        FXB1, 
+        endDateTime='',
+        durationStr=durStrng,
+        barSizeSetting=barSze,
+        whatToShow='TRADES',
+        useRTH=RTH,
+        formatDate=1,
+        keepUpToDate=False)
+
+    barsList.append(bars)
+
+    allBars = [b for bars in reversed(barsList) for b in bars]
+    df = util.df(allBars)
+    df['FXB'] = df['FXB']
+
+    return df[['date', 'SRLN']]
+
+def FXE():
+    barsList = []
+
+    bars = ib.reqHistoricalData(
+        FXE1, 
+        endDateTime='',
+        durationStr=durStrng,
+        barSizeSetting=barSze,
+        whatToShow='TRADES',
+        useRTH=RTH,
+        formatDate=1,
+        keepUpToDate=False)
+
+    barsList.append(bars)
+
+    allBars = [b for bars in reversed(barsList) for b in bars]
+    df = util.df(allBars)
+    df['FXE'] = df['close']
+
+    return df[['date', 'FXE']]
+
 
 
 
@@ -448,10 +661,6 @@ def main():
         rs = ema_up/ema_down
 
         df['RSI'] = round(100-(100/(1 + rs)), 4)
-
-        # most likely wont need these
-        # df['RSIup'] = 70
-        # df['RSIdown'] = 30
 
         # LT AND ST S/R ##########################################################################################################################################
         s =  np.mean(df['high'] - df['low'])
@@ -531,8 +740,22 @@ def main():
         SRLNdf = SRLN()
         df = pd.merge(df, SRLNdf, on=['date'])
 
+        EWHdf = EWH()
+        df = pd.merge(df, EWHdf, on=['date'])
+        GBTCdf = GBTC()
+        df = pd.merge()
 
 
+
+        GBTC1 = Stock('GBTC', 'SMART', 'USD')
+        USO1 = Stock('USO', 'SMART', 'USD')
+        DIA1 = Stock('DIA', 'SMART', 'USD')
+        QQQ1 = Stock('QQQ', 'SMART', 'USD')
+        IWM1 = Stock('IWM', 'SMART', 'USD')
+        IEF1 = Stock('IEF', 'SMART', 'USD')
+        SIVR1 = Stock('SIVR', 'SMART', 'USD')
+        FXB1 = Stock('FXB', 'SMART', 'USD')
+        FXE1 = Stock('FXE', 'SMART', 'USD')
 
 
         #print(df.columns)
