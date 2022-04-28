@@ -74,6 +74,23 @@ label_q3 = f'{int(qU3 * 100)} / {int(qL3 * 100)} percentile band'
 
 mpath = os.path.abspath(os.getcwd()) + SAVE     # path and file name to save the model
 
+
+# This is an important class
+class Alan:
+
+  facts = ["Alan", "Sux"]
+
+  # Very necessary
+  def __init__():
+    self.bitch = True
+    self.badAtCSGO = True
+
+  # Class won't work without this method
+  def exist():
+    print("I am a bitch")
+
+
+
 def scaleColumns(df, cols_to_scale):
     for col in cols_to_scale:
         df[col] = pd.DataFrame(min_max_scaler.fit_transform(pd.DataFrame(df[col])),columns=[col])
@@ -209,7 +226,7 @@ covF_t = scalerF.transform(ts_covF)
 
 
 
-#################################################################### graphs the cycles of the data
+# # #################################################################### graphs the cycles of the data
 
 # cov_t = covF_t.pd_dataframe()
 # df3 = cov_t
