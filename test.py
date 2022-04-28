@@ -36,7 +36,7 @@ min_max_scaler = preprocessing.MinMaxScaler()
 scaler = StandardScaler()
 
 
-LOAD = False         # True = load previously saved model from disk?  False = (re)train the model
+LOAD = True         # True = load previously saved model from disk?  False = (re)train the model
 SAVE = "/_TForm_model10e.pth.tar"   # file name to save the model under
 
 EPOCHS = 40
@@ -46,13 +46,13 @@ HEADS = 4           # default 8
 ENCODE = 5          # encoder layers
 DECODE = 5          # decoder layers
 DIM_FF = 64        # dimensions of the feedforward network, default 2048
-BATCH = 32          # batch size
+BATCH = 64          # batch size
 ACTF = "relu"       # activation function, relu (default) or gelu
 SCHLEARN = None     # a PyTorch learning rate scheduler; None = constant rate
-LEARN = 1e-4        # learning rate
+LEARN = 1e-3        # learning rate
 VALWAIT = 1         # epochs to wait before evaluating the loss on the test/validation set
 DROPOUT = 0.1       # dropout rate
-N_FC = 1            # output size
+N_FC = 2            # output size
 
 RAND = 42           # random seed
 N_SAMPLES = 100     # number of times a prediction is sampled from a probabilistic model
@@ -170,6 +170,7 @@ df1 = df1.drop(columns=['date'])
 
 
 
+
 df = df1.copy()
 
 # df = pd.DataFrame(scaler.fit_transform(df), columns=df.columns, index=df1.index)
@@ -186,7 +187,7 @@ ts_P = TimeSeries.from_series(ts_P_1)
 df_covF = df.loc[:, df.columns != "open"]
 ts_covF = TimeSeries.from_dataframe(df_covF, fill_missing_dates=fill, freq=None)
 ts_covF = ts_covF.pd_dataframe()
-ts_covF_1 = ts_covF.fillna(method='ffill')
+ts_covF_1 = ts_covF.fillna(method='bfill')
 ts_covF = TimeSeries.from_series(ts_covF_1)
 
 ############################################################## splits data into train or test data

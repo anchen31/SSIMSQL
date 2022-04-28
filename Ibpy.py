@@ -17,7 +17,7 @@ from mplfinance.original_flavor import candlestick_ohlc
 import matplotlib.dates as mpl_dates
 import matplotlib.pyplot as plt
 
-barSze = '10 mins'
+barSze = '1 hour'
 durStrng = '1 Y'
 
 ib = IB()

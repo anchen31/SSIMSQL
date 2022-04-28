@@ -46,8 +46,8 @@ EPOCHS = 40
 INLEN = 32          # input size
 FEAT = 32           # d_model = number of expected features in the inputs, up to 512    
 HEADS = 8           # default 8
-ENCODE = 4          # encoder layers
-DECODE = 4          # decoder layers
+ENCODE = 8          # encoder layers
+DECODE = 8          # decoder layers
 DIM_FF = 64         # dimensions of the feedforward network, default 2048
 BATCH = 4           # batch size
 ACTF = "relu"       # activation function, relu (default) or gelu
@@ -157,24 +157,27 @@ for stuff in data:
   if stuff[2] == -1:
     df1.iat[stuff[0], 20] = 0
 
+# df1 = df1.drop(columns=['date'])
+
 df1['date'] = pd.to_datetime(df1['date'])
 df1 = df1.set_index('date')
 df = df1.copy()
 
 # df = pd.DataFrame(scaler.fit_transform(df), columns=df.columns, index=df1.index)
 fill = False
-ts = TimeSeries.from_series(df1['open'], fill_missing_dates=fill, freq='D')
+freq = 'D'
+ts = TimeSeries.from_series(df1['open'], fill_missing_dates=fill, freq=freq)
 
 ############################################################## create multiple time series object 
 # create time series object for target variable, This is univariate
-ts_P = TimeSeries.from_series(df["open"], fill_missing_dates=fill, freq='D')
+ts_P = TimeSeries.from_series(df["open"], fill_missing_dates=fill, freq=freq)
 ts_P = ts_P.pd_dataframe()
 ts_P_1 = ts_P.fillna(method='ffill')
 ts_P = TimeSeries.from_series(ts_P_1)
 
 # creates time series object covariate feature, This is multivariate
 df_covF = df.loc[:, df.columns != "open"]
-ts_covF = TimeSeries.from_dataframe(df_covF, fill_missing_dates=fill, freq='D')
+ts_covF = TimeSeries.from_dataframe(df_covF, fill_missing_dates=fill, freq=freq)
 ts_covF = ts_covF.pd_dataframe()
 ts_covF_1 = ts_covF.fillna(method='bfill')
 ts_covF = TimeSeries.from_series(ts_covF_1)
@@ -240,14 +243,14 @@ covF_t = scalerF.transform(ts_covF)
 
 
 # #################################################################### graphs the cycles of the data
-cov_t = covF_t.pd_dataframe()
+# cov_t = covF_t.pd_dataframe()
 
-df3 = cov_t
-print(len(df3))
+# df3 = cov_t
+# print(len(df3))
 
-df3.plot()
-# # covF_ttrain.plot()
-plt.show()
+# df3.plot()
+# # # covF_ttrain.plot()
+# plt.show()
 
 # # additional datetime columns: feature engineering
 # df3["month"] = df3.index.month
@@ -281,115 +284,68 @@ plt.show()
 
 ###############################################################################################
 
-# model = TransformerModel(
-#                     input_chunk_length = INLEN,
-#                     output_chunk_length = N_FC,
-#                     batch_size = BATCH,
-#                     n_epochs = EPOCHS,
-#                     model_name = "Transformer_price",
-#                     nr_epochs_val_period = VALWAIT,
-#                     d_model = FEAT,
-#                     nhead = HEADS,
-#                     num_encoder_layers = ENCODE,
-#                     num_decoder_layers = DECODE,
-#                     dim_feedforward = DIM_FF,
-#                     dropout = DROPOUT,
-#                     activation = ACTF,
-#                     random_state=RAND,
-#                     likelihood=QuantileRegression(quantiles=QUANTILES), 
-#                     optimizer_kwargs={'lr': LEARN},
-#                     add_encoders={"cyclic": {"future": ["dayofweek", "month"]}},
-#                     save_checkpoints=True,
-#                     force_reset=True
-#                     )
+model = TransformerModel(
+                    input_chunk_length = INLEN,
+                    output_chunk_length = N_FC,
+                    batch_size = BATCH,
+                    n_epochs = EPOCHS,
+                    model_name = "Transformer_price",
+                    nr_epochs_val_period = VALWAIT,
+                    d_model = FEAT,
+                    nhead = HEADS,
+                    num_encoder_layers = ENCODE,
+                    num_decoder_layers = DECODE,
+                    dim_feedforward = DIM_FF,
+                    dropout = DROPOUT,
+                    activation = ACTF,
+                    random_state=RAND,
+                    likelihood=QuantileRegression(quantiles=QUANTILES), 
+                    optimizer_kwargs={'lr': LEARN},
+                    add_encoders={"cyclic": {"future": ["dayofweek", "month"]}},
+                    save_checkpoints=True,
+                    force_reset=True
+                    )
 
 
-# # training: load a saved model or (re)train
-# if LOAD:
-#     print("have loaded a previously saved model from disk:" + mpath)
-#     model = TransformerModel.load_model(mpath)                            # load previously model from disk 
-# else:
-#     model.fit(  ts_ttrain, 
-#                 past_covariates=covF_t, 
-#                 verbose=True)
-#     print("have saved the model after training:", mpath)
-#     model.save_model(mpath)
+# training: load a saved model or (re)train
+if LOAD:
+    print("have loaded a previously saved model from disk:" + mpath)
+    model = TransformerModel.load_model(mpath)                            # load previously model from disk 
+else:
+    model.fit(  ts_ttrain, 
+                past_covariates=covF_t, 
+                verbose=True)
+    print("have saved the model after training:", mpath)
+    model.save_model(mpath)
 
-# # # testing: generate predictions
-# ts_tpred = model.predict(   n=len(ts_ttest), 
-#                             num_samples=N_SAMPLES,   
-#                             n_jobs=N_JOBS, 
-#                             verbose=True)
+# # testing: generate predictions
+ts_tpred = model.predict(   n=len(ts_ttest), 
+                            num_samples=N_SAMPLES,   
+                            n_jobs=N_JOBS, 
+                            verbose=True)
 
 
 
-# # testing: helper function: plot predictions
-# def plot_predict(ts_actual, ts_test, ts_pred):
+# testing: helper function: plot predictions
+def plot_predict(ts_actual, ts_test, ts_pred):
     
-#     ## plot time series, limited to forecast horizon
-#     plt.figure(figsize=FIGSIZE)
+    ## plot time series, limited to forecast horizon
+    plt.figure(figsize=FIGSIZE)
     
-#     ts_actual.plot(label="actual")                                       # plot actual
+    ts_actual.plot(label="actual")                                       # plot actual
     
-#     ts_pred.plot(low_quantile=qL1, high_quantile=qU1, label=label_q1)    # plot U1 quantile band
-#     #ts_pred.plot(low_quantile=qL2, high_quantile=qU2, label=label_q2)   # plot U2 quantile band
-#     ts_pred.plot(low_quantile=qL3, high_quantile=qU3, label=label_q3)    # plot U3 quantile band
-#     ts_pred.plot(central_quantile="mean", label="expected")              # plot "mean" or median=0.5
+    ts_pred.plot(low_quantile=qL1, high_quantile=qU1, label=label_q1)    # plot U1 quantile band
+    #ts_pred.plot(low_quantile=qL2, high_quantile=qU2, label=label_q2)   # plot U2 quantile band
+    ts_pred.plot(low_quantile=qL3, high_quantile=qU3, label=label_q3)    # plot U3 quantile band
+    ts_pred.plot(central_quantile="mean", label="expected")              # plot "mean" or median=0.5
     
-#     plt.title("TFT: test set (MAPE: {:.2f}%)".format(mape(ts_test, ts_pred)))
-#     plt.legend()
-#     plt.show()    
+    plt.title("TFT: test set (MAPE: {:.2f}%)".format(mape(ts_test, ts_pred)))
+    plt.legend()
+    plt.show()    
 
 
-# ts_pred = scalerP.inverse_transform(ts_tpred)
-# plot_predict(ts, ts_test, ts_pred)
-
-
-
+ts_pred = scalerP.inverse_transform(ts_tpred)
+plot_predict(ts, ts_test, ts_pred)
 
 
 
-# # retrieve forecast series for chosen quantiles, 
-# # inverse-transform each series,
-# # insert them as columns in a new dataframe dfY
-# q50_RMSE = np.inf
-# q50_MAPE = np.inf
-# ts_q50 = None
-# pd.options.display.float_format = '{:,.2f}'.format
-# dfY = pd.DataFrame()
-# dfY["Actual"] = TimeSeries.pd_series(ts_test)
-
-
-# # helper function: get forecast values for selected quantile q and insert them in dataframe dfY
-# def predQ(ts_t, q):
-#     ts_tq = ts_t.quantile_timeseries(q)
-#     ts_q = scalerP.inverse_transform(ts_tq)
-#     s = TimeSeries.pd_series(ts_q)
-#     header = "Q" + format(int(q*100), "02d")
-#     dfY[header] = s
-#     if q==0.5:
-#         ts_q50 = ts_q
-#         q50_RMSE = rmse(ts_q50, ts_test)
-#         q50_MAPE = mape(ts_q50, ts_test) 
-#         print("RMSE:", f'{q50_RMSE:.2f}')
-#         print("MAPE:", f'{q50_MAPE:.2f}')
-  
-    
-# # call helper function predQ, once for every quantile
-# _ = [predQ(ts_tpred, q) for q in QUANTILES]
-
-# # move Q50 column to the left of the Actual column
-# col = dfY.pop("Q50")
-# dfY.insert(1, col.name, col)
-# # print(dfY)
-
-
-# plt.figure(100, figsize=(20, 7))
-# sns.set(font_scale=1.3)
-# p = sns.lineplot(x="date", y="Q50", data=dfY, palette="coolwarm")
-# sns.lineplot(x="date", y="Actual", data=dfY, palette="coolwarm")
-# plt.legend(labels=["forecast median price Q50", "actual price"])
-# p.set_ylabel("price")
-# p.set_xlabel("")
-# p.set_title("S&P price")
-# plt.show()
