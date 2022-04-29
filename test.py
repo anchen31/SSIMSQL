@@ -52,7 +52,7 @@ SCHLEARN = None     # a PyTorch learning rate scheduler; None = constant rate
 LEARN = 1e-3        # learning rate
 VALWAIT = 1         # epochs to wait before evaluating the loss on the test/validation set
 DROPOUT = 0.1       # dropout rate
-N_FC = 2            # output size
+N_FC = 4            # output size
 
 RAND = 42           # random seed
 N_SAMPLES = 100     # number of times a prediction is sampled from a probabilistic model

@@ -17,7 +17,7 @@ from mplfinance.original_flavor import candlestick_ohlc
 import matplotlib.dates as mpl_dates
 import matplotlib.pyplot as plt
 
-barSze = '1 hour'
+barSze = '30 mins'
 durStrng = '1 Y'
 
 ib = IB()
@@ -554,26 +554,26 @@ def IEF():
 
     return df[['date', 'IEF']]
 
-def SIVR():
-    barsList = []
+# def SIVR():
+#     barsList = []
 
-    bars = ib.reqHistoricalData(
-        SIVR, 
-        endDateTime='',
-        durationStr=durStrng,
-        barSizeSetting=barSze,
-        whatToShow='TRADES',
-        useRTH=RTH,
-        formatDate=1,
-        keepUpToDate=False)
+#     bars = ib.reqHistoricalData(
+#         SIVR, 
+#         endDateTime='',
+#         durationStr=durStrng,
+#         barSizeSetting=barSze,
+#         whatToShow='TRADES',
+#         useRTH=RTH,
+#         formatDate=1,
+#         keepUpToDate=False)
 
-    barsList.append(bars)
+#     barsList.append(bars)
 
-    allBars = [b for bars in reversed(barsList) for b in bars]
-    df = util.df(allBars)
-    df['SIVR'] = df['close']
+#     allBars = [b for bars in reversed(barsList) for b in bars]
+#     df = util.df(allBars)
+#     df['SIVR'] = df['close']
 
-    return df[['date', 'SIVR']]
+#     return df[['date', 'SIVR']]
 
 def FXB():
     barsList = []
@@ -592,9 +592,9 @@ def FXB():
 
     allBars = [b for bars in reversed(barsList) for b in bars]
     df = util.df(allBars)
-    df['FXB'] = df['FXB']
+    df['FXB'] = df['close']
 
-    return df[['date', 'SRLN']]
+    return df[['date', 'FXB']]
 
 def FXE():
     barsList = []
@@ -743,19 +743,23 @@ def main():
         EWHdf = EWH()
         df = pd.merge(df, EWHdf, on=['date'])
         GBTCdf = GBTC()
-        df = pd.merge()
-
-
-
-        GBTC1 = Stock('GBTC', 'SMART', 'USD')
-        USO1 = Stock('USO', 'SMART', 'USD')
-        DIA1 = Stock('DIA', 'SMART', 'USD')
-        QQQ1 = Stock('QQQ', 'SMART', 'USD')
-        IWM1 = Stock('IWM', 'SMART', 'USD')
-        IEF1 = Stock('IEF', 'SMART', 'USD')
-        SIVR1 = Stock('SIVR', 'SMART', 'USD')
-        FXB1 = Stock('FXB', 'SMART', 'USD')
-        FXE1 = Stock('FXE', 'SMART', 'USD')
+        df = pd.merge(df, GBTCdf, on=['date'])
+        USOdf = USO()
+        df = pd.merge(df, USOdf, on=['date'])
+        DIAdf = DIA()
+        df = pd.merge(df, DIAdf, on=['date'])
+        QQQdf = QQQ()
+        df = pd.merge(df, QQQdf, on=['date'])
+        IWMdf = IWM()
+        df = pd.merge(df, IWMdf, on=['date'])
+        IEFdf = IEF()
+        df = pd.merge(df, IEFdf, on=['date'])
+        # SIVRdf = SIVR()
+        # df = pd.merge(df, SIVRdf, on=['date'])
+        FXBdf = FXB()
+        df = pd.merge(df, FXBdf, on=['date'])
+        FXEdf = FXE()
+        df = pd.merge(df, FXEdf, on=['date'])
 
 
         #print(df.columns)

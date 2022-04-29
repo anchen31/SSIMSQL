@@ -37,19 +37,19 @@ scaler = StandardScaler()
 
 
 
-LOAD = False         # True = load previously saved model from disk?  False = (re)train the model
+LOAD = True         # True = load previously saved model from disk?  False = (re)train the model
 # SAVE = "/_TForm_model10e.pth.tar"   # file name to save the model under
 
 SAVE = "/_TForm_model_trade10e.pth.tar"   # file name to save the model under
 
-EPOCHS = 40
-INLEN = 32          # input size
-FEAT = 32           # d_model = number of expected features in the inputs, up to 512    
-HEADS = 8           # default 8
+EPOCHS = 10
+INLEN = 64          # input size
+FEAT = 64           # d_model = number of expected features in the inputs, up to 512    
+HEADS = 4           # default 8
 ENCODE = 8          # encoder layers
 DECODE = 8          # decoder layers
-DIM_FF = 64         # dimensions of the feedforward network, default 2048
-BATCH = 4           # batch size
+DIM_FF = 128         # dimensions of the feedforward network, default 2048
+BATCH = 16           # batch size
 ACTF = "relu"       # activation function, relu (default) or gelu
 SCHLEARN = None     # a PyTorch learning rate scheduler; None = constant rate
 LEARN = 1e-4        # learning rate
@@ -142,6 +142,8 @@ data = []
 
 df1 = pd.read_csv('four_year_date.csv')
 df1 = df1.loc[:, ~df1.columns.str.contains('^Unnamed')] # removes the unamed df dolumn
+
+print(len(df1.columns))
 
 # gets the local mins and maxes
 for i in range(2,df1.shape[0]-2):
@@ -246,7 +248,6 @@ covF_t = scalerF.transform(ts_covF)
 # cov_t = covF_t.pd_dataframe()
 
 # df3 = cov_t
-# print(len(df3))
 
 # df3.plot()
 # # # covF_ttrain.plot()
