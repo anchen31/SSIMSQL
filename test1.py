@@ -1,9 +1,12 @@
 import pandas as pd
+import seaborn as sns
 import numpy as np
 import yfinance
 from mplfinance.original_flavor import candlestick_ohlc
 import matplotlib.dates as mpl_dates
 import matplotlib.pyplot as plt
+from sklearn import preprocessing
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler, RobustScaler
 
 # plt.rcParams['figure.figsize'] = [12, 7]
 # plt.rc('font', size=14)
@@ -91,23 +94,43 @@ import matplotlib.pyplot as plt
 # with 4 year data, it is more responsive to the indexes such as gld 
 # with the intrad day data, it is less efficent
 
-import pandas as pd
-import seaborn as sns
-
-df = pd.read_csv('OPdata.csv', index_col=False)
 # df = pd.read_csv('OPdata.csv', index_col=False)
-# df = df.drop('Unnamed: 0',1)
-df = df.drop('date', 1)
+# # df = pd.read_csv('OPdata.csv', index_col=False)
+# # df = df.drop('Unnamed: 0',1)
+# df = df.drop('date', 1)
 
-plt.figure(figsize = (15,15))
-sns.set(font_scale=0.75)
-ax = sns.heatmap(df.corr().round(3), 
-            annot=True, 
-            square=True, 
-            linewidths=.75, cmap="coolwarm", 
-            fmt = ".2f", 
-            annot_kws = {"size": 11})
-ax.xaxis.tick_bottom()
-plt.title("correlation matrix")
+# plt.figure(figsize = (15,15))
+# sns.set(font_scale=0.75)
+# ax = sns.heatmap(df.corr().round(3), 
+#             annot=True, 
+#             square=True, 
+#             linewidths=.75, cmap="coolwarm", 
+#             fmt = ".2f", 
+#             annot_kws = {"size": 11})
+# ax.xaxis.tick_bottom()
+# plt.title("correlation matrix")
+# plt.show()
+
+
+
+##############################################################
+
+df = pd.read_csv('OPdata.csv', index_col=0)
+
+min_max_scaler = preprocessing.MinMaxScaler()
+# scaler = MinMaxScaler(feature_range = (0,1))
+scaler = StandardScaler()
+
+
+
+
+df = scaler.fit_transform(df)
+
+df = pd.DataFrame(df)
+
+df.plot()
 plt.show()
+
+
+
 
