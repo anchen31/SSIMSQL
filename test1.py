@@ -94,13 +94,12 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler, Ro
 # with 4 year data, it is more responsive to the indexes such as gld 
 # with the intrad day data, it is less efficent
 
-<<<<<<< HEAD
 import pandas as pd
 import seaborn as sns
 
 df = pd.read_csv('four_year_date.csv', index_col=False)
 
-# df = pd.read_csv('OPdata.csv', index_col=False)
+# # df = pd.read_csv('OPdata.csv', index_col=False)
 # # df = pd.read_csv('OPdata.csv', index_col=False)
 # # df = df.drop('Unnamed: 0',1)
 # df = df.drop('date', 1)
@@ -121,7 +120,7 @@ df = pd.read_csv('four_year_date.csv', index_col=False)
 
 ##############################################################
 
-df = pd.read_csv('OPdata.csv', index_col=0)
+# df = pd.read_csv('OPdata.csv', index_col=0)
 
 min_max_scaler = preprocessing.MinMaxScaler()
 # scaler = MinMaxScaler(feature_range = (0,1))
@@ -130,9 +129,12 @@ scaler = StandardScaler()
 
 
 
-df = scaler.fit_transform(df)
+# df = scaler.fit_transform(df)
 
 df = pd.DataFrame(df)
+del df['volume']
+del df['barCount']
+
 
 df.plot()
 plt.show()

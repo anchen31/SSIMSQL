@@ -32,8 +32,8 @@ import config
 password = config.password
 
 min_max_scaler = preprocessing.MinMaxScaler()
-# scaler = MinMaxScaler(feature_range = (0,1))
-scaler = StandardScaler()
+scaler = MinMaxScaler(feature_range = (0,1))
+# scaler = StandardScaler()
 
 
 #1.75 mape
@@ -160,8 +160,6 @@ for stuff in data:
   if stuff[2] == -1:
     df1.iat[stuff[0], 38] = 200
 
-print(df1.tail(50))
-
 # df1 = df1.drop(columns=['date'])
 
 df1['date'] = pd.to_datetime(df1['date'])
@@ -249,14 +247,13 @@ covF_t = scalerF.transform(ts_covF)
 
 
 # #################################################################### graphs the cycles of the data
-# cov_t = covF_t.pd_dataframe()
-# print(len(cov_t))
+cov_t = covF_t.pd_dataframe()
 
-# df3 = cov_t
+df3 = cov_t
 
-# df3.plot()
-# # # covF_ttrain.plot()
-# plt.show()
+df3.plot()
+# # covF_ttrain.plot()
+plt.show()
 
 # # additional datetime columns: feature engineering
 # df3["month"] = df3.index.month
@@ -290,70 +287,70 @@ covF_t = scalerF.transform(ts_covF)
 
 ###############################################################################################
 
-model = TransformerModel(
-                    input_chunk_length = INLEN,
-                    output_chunk_length = N_FC,
-                    batch_size = BATCH,
-                    n_epochs = EPOCHS,
-                    model_name = "Transformer_price",
-                    nr_epochs_val_period = VALWAIT,
-                    d_model = FEAT,
-                    nhead = HEADS,
-                    num_encoder_layers = ENCODE,
-                    num_decoder_layers = DECODE,
-                    dim_feedforward = DIM_FF,
-                    dropout = DROPOUT,
-                    activation = ACTF,
-                    random_state=RAND,
-                    likelihood=QuantileRegression(quantiles=QUANTILES), 
-                    optimizer_kwargs={'lr': LEARN},
-                    add_encoders={"cyclic": {"future": ["dayofweek", "month"]}},
-                    save_checkpoints=True,
-                    force_reset=True
-                    )
+# model = TransformerModel(
+#                     input_chunk_length = INLEN,
+#                     output_chunk_length = N_FC,
+#                     batch_size = BATCH,
+#                     n_epochs = EPOCHS,
+#                     model_name = "Transformer_price",
+#                     nr_epochs_val_period = VALWAIT,
+#                     d_model = FEAT,
+#                     nhead = HEADS,
+#                     num_encoder_layers = ENCODE,
+#                     num_decoder_layers = DECODE,
+#                     dim_feedforward = DIM_FF,
+#                     dropout = DROPOUT,
+#                     activation = ACTF,
+#                     random_state=RAND,
+#                     likelihood=QuantileRegression(quantiles=QUANTILES), 
+#                     optimizer_kwargs={'lr': LEARN},
+#                     add_encoders={"cyclic": {"future": ["dayofweek", "month"]}},
+#                     save_checkpoints=True,
+#                     force_reset=True
+#                     )
 
 
-# training: load a saved model or (re)train
-if LOAD:
-    print("have loaded a previously saved model from disk:" + mpath)
-    model = TransformerModel.load_model(mpath)                            # load previously model from disk 
-else:
-    model.fit(  ts_ttrain, 
-                past_covariates=covF_t, 
-                verbose=True)
-    print("have saved the model after training:", mpath)
-    model.save_model(mpath)
+# # training: load a saved model or (re)train
+# if LOAD:
+#     print("have loaded a previously saved model from disk:" + mpath)
+#     model = TransformerModel.load_model(mpath)                            # load previously model from disk 
+# else:
+#     model.fit(  ts_ttrain, 
+#                 past_covariates=covF_t, 
+#                 verbose=True)
+#     print("have saved the model after training:", mpath)
+#     model.save_model(mpath)
 
-# # testing: generate predictions
-ts_tpred = model.predict(   n=len(ts_ttest), 
-                            num_samples=N_SAMPLES,   
-                            n_jobs=N_JOBS, 
-                            verbose=True)
+# # # testing: generate predictions
+# ts_tpred = model.predict(   n=len(ts_ttest), 
+#                             num_samples=N_SAMPLES,   
+#                             n_jobs=N_JOBS, 
+#                             verbose=True)
 
 
 
-# testing: helper function: plot predictions
-def plot_predict(ts_actual, ts_test, ts_pred):
+# # testing: helper function: plot predictions
+# def plot_predict(ts_actual, ts_test, ts_pred):
     
-    ## plot time series, limited to forecast horizon
-    plt.figure(figsize=FIGSIZE)
+#     ## plot time series, limited to forecast horizon
+#     plt.figure(figsize=FIGSIZE)
     
-    ts_actual.plot(label="actual")                                       # plot actual
+#     ts_actual.plot(label="actual")                                       # plot actual
     
-    trade.plot(label="Actual Trade")
+#     trade.plot(label="Actual Trade")
 
-    ts_pred.plot(low_quantile=qL1, high_quantile=qU1, label=label_q1)    # plot U1 quantile band
-    #ts_pred.plot(low_quantile=qL2, high_quantile=qU2, label=label_q2)   # plot U2 quantile band
-    ts_pred.plot(low_quantile=qL3, high_quantile=qU3, label=label_q3)    # plot U3 quantile band
-    ts_pred.plot(central_quantile="mean", label="expected")              # plot "mean" or median=0.5
+#     ts_pred.plot(low_quantile=qL1, high_quantile=qU1, label=label_q1)    # plot U1 quantile band
+#     #ts_pred.plot(low_quantile=qL2, high_quantile=qU2, label=label_q2)   # plot U2 quantile band
+#     ts_pred.plot(low_quantile=qL3, high_quantile=qU3, label=label_q3)    # plot U3 quantile band
+#     ts_pred.plot(central_quantile="mean", label="expected")              # plot "mean" or median=0.5
     
-    plt.title("TFT: test set (MAPE: {:.2f}%)".format(mape(ts_test, ts_pred)))
-    plt.legend()
-    plt.show()    
+#     plt.title("TFT: test set (MAPE: {:.2f}%)".format(mape(ts_test, ts_pred)))
+#     plt.legend()
+#     plt.show()    
 
 
-ts_pred = scalerP.inverse_transform(ts_tpred)
-plot_predict(ts, ts_test, ts_pred)
+# ts_pred = scalerP.inverse_transform(ts_tpred)
+# plot_predict(ts, ts_test, ts_pred)
 
 
 
