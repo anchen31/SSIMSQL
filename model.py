@@ -36,19 +36,21 @@ min_max_scaler = preprocessing.MinMaxScaler()
 scaler = StandardScaler()
 
 
+#1.75 mape
 
-LOAD = True         # True = load previously saved model from disk?  False = (re)train the model
+
+LOAD = False         # True = load previously saved model from disk?  False = (re)train the model
 # SAVE = "/_TForm_model10e.pth.tar"   # file name to save the model under
 
 SAVE = "/_TForm_model_trade10e.pth.tar"   # file name to save the model under
 
 EPOCHS = 10
-INLEN = 64          # input size
-FEAT = 64           # d_model = number of expected features in the inputs, up to 512    
+INLEN = 8          # input size
+FEAT = 128           # d_model = number of expected features in the inputs, up to 512    
 HEADS = 4           # default 8
-ENCODE = 8          # encoder layers
-DECODE = 8          # decoder layers
-DIM_FF = 128         # dimensions of the feedforward network, default 2048
+ENCODE = 4          # encoder layers
+DECODE = 4          # decoder layers
+DIM_FF = 256         # dimensions of the feedforward network, default 2048
 BATCH = 16           # batch size
 ACTF = "relu"       # activation function, relu (default) or gelu
 SCHLEARN = None     # a PyTorch learning rate scheduler; None = constant rate
@@ -143,8 +145,6 @@ data = []
 df1 = pd.read_csv('four_year_date.csv')
 df1 = df1.loc[:, ~df1.columns.str.contains('^Unnamed')] # removes the unamed df dolumn
 
-print(len(df1.columns))
-
 # gets the local mins and maxes
 for i in range(2,df1.shape[0]-2):
   if isSupport(df1, i):
@@ -152,12 +152,15 @@ for i in range(2,df1.shape[0]-2):
   elif isResistance(df1,i):
     data.append((i, df1['high'][i], -1))
 
-df1['trade'] = 0.5
+# append the trade to the main df
+df1['trade'] = 300
 for stuff in data:
   if stuff[2] == 1:
-    df1.iat[stuff[0], 20] = 1
+    df1.iat[stuff[0], 38] = 400
   if stuff[2] == -1:
-    df1.iat[stuff[0], 20] = 0
+    df1.iat[stuff[0], 38] = 200
+
+print(df1.tail(50))
 
 # df1 = df1.drop(columns=['date'])
 
@@ -168,7 +171,8 @@ df = df1.copy()
 # df = pd.DataFrame(scaler.fit_transform(df), columns=df.columns, index=df1.index)
 fill = False
 freq = 'D'
-ts = TimeSeries.from_series(df1['open'], fill_missing_dates=fill, freq=freq)
+ts = df1['open']
+trade = df1['trade']
 
 ############################################################## create multiple time series object 
 # create time series object for target variable, This is univariate
@@ -246,6 +250,7 @@ covF_t = scalerF.transform(ts_covF)
 
 # #################################################################### graphs the cycles of the data
 # cov_t = covF_t.pd_dataframe()
+# print(len(cov_t))
 
 # df3 = cov_t
 
@@ -335,6 +340,8 @@ def plot_predict(ts_actual, ts_test, ts_pred):
     
     ts_actual.plot(label="actual")                                       # plot actual
     
+    trade.plot(label="Actual Trade")
+
     ts_pred.plot(low_quantile=qL1, high_quantile=qU1, label=label_q1)    # plot U1 quantile band
     #ts_pred.plot(low_quantile=qL2, high_quantile=qU2, label=label_q2)   # plot U2 quantile band
     ts_pred.plot(low_quantile=qL3, high_quantile=qU3, label=label_q3)    # plot U3 quantile band
