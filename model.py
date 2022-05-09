@@ -31,9 +31,9 @@ import config
 
 password = config.password
 
-min_max_scaler = preprocessing.MinMaxScaler()
-# scaler = MinMaxScaler(feature_range = (0,1))
-scaler = StandardScaler()
+# min_max_scaler = preprocessing.MinMaxScaler()
+scaler = MinMaxScaler(feature_range = (0,1))
+# scaler = StandardScaler()
 
 
 #1.75 mape
@@ -210,12 +210,11 @@ covF_t = scalerF.transform(ts_covF)
 # #################################################################### graphs the cycles of the data
 cov_t = covF_t.pd_dataframe()
 
-# df3 = cov_t
+df3 = cov_t
 
-# df3.plot()
-df1['open'].plot()
-df1['trade'].plot()
-# # covF_ttrain.plot()
+df3.plot()
+
+# covF_ttrain.plot()
 plt.show()
 
 # # additional datetime columns: feature engineering

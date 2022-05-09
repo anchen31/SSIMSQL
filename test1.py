@@ -100,24 +100,22 @@ import seaborn as sns
 
 df = pd.read_csv('four_year_date.csv', index_col=False)
 
-# df = pd.read_csv('OPdata.csv', index_col=False)
-# df = pd.read_csv('OPdata.csv', index_col=False)
-# df = df.drop('Unnamed: 0',1)
-df = df.drop('date', 1)
+# # df = pd.read_csv('OPdata.csv', index_col=False)
+# # df = pd.read_csv('OPdata.csv', index_col=False)
+# # df = df.drop('Unnamed: 0',1)
+# df = df.drop('date', 1)
 
-plt.figure(figsize = (15,15))
-sns.set(font_scale=0.75)
-ax = sns.heatmap(df.corr().round(3), 
-            annot=True, 
-            square=True, 
-            linewidths=.75, cmap="coolwarm", 
-            fmt = ".2f", 
-            annot_kws = {"size": 11})
-ax.xaxis.tick_bottom()
-plt.title("correlation matrix")
-plt.show()
-
-
+# plt.figure(figsize = (15,15))
+# sns.set(font_scale=0.75)
+# ax = sns.heatmap(df.corr().round(3), 
+#             annot=True, 
+#             square=True, 
+#             linewidths=.75, cmap="coolwarm", 
+#             fmt = ".2f", 
+#             annot_kws = {"size": 11})
+# ax.xaxis.tick_bottom()
+# plt.title("correlation matrix")
+# plt.show()
 
 ##############################################################
 
@@ -153,9 +151,12 @@ for i in df.columns:
 
 del df['volume']
 del df['barCount']
+del df['UVXY']
+del df['SQQQ']
+del df['LTres']
 
-# df.plot()
-# plt.show()
+df.plot()
+plt.show()
 
 
 plt.figure(figsize = (15,15))
