@@ -1,3 +1,6 @@
+# This file proccess all of the data to be sent to model py in a df
+
+
 from ib_insync import *
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from datetime import datetime
@@ -18,45 +21,68 @@ import matplotlib.dates as mpl_dates
 import matplotlib.pyplot as plt
 
 barSze = '30 mins'
-durStrng = '1 Y'
+durStrng = '1 W'
+#0.6 ms difference but can gather more data for the openning bars
+RTH = True
+list1 = ['GLD', 'UVXY', 'SQQQ', 'CVX', 'RIO', 'NUE', 'LWAY', 'TSN', 'NTR', 'ADM', 'HYG', 'SRLN', 'JNK', 'EWH', 'GBTC', 'USO', 'DIA', 'QQQ', 'IWM', 'IEF', 'SIVR', 'FXB', 'FXE']
 
 ib = IB()
 ib.connect('127.0.0.1', 7497, clientId=2)
-#0.6 ms difference but can gather more data for the openning bars
-RTH = True
-
-sia = SentimentIntensityAnalyzer()
-
-contract1 = Stock('SPY', 'SMART', 'USD')
-GLD1 = Stock('GLD', 'SMART', 'USD')
-UVXY1 = Stock('UVXY', 'SMART', 'USD')
-SQQQ1 = Stock('SQQQ', 'SMART', 'USD')
-CVX1 = Stock('CVX', 'SMART', 'USD')
-RIO1 = Stock('RIO', 'SMART', 'USD')
-NUE1 = Stock('NUE', 'SMART', 'USD')
-LWAY1 = Stock('LWAY', 'SMART', 'USD')
-TSN1 = Stock('TSN', 'SMART', 'USD')
-NTR1 = Stock('NTR', 'SMART', 'USD')
-ADM1 = Stock('ADM', 'SMART', 'USD')
-HYG1 = Stock('HYG', 'SMART', 'USD')
-SRLN1 = Stock('SRLN', 'SMART', 'USD')
-JNK1 = Stock('JNK', 'SMART', 'USD')
-
-EWH1 = Stock('EWH', 'SMART', 'USD')
-GBTC1 = Stock('GBTC', 'SMART', 'USD')
-USO1 = Stock('USO', 'SMART', 'USD')
-DIA1 = Stock('DIA', 'SMART', 'USD')
-QQQ1 = Stock('QQQ', 'SMART', 'USD')
-IWM1 = Stock('IWM', 'SMART', 'USD')
-IEF1 = Stock('IEF', 'SMART', 'USD')
-SIVR1 = Stock('SIVR', 'SMART', 'USD')
-FXB1 = Stock('FXB', 'SMART', 'USD')
-FXE1 = Stock('FXE', 'SMART', 'USD')
 
 
+def datafrm():
+    contract1 = Stock('SPY', 'SMART', 'USD')
+    barsList = []
+
+    bars = ib.reqHistoricalData(
+        contract1, 
+        endDateTime='',
+        durationStr=durStrng,
+        barSizeSetting=barSze,
+        whatToShow='TRADES',
+        useRTH=RTH,
+        formatDate=1,
+        keepUpToDate=False)
+
+    barsList.append(bars)
+
+    allBars = [b for bars in reversed(barsList) for b in bars]
+    df = util.df(allBars)
+    return df
 
 
+# create giant df here to add
 
+# function that takes in a bunch of list of strings of tickers and 
+def getData(list):
+    data1 = datafrm()
+    for i in list:
+        contract = Stock(i, 'SMART', 'USD')
+
+        barsList = []
+
+        bars = ib.reqHistoricalData(
+            contract, 
+            endDateTime='',
+            durationStr=durStrng,
+            barSizeSetting=barSze,
+            whatToShow='TRADES',
+            useRTH=RTH,
+            formatDate=1,
+            keepUpToDate=False)
+
+        barsList.append(bars)
+
+        allBars = [b for bars in reversed(barsList) for b in bars]
+        df = util.df(allBars)
+        df[i] = df['close']
+        df = df[['date', i]]
+
+        data = pd.merge(data1, df, on=['date'])
+
+        data1 = data
+
+    return data
 
 levels = []
 
@@ -98,6 +124,7 @@ def closest(lst, b):
  
 # Calculates the long term support/resistance and puts it into a list
 def ltSR():
+    contract1 = Stock('SPY', 'SMART', 'USD')
     barsList = []
 
     bars = ib.reqHistoricalData(
@@ -135,499 +162,10 @@ def ltSR():
 
     return levels
 
-# returns a df from ibkr highlighting it's price action
-def datafrm():
-    barsList = []
-
-    bars = ib.reqHistoricalData(
-        contract1, 
-        endDateTime='',
-        durationStr=durStrng,
-        barSizeSetting=barSze,
-        whatToShow='TRADES',
-        useRTH=RTH,
-        formatDate=1,
-        keepUpToDate=False)
-
-    barsList.append(bars)
-
-    allBars = [b for bars in reversed(barsList) for b in bars]
-    df = util.df(allBars)
-    return df
-
-def GLD():
-    barsList = []
-
-    bars = ib.reqHistoricalData(
-        GLD1, 
-        endDateTime='',
-        durationStr=durStrng,
-        barSizeSetting=barSze,
-        whatToShow='TRADES',
-        useRTH=RTH,
-        formatDate=1,
-        keepUpToDate=False)
-
-    barsList.append(bars)
-
-    allBars = [b for bars in reversed(barsList) for b in bars]
-    df = util.df(allBars)
-    df['GLD'] = df['close']
-
-    return df[['date', 'GLD']]
-
-def UVXY():
-    barsList = []
-
-    bars = ib.reqHistoricalData(
-        UVXY1, 
-        endDateTime='',
-        durationStr=durStrng,
-        barSizeSetting=barSze,
-        whatToShow='TRADES',
-        useRTH=RTH,
-        formatDate=1,
-        keepUpToDate=False)
-
-    barsList.append(bars)
-
-    allBars = [b for bars in reversed(barsList) for b in bars]
-    df = util.df(allBars)
-    df['UVXY'] = df['close']
-
-    return df[['date', 'UVXY']]
-
-def SQQQ():
-    barsList = []
-
-    bars = ib.reqHistoricalData(
-        SQQQ1, 
-        endDateTime='',
-        durationStr=durStrng,
-        barSizeSetting=barSze,
-        whatToShow='TRADES',
-        useRTH=RTH,
-        formatDate=1,
-        keepUpToDate=False)
-
-    barsList.append(bars)
-
-    allBars = [b for bars in reversed(barsList) for b in bars]
-    df = util.df(allBars)
-    df['SQQQ'] = df['close']
-
-    return df[['date', 'SQQQ']]
-
-def CVX():
-    barsList = []
-
-    bars = ib.reqHistoricalData(
-        CVX1, 
-        endDateTime='',
-        durationStr=durStrng,
-        barSizeSetting=barSze,
-        whatToShow='TRADES',
-        useRTH=RTH,
-        formatDate=1,
-        keepUpToDate=False)
-
-    barsList.append(bars)
-
-    allBars = [b for bars in reversed(barsList) for b in bars]
-    df = util.df(allBars)
-    df['CVX'] = df['close']
-
-    return df[['date', 'CVX']]
-
-def RIO():
-    barsList = []
-
-    bars = ib.reqHistoricalData(
-        RIO1, 
-        endDateTime='',
-        durationStr=durStrng,
-        barSizeSetting=barSze,
-        whatToShow='TRADES',
-        useRTH=RTH,
-        formatDate=1,
-        keepUpToDate=False)
-
-    barsList.append(bars)
-
-    allBars = [b for bars in reversed(barsList) for b in bars]
-    df = util.df(allBars)
-    df['RIO'] = df['close']
-
-    return df[['date', 'RIO']]
-
-def NUE():
-    barsList = []
-
-    bars = ib.reqHistoricalData(
-        NUE1, 
-        endDateTime='',
-        durationStr=durStrng,
-        barSizeSetting=barSze,
-        whatToShow='TRADES',
-        useRTH=RTH,
-        formatDate=1,
-        keepUpToDate=False)
-
-    barsList.append(bars)
-
-    allBars = [b for bars in reversed(barsList) for b in bars]
-    df = util.df(allBars)
-    df['NUE'] = df['close']
-
-    return df[['date', 'NUE']]
-
-def LWAY():
-    barsList = []
-
-    bars = ib.reqHistoricalData(
-        LWAY1, 
-        endDateTime='',
-        durationStr=durStrng,
-        barSizeSetting=barSze,
-        whatToShow='TRADES',
-        useRTH=RTH,
-        formatDate=1,
-        keepUpToDate=False)
-
-    barsList.append(bars)
-
-    allBars = [b for bars in reversed(barsList) for b in bars]
-    df = util.df(allBars)
-    df['LWAY'] = df['close']
-
-    return df[['date', 'LWAY']]
-
-def TSN():
-    barsList = []
-
-    bars = ib.reqHistoricalData(
-        TSN1, 
-        endDateTime='',
-        durationStr=durStrng,
-        barSizeSetting=barSze,
-        whatToShow='TRADES',
-        useRTH=RTH,
-        formatDate=1,
-        keepUpToDate=False)
-
-    barsList.append(bars)
-
-    allBars = [b for bars in reversed(barsList) for b in bars]
-    df = util.df(allBars)
-    df['TSN'] = df['close']
-
-    return df[['date', 'TSN']]
-
-def NTR():
-    barsList = []
-
-    bars = ib.reqHistoricalData(
-        NTR1, 
-        endDateTime='',
-        durationStr=durStrng,
-        barSizeSetting=barSze,
-        whatToShow='TRADES',
-        useRTH=RTH,
-        formatDate=1,
-        keepUpToDate=False)
-
-    barsList.append(bars)
-
-    allBars = [b for bars in reversed(barsList) for b in bars]
-    df = util.df(allBars)
-    df['NTR'] = df['close']
-
-    return df[['date', 'NTR']]
-
-def ADM():
-    barsList = []
-
-    bars = ib.reqHistoricalData(
-        ADM1, 
-        endDateTime='',
-        durationStr=durStrng,
-        barSizeSetting=barSze,
-        whatToShow='TRADES',
-        useRTH=RTH,
-        formatDate=1,
-        keepUpToDate=False)
-
-    barsList.append(bars)
-
-    allBars = [b for bars in reversed(barsList) for b in bars]
-    df = util.df(allBars)
-    df['ADM'] = df['close']
-
-    return df[['date', 'ADM']]
-
-def HYG():
-    barsList = []
-
-    bars = ib.reqHistoricalData(
-        HYG1, 
-        endDateTime='',
-        durationStr=durStrng,
-        barSizeSetting=barSze,
-        whatToShow='TRADES',
-        useRTH=RTH,
-        formatDate=1,
-        keepUpToDate=False)
-
-    barsList.append(bars)
-
-    allBars = [b for bars in reversed(barsList) for b in bars]
-    df = util.df(allBars)
-    df['HYG'] = df['close']
-
-    return df[['date', 'HYG']]
-
-def SRLN():
-    barsList = []
-
-    bars = ib.reqHistoricalData(
-        SRLN1, 
-        endDateTime='',
-        durationStr=durStrng,
-        barSizeSetting=barSze,
-        whatToShow='TRADES',
-        useRTH=RTH,
-        formatDate=1,
-        keepUpToDate=False)
-
-    barsList.append(bars)
-
-    allBars = [b for bars in reversed(barsList) for b in bars]
-    df = util.df(allBars)
-    df['SRLN'] = df['close']
-
-    return df[['date', 'SRLN']]
-
-def EWH():
-    barsList = []
-
-    bars = ib.reqHistoricalData(
-        EWH1, 
-        endDateTime='',
-        durationStr=durStrng,
-        barSizeSetting=barSze,
-        whatToShow='TRADES',
-        useRTH=RTH,
-        formatDate=1,
-        keepUpToDate=False)
-
-    barsList.append(bars)
-
-    allBars = [b for bars in reversed(barsList) for b in bars]
-    df = util.df(allBars)
-    df['EWH'] = df['close']
-
-    return df[['date', 'EWH']]
-
-def GBTC():
-    barsList = []
-
-    bars = ib.reqHistoricalData(
-        GBTC1, 
-        endDateTime='',
-        durationStr=durStrng,
-        barSizeSetting=barSze,
-        whatToShow='TRADES',
-        useRTH=RTH,
-        formatDate=1,
-        keepUpToDate=False)
-
-    barsList.append(bars)
-
-    allBars = [b for bars in reversed(barsList) for b in bars]
-    df = util.df(allBars)
-    df['GBTC'] = df['close']
-
-    return df[['date', 'GBTC']]
-
-def USO():
-    barsList = []
-
-    bars = ib.reqHistoricalData(
-        USO1, 
-        endDateTime='',
-        durationStr=durStrng,
-        barSizeSetting=barSze,
-        whatToShow='TRADES',
-        useRTH=RTH,
-        formatDate=1,
-        keepUpToDate=False)
-
-    barsList.append(bars)
-
-    allBars = [b for bars in reversed(barsList) for b in bars]
-    df = util.df(allBars)
-    df['USO'] = df['close']
-
-    return df[['date', 'USO']]
-
-def DIA():
-    barsList = []
-
-    bars = ib.reqHistoricalData(
-        DIA1, 
-        endDateTime='',
-        durationStr=durStrng,
-        barSizeSetting=barSze,
-        whatToShow='TRADES',
-        useRTH=RTH,
-        formatDate=1,
-        keepUpToDate=False)
-
-    barsList.append(bars)
-
-    allBars = [b for bars in reversed(barsList) for b in bars]
-    df = util.df(allBars)
-    df['DIA'] = df['close']
-
-    return df[['date', 'DIA']]
-
-def QQQ():
-    barsList = []
-
-    bars = ib.reqHistoricalData(
-        QQQ1, 
-        endDateTime='',
-        durationStr=durStrng,
-        barSizeSetting=barSze,
-        whatToShow='TRADES',
-        useRTH=RTH,
-        formatDate=1,
-        keepUpToDate=False)
-
-    barsList.append(bars)
-
-    allBars = [b for bars in reversed(barsList) for b in bars]
-    df = util.df(allBars)
-    df['QQQ'] = df['close']
-
-    return df[['date', 'QQQ']]
-
-def IWM():
-    barsList = []
-
-    bars = ib.reqHistoricalData(
-        IWM1, 
-        endDateTime='',
-        durationStr=durStrng,
-        barSizeSetting=barSze,
-        whatToShow='TRADES',
-        useRTH=RTH,
-        formatDate=1,
-        keepUpToDate=False)
-
-    barsList.append(bars)
-
-    allBars = [b for bars in reversed(barsList) for b in bars]
-    df = util.df(allBars)
-    df['IWM'] = df['close']
-
-    return df[['date', 'IWM']]
-
-def IEF():
-    barsList = []
-
-    bars = ib.reqHistoricalData(
-        IEF1, 
-        endDateTime='',
-        durationStr=durStrng,
-        barSizeSetting=barSze,
-        whatToShow='TRADES',
-        useRTH=RTH,
-        formatDate=1,
-        keepUpToDate=False)
-
-    barsList.append(bars)
-
-    allBars = [b for bars in reversed(barsList) for b in bars]
-    df = util.df(allBars)
-    df['IEF'] = df['close']
-
-    return df[['date', 'IEF']]
-
-# def SIVR():
-#     barsList = []
-
-#     bars = ib.reqHistoricalData(
-#         SIVR, 
-#         endDateTime='',
-#         durationStr=durStrng,
-#         barSizeSetting=barSze,
-#         whatToShow='TRADES',
-#         useRTH=RTH,
-#         formatDate=1,
-#         keepUpToDate=False)
-
-#     barsList.append(bars)
-
-#     allBars = [b for bars in reversed(barsList) for b in bars]
-#     df = util.df(allBars)
-#     df['SIVR'] = df['close']
-
-#     return df[['date', 'SIVR']]
-
-def FXB():
-    barsList = []
-
-    bars = ib.reqHistoricalData(
-        FXB1, 
-        endDateTime='',
-        durationStr=durStrng,
-        barSizeSetting=barSze,
-        whatToShow='TRADES',
-        useRTH=RTH,
-        formatDate=1,
-        keepUpToDate=False)
-
-    barsList.append(bars)
-
-    allBars = [b for bars in reversed(barsList) for b in bars]
-    df = util.df(allBars)
-    df['FXB'] = df['close']
-
-    return df[['date', 'FXB']]
-
-def FXE():
-    barsList = []
-
-    bars = ib.reqHistoricalData(
-        FXE1, 
-        endDateTime='',
-        durationStr=durStrng,
-        barSizeSetting=barSze,
-        whatToShow='TRADES',
-        useRTH=RTH,
-        formatDate=1,
-        keepUpToDate=False)
-
-    barsList.append(bars)
-
-    allBars = [b for bars in reversed(barsList) for b in bars]
-    df = util.df(allBars)
-    df['FXE'] = df['close']
-
-    return df[['date', 'FXE']]
-
-
-
-
 
 # does all of the ta stuff and puts it into a mysql db
 def main():
 
-    # what  do i need to test?
-    # loop it and have a time limit to kill it and disconnect from ib
-    # add a time sleep mode that catches 
-    # each time it makes 
     counter = 0
 
     while True:
@@ -639,7 +177,7 @@ def main():
             print(now.second)
             now = datetime.now()
 
-        df = datafrm()
+        df = getData(list1)
 
         indicator_bb = BollingerBands(close=df["close"], window=20, window_dev=2)
 
@@ -714,60 +252,12 @@ def main():
             else:
                 df.loc[ind, ['LTres']] = LT[1]
 
-        # Merge the tickers with the main df
-        GLDdf = GLD()
-        df = pd.merge(df, GLDdf, on=['date'])
-        UVXYdf = UVXY()
-        df = pd.merge(df, UVXYdf, on=['date'])
-        SQQQdf = SQQQ()
-        df = pd.merge(df, SQQQdf, on=['date'])
-        CVXdf = CVX()
-        df = pd.merge(df, CVXdf, on=['date'])
-        RIOdf = RIO()
-        df = pd.merge(df, RIOdf, on=['date'])
-        NUEdf = NUE()
-        df = pd.merge(df, NUEdf, on=['date'])
-        LWAYdf = LWAY()
-        df = pd.merge(df, LWAYdf, on=['date'])
-        TSNdf = TSN()
-        df = pd.merge(df, TSNdf, on=['date'])
-        NTRdf = NTR()
-        df = pd.merge(df, NTRdf, on=['date'])
-        ADMdf = ADM()
-        df = pd.merge(df, ADMdf, on=['date'])
-        HYGdf = HYG()
-        df = pd.merge(df, HYGdf, on=['date'])
-        SRLNdf = SRLN()
-        df = pd.merge(df, SRLNdf, on=['date'])
-
-        EWHdf = EWH()
-        df = pd.merge(df, EWHdf, on=['date'])
-        GBTCdf = GBTC()
-        df = pd.merge(df, GBTCdf, on=['date'])
-        USOdf = USO()
-        df = pd.merge(df, USOdf, on=['date'])
-        DIAdf = DIA()
-        df = pd.merge(df, DIAdf, on=['date'])
-        QQQdf = QQQ()
-        df = pd.merge(df, QQQdf, on=['date'])
-        IWMdf = IWM()
-        df = pd.merge(df, IWMdf, on=['date'])
-        IEFdf = IEF()
-        df = pd.merge(df, IEFdf, on=['date'])
-        # SIVRdf = SIVR()
-        # df = pd.merge(df, SIVRdf, on=['date'])
-        FXBdf = FXB()
-        df = pd.merge(df, FXBdf, on=['date'])
-        FXEdf = FXE()
-        df = pd.merge(df, FXEdf, on=['date'])
-
-
         #print(df.columns)
 
-        print(df.tail())
+        print(df.columns)
 
 
-        df.to_csv('OPdata.csv', index=False)
+        # df.to_csv('OPdata.csv', index=False)
 
 
         
@@ -787,106 +277,12 @@ def main():
 
 
 
+###########################################################################################################################
+
 if __name__== '__main__':
     # put the loop logic here eto loop through everything accordingly
     main()
 
 
 #################################################################### WHY IS BENZINGA DATA 250$ LOL #####################################################################
-
-# plt.rcParams['figure.figsize'] = [12, 7]
-# plt.rc('font', size=14)
-
-# name = 'SPY'
-# ticker = yfinance.Ticker(name)
-# df1 = ticker.history(interval="5m",start="2021-08-12",end="2021-08-13", threads= False)
-# df1['Date'] = pd.to_datetime(df1.index)
-# df1['Date'] = df1['Date'].apply(mpl_dates.date2num)
-# df1 = df1.loc[:,['Date', 'Open', 'High', 'Low', 'Close']]
-
-
-
-
-# df = pd.DataFrame(columns=['date', 'sentiment'])
-
-# h = 0
-# newsProviders = ib.reqNewsProviders()
-# codes = '+'.join(np.code for np in newsProviders)
-
-# print(codes)
-
-# ib.qualifyContracts(contract1)
-
-# td = datetime.today()
-# td1 = td.strftime("%Y-%m-%d")
-
-# print(td1)
-
-# tmr = td.strftime("%Y-%m-%d+1")
-
-# print(tmr)
-
-# # the number parameter should stay at 50
-# headlines = ib.reqHistoricalNews(contract1.conId, codes, '2021-09-19', '2021-09', 50)
-
-# #if the day doesn't match up then you remove the headline
-# # store headlines into a manipulatable list
-# hList = []
-
-# today = datetime.today()
-# today = today.day
-
-# for j in headlines:
-#     day = j.time
-#     day = day.day
-#     if day == today:
-#         hList.append(j)
-
-# for i in headlines:
-#     print(i)
-
-
-# for i in hList:
-#     latest = i.headline
-#     # turn headline into pst time and remove the seconds into 0
-#     # next, 
-#     time = i.time
-#     time = time.replace(minute = 0)
-#     print(time)
-
-#     #datetime_from_utc_to_local(time)
-#     vs = sia.polarity_scores(latest)
-#     sentiment = round(vs['compound'], 4)
-#     time = i.time
-#     #print(time, sentiment, latest)
-
-
-#     df.loc[h] = [time, sentiment]
-
-#     h = h+1
-
-
-
-# fig, ax = plt.subplots()
-# candlestick_ohlc(ax,df1.values,width=0.0001, \
-#                colorup='green', colordown='red', alpha=0.8)
-# date_format = mpl_dates.DateFormatter('%Y-%m-%d %H:%M:%S')
-# ax.xaxis.set_major_formatter(date_format)
-# fig.autofmt_xdate()
-# fig.tight_layout()
-
-
-
-# df['sentiment'] = df['sentiment'].rolling(int(len(df)/5)).mean()
-# df.plot('date', 'sentiment')
-
-
-# plt.show()
-
-
-# article = ib.reqNewsArticle(latest.providerCode, latest.articleId)
-# print(article)
-
-
-
 
