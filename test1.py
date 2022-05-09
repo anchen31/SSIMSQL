@@ -6,6 +6,7 @@ from mplfinance.original_flavor import candlestick_ohlc
 import matplotlib.dates as mpl_dates
 import matplotlib.pyplot as plt
 from sklearn import preprocessing
+from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler, RobustScaler
 
 # plt.rcParams['figure.figsize'] = [12, 7]
@@ -99,46 +100,73 @@ import seaborn as sns
 
 df = pd.read_csv('four_year_date.csv', index_col=False)
 
-# # df = pd.read_csv('OPdata.csv', index_col=False)
-# # df = pd.read_csv('OPdata.csv', index_col=False)
-# # df = df.drop('Unnamed: 0',1)
-# df = df.drop('date', 1)
+# df = pd.read_csv('OPdata.csv', index_col=False)
+# df = pd.read_csv('OPdata.csv', index_col=False)
+# df = df.drop('Unnamed: 0',1)
+df = df.drop('date', 1)
 
-# plt.figure(figsize = (15,15))
-# sns.set(font_scale=0.75)
-# ax = sns.heatmap(df.corr().round(3), 
-#             annot=True, 
-#             square=True, 
-#             linewidths=.75, cmap="coolwarm", 
-#             fmt = ".2f", 
-#             annot_kws = {"size": 11})
-# ax.xaxis.tick_bottom()
-# plt.title("correlation matrix")
-# plt.show()
+plt.figure(figsize = (15,15))
+sns.set(font_scale=0.75)
+ax = sns.heatmap(df.corr().round(3), 
+            annot=True, 
+            square=True, 
+            linewidths=.75, cmap="coolwarm", 
+            fmt = ".2f", 
+            annot_kws = {"size": 11})
+ax.xaxis.tick_bottom()
+plt.title("correlation matrix")
+plt.show()
 
 
 
 ##############################################################
 
-# df = pd.read_csv('OPdata.csv', index_col=0)
+# uvxy, rio,? uso?, sqqq
 
-min_max_scaler = preprocessing.MinMaxScaler()
-# scaler = MinMaxScaler(feature_range = (0,1))
-scaler = StandardScaler()
+# Naw = ['date', 'open', 'high', 'low', 'volume', 'average', 'barCount', 'bb_bbm', 'bb_bbh', 'bb_bbl', 'VWAP', 'RSI', 'STsupp', 'STres', 'LTsupp', 'LTres']
+Naw = ['date']
 
+df = df.dropna()
 
+for i in df.columns:
+  if i in Naw:
+    pass
+  else:
+    # does the linear regression on the columns
+    X = df.index.values
+    y = df[[i]].values
 
+    length = len(X)
 
-# df = scaler.fit_transform(df)
+    X = X.reshape(length, 1)
+    y = y.reshape(length, 1)
 
-df = pd.DataFrame(df)
+    regressor = LinearRegression()
+    regressor.fit(X, y)
+
+    y_pred = regressor.predict(X)
+    y_pred = pd.DataFrame(y_pred)
+
+    # create a new value based off of 
+    df[i] = df[i] - y_pred[0]
+    # print(y_pred[0])
+
 del df['volume']
 del df['barCount']
 
+# df.plot()
+# plt.show()
 
-df.plot()
+
+plt.figure(figsize = (15,15))
+sns.set(font_scale=0.75)
+ax = sns.heatmap(df.corr().round(3), 
+            annot=True, 
+            square=True, 
+            linewidths=.75, cmap="coolwarm", 
+            fmt = ".2f", 
+            annot_kws = {"size": 11})
+ax.xaxis.tick_bottom()
+plt.title("correlation matrix")
 plt.show()
-
-
-
 

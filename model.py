@@ -32,8 +32,8 @@ import config
 password = config.password
 
 min_max_scaler = preprocessing.MinMaxScaler()
-scaler = MinMaxScaler(feature_range = (0,1))
-# scaler = StandardScaler()
+# scaler = MinMaxScaler(feature_range = (0,1))
+scaler = StandardScaler()
 
 
 #1.75 mape
@@ -198,12 +198,6 @@ ts_ttrain = scalerP.transform(ts_train)
 ts_ttest = scalerP.transform(ts_test)    
 ts_t = scalerP.transform(ts_P)
 
-# # make sure data are of type float
-# ts_t = ts_t.astype(np.float32)
-# ts_ttrain = ts_ttrain.astype(np.float32)
-# ts_ttest = ts_ttest.astype(np.float32)
-
-
 # train/test split and scaling of FEATURE covariates
 covF_train, covF_test = ts_covF.split_after(SPLIT)
 
@@ -211,47 +205,16 @@ scalerF = Scaler(scaler)
 scalerF.fit_transform(ts_covF)
 covF_ttrain = scalerF.transform(covF_train) 
 covF_ttest = scalerF.transform(covF_test)   
-covF_t = scalerF.transform(ts_covF)  
-
-# # make sure data are of type float
-# covF_ttrain = ts_ttrain.astype(np.float32)
-# covF_ttest = ts_ttest.astype(np.float32)
-
-
-# feature engineering - create time covariates: hour, weekday, month, year, country-specific holidays
-# covT = datetime_attribute_timeseries( ts_P.time_index, 
-#                                       attribute="day_of_week", 
-#                                       one_hot=False)
-# # covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="day_of_week", one_hot=False))
-# covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="month", one_hot=False))
-# covT = covT.stack(datetime_attribute_timeseries(covT.time_index, attribute="year", one_hot=False))
-
-# covT = covT.add_holidays(country_code="US")
-
-# covT = covT.astype(np.float32)
-
-# # train/test split
-# covT_train, covT_test = covT.split_after(SPLIT)
-
-# scalerT = Scaler(scaler)
-# scalerT.fit_transform(covT)
-# covT_ttrain = scalerT.transform(covT_train)
-# covT_ttest = scalerT.transform(covT_test)
-# covT_t = scalerT.transform(covT)
-# covT_t = covT_t.astype(np.float32)
-
-# ts_cov = ts_covF.concatenate(covT, axis=1)                      # unscaled F+T
-# cov_t = covF_t.concatenate(covT_t, axis=1)                      # scaled F+T
-# cov_ttrain = covF_ttrain.concatenate(covT_ttrain, axis=1)       # scaled F+T training
-
-
+covF_t = scalerF.transform(ts_covF)
 
 # #################################################################### graphs the cycles of the data
 cov_t = covF_t.pd_dataframe()
 
-df3 = cov_t
+# df3 = cov_t
 
-df3.plot()
+# df3.plot()
+df1['open'].plot()
+df1['trade'].plot()
 # # covF_ttrain.plot()
 plt.show()
 
