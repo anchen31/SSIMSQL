@@ -1,6 +1,5 @@
 # This file proccess all of the data to be sent to model py in a df
 
-
 from ib_insync import *
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from datetime import datetime
@@ -20,8 +19,8 @@ from mplfinance.original_flavor import candlestick_ohlc
 import matplotlib.dates as mpl_dates
 import matplotlib.pyplot as plt
 
-barSze = '30 mins'
-durStrng = '1 W'
+barSze = '1 day'
+durStrng = '4 Y'
 #0.6 ms difference but can gather more data for the openning bars
 RTH = True
 list1 = ['GLD', 'UVXY', 'SQQQ', 'CVX', 'RIO', 'NUE', 'LWAY', 'TSN', 'NTR', 'ADM', 'HYG', 'SRLN', 'JNK', 'EWH', 'GBTC', 'USO', 'DIA', 'QQQ', 'IWM', 'IEF', 'SIVR', 'FXB', 'FXE']
@@ -130,7 +129,7 @@ def ltSR():
     bars = ib.reqHistoricalData(
         contract1, 
         endDateTime='',
-        durationStr='1 Y',
+        durationStr='5 Y',
         barSizeSetting='1 day',
         whatToShow='TRADES',
         useRTH=RTH,
@@ -232,7 +231,7 @@ def main():
             LT = closest(LTe, price)
 
             #This will take care of Nan Values on the S/R
-            if (ST[0] == None):
+            if(ST[0] == None):
                 df.loc[ind, ['STsupp']] = RoudDown(price)
             else:
                 df.loc[ind, ['STsupp']] = ST[0]
@@ -256,11 +255,8 @@ def main():
 
         print(df.columns)
 
-
         # df.to_csv('OPdata.csv', index=False)
 
-
-        
         #################################################Create a new db for this data, this will be the main db that will have everything else join it###
         # engine = create_engine(config.engine)
         # ############################## Create config.engine1 that has a different db loaction #######################

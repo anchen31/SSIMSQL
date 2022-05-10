@@ -126,6 +126,8 @@ Naw = ['date']
 
 df = df.dropna()
 
+print(df['LTres']. head(50))
+
 for i in df.columns:
   if i in Naw:
     pass
@@ -153,7 +155,7 @@ del df['volume']
 del df['barCount']
 del df['UVXY']
 del df['SQQQ']
-del df['LTres']
+# del df['LTres']
 
 df.plot()
 plt.show()

@@ -74,7 +74,6 @@ label_q3 = f'{int(qU3 * 100)} / {int(qL3 * 100)} percentile band'
 
 mpath = os.path.abspath(os.getcwd()) + SAVE     # path and file name to save the model
 
-
 # This is an important class
 class Alan:
 
