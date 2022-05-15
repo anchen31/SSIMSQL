@@ -136,8 +136,6 @@ df.plot()
 plt.show()
 
 
-
-
 print(df['LTres']. head(50))
 
 for i in df.columns:

@@ -3,14 +3,9 @@ import numpy as np
 import os
 from sklearn import preprocessing
 import math
-# from collections import deque
 import random
 import time
 import seaborn as sns
-# import tensorflow as tf
-# from tensorflow.keras.models import Sequential
-# from tensorflow.keras.layers import Dense, Dropout, LSTM, BatchNormalization
-# from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler, RobustScaler
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
@@ -22,18 +17,19 @@ import matplotlib.pyplot as plt
 
 from darts import TimeSeries, concatenate
 from darts.dataprocessing.transformers import Scaler
-from darts.models import TransformerModel
+# from darts.models import TransformerModel
 from darts.metrics import mape, rmse
 from darts.utils.timeseries_generation import datetime_attribute_timeseries
 from darts.utils.likelihood_models import QuantileRegression
+from sklearn.linear_model import LinearRegression
 
 import config
 
 password = config.password
 
 # min_max_scaler = preprocessing.MinMaxScaler()
-scaler = MinMaxScaler(feature_range = (0,1))
-# scaler = StandardScaler()
+# scaler = MinMaxScaler(feature_range = (0,1))
+scaler = StandardScaler()
 
 
 #1.75 mape
@@ -153,17 +149,17 @@ for i in range(2,df1.shape[0]-2):
     data.append((i, df1['high'][i], -1))
 
 # append the trade to the main df
-df1['trade'] = 300
+df1['trade'] = 0
 for stuff in data:
   if stuff[2] == 1:
-    df1.iat[stuff[0], 38] = 400
+    df1.iat[stuff[0], 38] = 1
   if stuff[2] == -1:
-    df1.iat[stuff[0], 38] = 200
+    df1.iat[stuff[0], 38] = -1
 
-# df1 = df1.drop(columns=['date'])
+df1 = df1.drop(columns=['date'])
 
-df1['date'] = pd.to_datetime(df1['date'])
-df1 = df1.set_index('date')
+# df1['date'] = pd.to_datetime(df1['date'])
+# df1 = df1.set_index('date')
 df = df1.copy()
 
 # df = pd.DataFrame(scaler.fit_transform(df), columns=df.columns, index=df1.index)
@@ -174,18 +170,64 @@ trade = df1['trade']
 
 ############################################################## create multiple time series object 
 # create time series object for target variable, This is univariate
-ts_P = TimeSeries.from_series(df["open"], fill_missing_dates=fill, freq=freq)
+ts_P = TimeSeries.from_series(df["trade"], fill_missing_dates=fill, freq=freq)
 ts_P = ts_P.pd_dataframe()
 ts_P_1 = ts_P.fillna(method='ffill')
 ts_P = TimeSeries.from_series(ts_P_1)
 
+# turn ts_p into a df
+ts_p = ts_P.pd_dataframe()
+
+X = ts_p.index.values
+y = ts_p[['trade']].values
+
+length = len(X)
+
+X = X.reshape(length, 1)
+y = y.reshape(length, 1)
+
+regressor = LinearRegression()
+regressor.fit(X, y)
+
+y_pred1 = regressor.predict(X)
+y_pred = pd.DataFrame(y_pred1)
+
+# create a new value based off of 
+ts_p['trade'] = ts_p['trade'] - y_pred[0]
+# turn back into timeseries object
+ts_P = TimeSeries.from_dataframe(ts_p)
+
 # creates time series object covariate feature, This is multivariate
-df_covF = df.loc[:, df.columns != "open"]
+df_covF = df.loc[:, df.columns != "trade"]
 ts_covF = TimeSeries.from_dataframe(df_covF, fill_missing_dates=fill, freq=freq)
 ts_covF = ts_covF.pd_dataframe()
 ts_covF_1 = ts_covF.fillna(method='bfill')
 ts_covF = TimeSeries.from_series(ts_covF_1)
 
+# turn ts_p into a df
+ts_covF = ts_covF.pd_dataframe()
+
+
+for i in ts_covF.columns:
+  # does the linear regression on the columns
+  X = ts_covF.index.values
+  y = ts_covF[[i]].values
+
+  length = len(X)
+
+  X = X.reshape(length, 1)
+  y = y.reshape(length, 1)
+
+  regressor = LinearRegression()
+  regressor.fit(X, y)
+
+  y_pred1 = regressor.predict(X)
+  y_pred = pd.DataFrame(y_pred1)
+
+  # create a new value based off of 
+  ts_covF[i] = ts_covF[i] - y_pred[0]
+# test to se if this works
+ts_covF = TimeSeries.from_dataframe(ts_covF)
 
 ############################################################## splits data into train or test data
 
@@ -208,43 +250,31 @@ covF_ttest = scalerF.transform(covF_test)
 covF_t = scalerF.transform(ts_covF)
 
 # #################################################################### graphs the cycles of the data
-cov_t = covF_t.pd_dataframe()
+# cov_t = covF_t.pd_dataframe()
 
-df3 = cov_t
+# df3 = cov_t
 
-df3.plot()
+# df3.plot()
 
-# covF_ttrain.plot()
+lol = df1['trade']
+
+print(lol)
+
+lol.plot()
+
+# # covF_ttrain.plot()
 plt.show()
 
-# # additional datetime columns: feature engineering
-# df3["month"] = df3.index.month
-
-# df3["wday"] = df3.index.dayofweek
-# dict_days = {0:"1_Mon", 1:"2_Tue", 2:"3_Wed", 3:"4_Thu", 4:"5_Fri", 5:"6_Sat", 6:"7_Sun"}
-# df3["weekday"] = df3["wday"].apply(lambda x: dict_days[x])
-
-# df3["hour"] = df3.index.hour
-
-# df3 = df3.astype({"hour":float, "wday":float, "month": float})
-
-# df3.iloc[[0, -1]]
-
-
-# piv = pd.pivot_table(   df3, 
-#                         values="close", 
-#                         index="month", 
-#                         columns="weekday", 
-#                         aggfunc="mean", 
-#                         margins=True, margins_name="Avg", 
-#                         fill_value=0)
-# pd.options.display.float_format = '{:,.0f}'.format
-
-# plt.figure(figsize = (10,15))
-# sns.set(font_scale=1)
-# sns.heatmap(piv.round(0), annot=True, square = True, \
-#             linewidths=.75, cmap="coolwarm", fmt = ".0f", annot_kws = {"size": 11})
-# plt.title("price by weekday by month")
+# plt.figure(figsize = (15,15))
+# sns.set(font_scale=0.75)
+# ax = sns.heatmap(df3.corr().round(3), 
+#             annot=True, 
+#             square=True, 
+#             linewidths=.75, cmap="coolwarm", 
+#             fmt = ".2f", 
+#             annot_kws = {"size": 11})
+# ax.xaxis.tick_bottom()
+# plt.title("correlation matrix")
 # plt.show()
 
 ###############################################################################################
