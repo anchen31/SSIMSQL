@@ -258,9 +258,26 @@ covF_t = scalerF.transform(ts_covF)
 
 lol = df1['trade']
 
-print(lol)
+
+# there are 4 scenarios, high to high, low to low, low to high, and high to low
+
+
+
+
+# count = 0
+# value = 0
+
+# for i in lol:
+#   if i == 0:
+
+#     count += 1
+
+#   print(i)
+
+
 
 lol.plot()
+ts.plot()
 
 # # covF_ttrain.plot()
 plt.show()
