@@ -129,7 +129,7 @@ def ltSR():
     bars = ib.reqHistoricalData(
         contract1, 
         endDateTime='',
-        durationStr='5 Y',
+        durationStr='4 Y',
         barSizeSetting='1 day',
         whatToShow='TRADES',
         useRTH=RTH,
@@ -255,7 +255,7 @@ def main():
 
         print(df.columns)
 
-        # df.to_csv('OPdata.csv', index=False)
+        df.to_csv('four_year_date.csv', index=False)
 
         #################################################Create a new db for this data, this will be the main db that will have everything else join it###
         # engine = create_engine(config.engine)
