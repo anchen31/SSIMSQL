@@ -3,15 +3,10 @@ import numpy as np
 import os
 from sklearn import preprocessing
 import math
-# from collections import deque
 import random
 import time
 import seaborn as sns
-# import tensorflow as tf
-# from tensorflow.keras.models import Sequential
-# from tensorflow.keras.layers import Dense, Dropout, LSTM, BatchNormalization
-# from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler, RobustScaler
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 # from sqlalchemy import create_engine
@@ -26,37 +21,46 @@ from darts.models import TransformerModel
 from darts.metrics import mape, rmse
 from darts.utils.timeseries_generation import datetime_attribute_timeseries
 from darts.utils.likelihood_models import QuantileRegression
+from sklearn.linear_model import LinearRegression
 
 import config
 
 password = config.password
 
-min_max_scaler = preprocessing.MinMaxScaler()
+# 3.84 w standard scaler
+
+# min_max_scaler = preprocessing.MinMaxScaler()
 # scaler = MinMaxScaler(feature_range = (0,1))
 scaler = StandardScaler()
 
 
-LOAD = True         # True = load previously saved model from disk?  False = (re)train the model
-SAVE = "/_TForm_model10e.pth.tar"   # file name to save the model under
+#1.75 mape
 
-EPOCHS = 40
-INLEN = 32          # input size
-FEAT = 32           # d_model = number of expected features in the inputs, up to 512    
+
+LOAD = False         # True = load previously saved model from disk?  False = (re)train the model
+# SAVE = "/_TForm_model10e.pth.tar"   # file name to save the model under
+
+SAVE = "/_TForm_model_trade10e.pth.tar"   # file name to save the model under
+
+EPOCHS = 10
+INLEN = 8          # input size
+FEAT = 128           # d_model = number of expected features in the inputs, up to 512    
 HEADS = 4           # default 8
-ENCODE = 5          # encoder layers
-DECODE = 5          # decoder layers
-DIM_FF = 64        # dimensions of the feedforward network, default 2048
-BATCH = 64          # batch size
+ENCODE = 4          # encoder layers
+DECODE = 4          # decoder layers
+DIM_FF = 256         # dimensions of the feedforward network, default 2048
+BATCH = 16           # batch size
 ACTF = "relu"       # activation function, relu (default) or gelu
 SCHLEARN = None     # a PyTorch learning rate scheduler; None = constant rate
-LEARN = 1e-3        # learning rate
+LEARN = 1e-4        # learning rate
 VALWAIT = 1         # epochs to wait before evaluating the loss on the test/validation set
 DROPOUT = 0.1       # dropout rate
-N_FC = 4            # output size
+N_FC = 1            # output size
 
 RAND = 42           # random seed
 N_SAMPLES = 100     # number of times a prediction is sampled from a probabilistic model
 N_JOBS = 3          # parallel processors to use;  -1 = all processors
+
 
 # default quantiles for QuantileRegression
 QUANTILES = [0.01, 0.1, 0.2, 0.5, 0.8, 0.9, 0.99]
@@ -73,6 +77,7 @@ label_q2 = f'{int(qU2 * 100)} / {int(qL2 * 100)} percentile band'
 label_q3 = f'{int(qU3 * 100)} / {int(qL3 * 100)} percentile band'
 
 mpath = os.path.abspath(os.getcwd()) + SAVE     # path and file name to save the model
+
 
 # This is an important class
 class Alan:
@@ -135,11 +140,8 @@ def isResistance(df,i):
 #                     'UVXY', 'SQQQ'], axis=1, inplace=False)
 data = []
 
-df1 = pd.read_csv('OPdata.csv')
+df1 = pd.read_csv('four_year_date.csv')
 df1 = df1.loc[:, ~df1.columns.str.contains('^Unnamed')] # removes the unamed df dolumn
-del df1['volume']
-del df1['barCount']
-del df1['RSI']
 
 # gets the local mins and maxes
 for i in range(2,df1.shape[0]-2):
@@ -148,46 +150,92 @@ for i in range(2,df1.shape[0]-2):
   elif isResistance(df1,i):
     data.append((i, df1['high'][i], -1))
 
-# df1['trade'] = 5
-# for stuff in data:
-#   if stuff[2] == 1:
-#     df1.iat[stuff[0], 18] = 6
-#   if stuff[2] == -1:
-#     df1.iat[stuff[0], 18] = 4
-
-# df1['date'] = pd.to_datetime(df1['date'])
-# df1 = df1.set_index('date')
-ts = df1['open']
-# trade = df1['trade']
-
-# df1 = df1.reset_index()
-# xaxis = df1['date'].values.tolist()
-# x = range(len(df1))
-
+# append the trade to the main df
+df1['trade'] = 2
+for stuff in data:
+  if stuff[2] == 1:
+    df1.iat[stuff[0], 40] = 3
+  if stuff[2] == -1:
+    df1.iat[stuff[0], 40] = 1
 
 df1 = df1.drop(columns=['date'])
 
+ts = df1['open']
+trade = df1['trade']
 
+df1['trade'] = df1['trade'].rolling(16).mean()
 
-
+# df1['date'] = pd.to_datetime(df1['date'])
+# df1 = df1.set_index('date')
 df = df1.copy()
 
+
 # df = pd.DataFrame(scaler.fit_transform(df), columns=df.columns, index=df1.index)
+fill = False
+freq = None
 
 ############################################################## create multiple time series object 
-fill = False
 # create time series object for target variable, This is univariate
-ts_P = TimeSeries.from_series(df["open"], fill_missing_dates=fill, freq=None)
+ts_P = TimeSeries.from_series(df["open"], fill_missing_dates=fill, freq=freq)
 ts_P = ts_P.pd_dataframe()
 ts_P_1 = ts_P.fillna(method='ffill')
 ts_P = TimeSeries.from_series(ts_P_1)
 
+# turn ts_p into a df
+ts_p = ts_P.pd_dataframe()
+
+X = ts_p.index.values
+y = ts_p[['open']].values
+
+length = len(X)
+
+X = X.reshape(length, 1)
+y = y.reshape(length, 1)
+
+regressor = LinearRegression()
+regressor.fit(X, y)
+
+y_pred1 = regressor.predict(X)
+y_pred = pd.DataFrame(y_pred1)
+
+# create a new value based off of 
+ts_p['open'] = ts_p['open'] - y_pred[0] + 200
+
+ts = ts_p['open']
+# turn back into timeseries object
+ts_P = TimeSeries.from_dataframe(ts_p)
+
 # creates time series object covariate feature, This is multivariate
 df_covF = df.loc[:, df.columns != "open"]
-ts_covF = TimeSeries.from_dataframe(df_covF, fill_missing_dates=fill, freq=None)
+ts_covF = TimeSeries.from_dataframe(df_covF, fill_missing_dates=fill, freq=freq)
 ts_covF = ts_covF.pd_dataframe()
 ts_covF_1 = ts_covF.fillna(method='bfill')
 ts_covF = TimeSeries.from_series(ts_covF_1)
+
+# turn ts_p into a df
+ts_covF = ts_covF.pd_dataframe()
+
+
+for i in ts_covF.columns:
+  # does the linear regression on the columns
+  X = ts_covF.index.values
+  y = ts_covF[[i]].values
+
+  length = len(X)
+
+  X = X.reshape(length, 1)
+  y = y.reshape(length, 1)
+
+  regressor = LinearRegression()
+  regressor.fit(X, y)
+
+  y_pred1 = regressor.predict(X)
+  y_pred = pd.DataFrame(y_pred1)
+
+  # create a new value based off of 
+  ts_covF[i] = ts_covF[i] - y_pred[0] +200
+# test to se if this works
+ts_covF = TimeSeries.from_dataframe(ts_covF)
 
 ############################################################## splits data into train or test data
 
@@ -195,45 +243,57 @@ ts_covF = TimeSeries.from_series(ts_covF_1)
 ts_train, ts_test = ts_P.split_after(SPLIT)
 
 scalerP = Scaler(scaler)
-# scalerP.fit_transform(ts_train)
-scalerP.fit_transform(ts_P) # LETS SEE IF THIS WORKSSSSS
+scalerP.fit_transform(ts_P)
 ts_ttrain = scalerP.transform(ts_train)
 ts_ttest = scalerP.transform(ts_test)    
 ts_t = scalerP.transform(ts_P)
-
-# # make sure data are of type float
-# ts_t = ts_t.astype(np.float32)
-# ts_ttrain = ts_ttrain.astype(np.float32)
-# ts_ttest = ts_ttest.astype(np.float32)
-
 
 # train/test split and scaling of FEATURE covariates
 covF_train, covF_test = ts_covF.split_after(SPLIT)
 
 scalerF = Scaler(scaler)
-# scalerF.fit_transform(covF_train)
-scalerF.fit_transform(ts_covF) # LETS SEE IF THIS WORKSSSSS
+scalerF.fit_transform(ts_covF)
 covF_ttrain = scalerF.transform(covF_train) 
 covF_ttest = scalerF.transform(covF_test)   
-covF_t = scalerF.transform(ts_covF)  
+covF_t = scalerF.transform(ts_covF)
 
-# # make sure data are of type float
-# covF_ttrain = ts_ttrain.astype(np.float32)
-# covF_ttest = ts_ttest.astype(np.float32)
-
-
-# feature engineering - create time covariates: hour, weekday, month, year, country-specific holidays
-
-
-
-# # #################################################################### graphs the cycles of the data
-
+# #################################################################### graphs the cycles of the data
 # cov_t = covF_t.pd_dataframe()
+
 # df3 = cov_t
-# print(len(df3))
+
 # df3.plot()
+
 # plt.show()
 
+lol = df['trade']
+
+print(lol)
+
+
+# # there are 4 scenarios, high to high, low to low, low to high, and high to low
+
+
+
+
+# # count = 0
+# # value = 0
+
+# # for i in lol:
+# #   # if i == 0:
+
+# #   #   count += 1
+
+# #   print(i)
+
+
+
+lol.plot()
+trade.plot()
+# # ts.plot()
+
+# # # covF_ttrain.plot()
+plt.show()
 
 # plt.figure(figsize = (15,15))
 # sns.set(font_scale=0.75)
@@ -247,83 +307,72 @@ covF_t = scalerF.transform(ts_covF)
 # plt.title("correlation matrix")
 # plt.show()
 
-
-
 ###############################################################################################
 
-model = TransformerModel(
-                    input_chunk_length = INLEN,
-                    output_chunk_length = N_FC,
-                    batch_size = BATCH,
-                    n_epochs = EPOCHS,
-                    model_name = "Transformer_price_noFill",
-                    nr_epochs_val_period = VALWAIT,
-                    d_model = FEAT,
-                    nhead = HEADS,
-                    num_encoder_layers = ENCODE,
-                    num_decoder_layers = DECODE,
-                    dim_feedforward = DIM_FF,
-                    dropout = DROPOUT,
-                    activation = ACTF,
-                    random_state=RAND,
-                    likelihood=QuantileRegression(quantiles=QUANTILES), 
-                    optimizer_kwargs={'lr': LEARN},
-                    save_checkpoints=True,
-                    force_reset=True
-                    )
+# model = TransformerModel(
+#                     input_chunk_length = INLEN,
+#                     output_chunk_length = N_FC,
+#                     batch_size = BATCH,
+#                     n_epochs = EPOCHS,
+#                     model_name = "Transformer_price",
+#                     nr_epochs_val_period = VALWAIT,
+#                     d_model = FEAT,
+#                     nhead = HEADS,
+#                     num_encoder_layers = ENCODE,
+#                     num_decoder_layers = DECODE,
+#                     dim_feedforward = DIM_FF,
+#                     dropout = DROPOUT,
+#                     activation = ACTF,
+#                     random_state=RAND,
+#                     likelihood=QuantileRegression(quantiles=QUANTILES), 
+#                     optimizer_kwargs={'lr': LEARN},
+#                     add_encoders={"cyclic": {"future": ["dayofweek", "month"]}},
+#                     save_checkpoints=True,
+#                     force_reset=True
+#                     )
 
 
-# training: load a saved model or (re)train
-if LOAD:
-    print("have loaded a previously saved model from disk:" + mpath)
-    model = TransformerModel.load_model(mpath)                            # load previously model from disk 
-else:
-    model.fit(  ts_ttrain, 
-                past_covariates=covF_t, 
-                verbose=True)
-    print("have saved the model after training:", mpath)
-    model.save_model(mpath)
+# # training: load a saved model or (re)train
+# if LOAD:
+#     print("have loaded a previously saved model from disk:" + mpath)
+#     model = TransformerModel.load_model(mpath)                            # load previously model from disk 
+# else:
+#     model.fit(  ts_ttrain, 
+#                 past_covariates=covF_t, 
+#                 verbose=True)
+#     print("have saved the model after training:", mpath)
+#     model.save_model(mpath)
 
-# # testing: generate predictions
-ts_tpred = model.predict(   n=len(ts_ttest), 
-                            num_samples=N_SAMPLES,   
-                            n_jobs=N_JOBS, 
-                            verbose=True)
+# # # testing: generate predictions
+# ts_tpred = model.predict(   n=len(ts_ttest), 
+#                             num_samples=N_SAMPLES,   
+#                             n_jobs=N_JOBS, 
+#                             verbose=True)
 
 
 
-# testing: helper function: plot predictions
-def plot_predict(ts_actual, ts_test, ts_pred):
+# # testing: helper function: plot predictions
+# def plot_predict(ts_actual, ts_test, ts_pred):
     
-    # plot time series, limited to forecast horizon
-    plt.figure(figsize=FIGSIZE)
+#     ## plot time series, limited to forecast horizon
+#     plt.figure(figsize=FIGSIZE)
     
-    ts_actual.plot(label="actual price")                                       # plot actual
-    # trade.plot(label="actual trade")
-    ts_pred.plot(low_quantile=qL1, high_quantile=qU1, label=label_q1)    # plot U1 quantile band
-    ts_pred.plot(low_quantile=qL2, high_quantile=qU2, label=label_q2)   # plot U2 quantile band
-    ts_pred.plot(low_quantile=qL3, high_quantile=qU3, label=label_q3)    # plot U3 quantile band
-    ts_pred.plot(central_quantile="mean", label="expected")              # plot "mean" or median=0.5
-
-    plt.title("TFT: test set (MAPE: {:.2f}%)".format(mape(ts_test, ts_pred)))
+#     ts_actual.plot(label="actual")                                       # plot actual
     
+#     trade.plot(label="Actual Trade")
 
-    # fig, ax1 = plt.subplots()
-
-    # ax2 = ax1.twinx()y
-    # ax3 = ax1.twinx()
-
-    # ax1.plot(ts_actual)
-    # ts_pred = ts_pred.quantile_df()
-    # ax2.plot(ts_pred, color = 'red')
-    # ts_pred = TimeSeries.from_dataframe(ts_pred, fill_missing_dates=fill, freq=None)
-    # ax3.plot(trade, color = 'green')
-    # plt.title("TFT: test set (MAPE: {:.2f}%)".format(mape(ts_test, ts_pred)))
-
-    # plt.legend()
-    plt.show()
+#     ts_pred.plot(low_quantile=qL1, high_quantile=qU1, label=label_q1)    # plot U1 quantile band
+#     #ts_pred.plot(low_quantile=qL2, high_quantile=qU2, label=label_q2)   # plot U2 quantile band
+#     ts_pred.plot(low_quantile=qL3, high_quantile=qU3, label=label_q3)    # plot U3 quantile band
+#     ts_pred.plot(central_quantile="mean", label="expected")              # plot "mean" or median=0.5
+    
+#     plt.title("TFT: test set (MAPE: {:.2f}%)".format(mape(ts_test, ts_pred)))
+#     plt.legend()
+#     plt.show()    
 
 
-ts_pred = scalerP.inverse_transform(ts_tpred)
-print(type(ts_pred))
-plot_predict(ts, ts_test, ts_pred)
+# ts_pred = scalerP.inverse_transform(ts_tpred)
+# plot_predict(ts, ts_test, ts_pred)
+
+
+
