@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 
 from darts import TimeSeries, concatenate
 from darts.dataprocessing.transformers import Scaler
-from darts.models import TransformerModel
+# from darts.models import TransformerModel
 from darts.metrics import mape, rmse
 from darts.utils.timeseries_generation import datetime_attribute_timeseries
 from darts.utils.likelihood_models import QuantileRegression
@@ -32,6 +32,10 @@ password = config.password
 # min_max_scaler = preprocessing.MinMaxScaler()
 # scaler = MinMaxScaler(feature_range = (0,1))
 scaler = StandardScaler()
+
+
+# high is buy
+# low is sell
 
 
 #1.75 mape
@@ -107,6 +111,40 @@ def isResistance(df,i):
   resistance = df['high'][i] > df['high'][i-1]  and df['high'][i] > df['high'][i+1] and df['high'][i+1] > df['high'][i+2] and df['high'][i-1] > df['high'][i-2]
   return resistance
 
+
+# data is the column where your signal goes, buy and sell are values that need to be passed to trigger the buy/sell, ts is the open data
+def backtest(data, buy, sell, ts):
+  buy_trade = True
+  sell_trade = True
+  total = 0
+  trade_count = 0
+
+  for i in range(len(data)):
+    if lol[i] > buy:
+      if buy_trade == True:
+        total -= ts[i]
+        trade_count += 1
+        buy_trade = False
+        print("buy", total, "@ ", i)
+
+    if lol[i] == 2:
+      buy_trade = True
+      sell_trade = True
+    
+    if lol[i] < sell:
+      if sell_trade == True:
+        if trade_count > 0:
+          j = 0
+          while j < trade_count:
+            j += 1
+            total += ts[i]
+            print("sell", total, "@ ", i)
+          sell_trade = False
+          trade_count = 0
+          print("profit at end of trade: ", total)
+
+  return total
+
 ################################################################## pull the data and read it 
 
 # try:
@@ -163,7 +201,8 @@ df1 = df1.drop(columns=['date'])
 ts = df1['open']
 trade = df1['trade']
 
-df1['trade'] = df1['trade'].rolling(16).mean()
+# 853.2800000000002 max achieved gain
+df1['trade'] = df1['trade'].rolling(4).mean()
 
 # df1['date'] = pd.to_datetime(df1['date'])
 # df1 = df1.set_index('date')
@@ -201,7 +240,7 @@ y_pred = pd.DataFrame(y_pred1)
 # create a new value based off of 
 ts_p['open'] = ts_p['open'] - y_pred[0] + 200
 
-ts = ts_p['open']
+# ts = ts_p['open']
 # turn back into timeseries object
 ts_P = TimeSeries.from_dataframe(ts_p)
 
@@ -266,34 +305,26 @@ covF_t = scalerF.transform(ts_covF)
 
 # plt.show()
 
-lol = df['trade']
+lol = df1['trade']
 
-print(lol)
+# only buy once when its that number, don't buy another one if its the same number
 
-
-# # there are 4 scenarios, high to high, low to low, low to high, and high to low
-
-
+backtest(lol, 2.03, 1.97, ts)
+# backtest(actual, 2.9, 1.1, ts)
 
 
-# # count = 0
-# # value = 0
+# fig1, ax1 = plt.subplots()
+# ax2 = ax1.twinx()
+# ax1.plot(lol, c='g')
+# # ax1.plot(trade, c='b')
+# ax2.plot(ts)
 
-# # for i in lol:
-# #   # if i == 0:
+# plt.show()
 
-# #   #   count += 1
-
-# #   print(i)
-
-
-
-lol.plot()
-trade.plot()
-# # ts.plot()
+# ts.plot()
 
 # # # covF_ttrain.plot()
-plt.show()
+
 
 # plt.figure(figsize = (15,15))
 # sns.set(font_scale=0.75)
