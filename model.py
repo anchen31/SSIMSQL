@@ -37,7 +37,7 @@ scaler = StandardScaler()
 #1.75 mape
 
 
-LOAD = False         # True = load previously saved model from disk?  False = (re)train the model
+LOAD = True         # True = load previously saved model from disk?  False = (re)train the model
 # SAVE = "/_TForm_model10e.pth.tar"   # file name to save the model under
 
 SAVE = "/_TForm_model_trade10e.pth.tar"   # file name to save the model under
