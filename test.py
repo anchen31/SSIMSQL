@@ -202,7 +202,7 @@ ts = df1['open']
 trade = df1['trade']
 
 # 853.2800000000002 max achieved gain
-df1['trade'] = df1['trade'].rolling(4).mean()
+df1['trade'] = df1['trade'].rolling(8).mean()
 
 # df1['date'] = pd.to_datetime(df1['date'])
 # df1 = df1.set_index('date')
@@ -313,15 +313,15 @@ backtest(lol, 2.03, 1.97, ts)
 # backtest(actual, 2.9, 1.1, ts)
 
 
-# fig1, ax1 = plt.subplots()
-# ax2 = ax1.twinx()
-# ax1.plot(lol, c='g')
-# # ax1.plot(trade, c='b')
-# ax2.plot(ts)
+fig1, ax1 = plt.subplots()
+ax2 = ax1.twinx()
+ax1.plot(lol, c='g')
+# ax1.plot(trade, c='b')
+ax2.plot(ts)
 
-# plt.show()
+plt.show()
 
-# ts.plot()
+ts.plot()
 
 # # # covF_ttrain.plot()
 
