@@ -311,7 +311,6 @@ N = int(len(lol)/10)
 
 last_n_column  = lol.iloc[-N:]
 
-
 # print(last_n_column)
 
 # print(type(lol))
