@@ -92,109 +92,109 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler, Ro
 
 
 ########################################################### heat map below #####
-# with 4 year data, it is more responsive to the indexes such as gld 
-# with the intrad day data, it is less efficent
+with 4 year data, it is more responsive to the indexes such as gld 
+with the intrad day data, it is less efficent
 
-# import pandas as pd
-# import seaborn as sns
+import pandas as pd
+import seaborn as sns
 
-# df = pd.read_csv('four_year_date.csv', index_col=False)
+df = pd.read_csv('four_year_date.csv', index_col=False)
 
-# # df = pd.read_csv('OPdata.csv', index_col=False)
-# # df = pd.read_csv('OPdata.csv', index_col=False)
-# # df = df.drop('Unnamed: 0',1)
-# df = df.drop('date', 1)
+# df = pd.read_csv('OPdata.csv', index_col=False)
+# df = pd.read_csv('OPdata.csv', index_col=False)
+# df = df.drop('Unnamed: 0',1)
+df = df.drop('date', 1)
 
-# plt.figure(figsize = (15,15))
-# sns.set(font_scale=0.75)
-# ax = sns.heatmap(df.corr().round(3), 
-#             annot=True, 
-#             square=True, 
-#             linewidths=.75, cmap="coolwarm", 
-#             fmt = ".2f", 
-#             annot_kws = {"size": 11})
-# ax.xaxis.tick_bottom()
-# plt.title("correlation matrix")
-# plt.show()
+plt.figure(figsize = (15,15))
+sns.set(font_scale=0.75)
+ax = sns.heatmap(df.corr().round(3), 
+            annot=True, 
+            square=True, 
+            linewidths=.75, cmap="coolwarm", 
+            fmt = ".2f", 
+            annot_kws = {"size": 11})
+ax.xaxis.tick_bottom()
+plt.title("correlation matrix")
+plt.show()
 
-# ##############################################################
+##############################################################
 
-# # uvxy, rio,? uso?, sqqq
+# uvxy, rio,? uso?, sqqq
 
-# # Naw = ['date', 'open', 'high', 'low', 'volume', 'average', 'barCount', 'bb_bbm', 'bb_bbh', 'bb_bbl', 'VWAP', 'RSI', 'STsupp', 'STres', 'LTsupp', 'LTres']
-# Naw = ['date']
+# Naw = ['date', 'open', 'high', 'low', 'volume', 'average', 'barCount', 'bb_bbm', 'bb_bbh', 'bb_bbl', 'VWAP', 'RSI', 'STsupp', 'STres', 'LTsupp', 'LTres']
+Naw = ['date']
 
-# df = df.dropna()
+df = df.dropna()
 
-# # orignal data look
+# orignal data look
+del df['volume']
+del df['barCount']
+del df['UVXY']
+del df['SQQQ']
+
+df.plot()
+plt.show()
+
+
+# print(df['LTres']. head(50))
+
+for i in df.columns:
+  if i in Naw:
+    pass
+  else:
+    # does the linear regression on the columns
+    X = df.index.values
+    y = df[[i]].values
+
+    length = len(X)
+
+    X = X.reshape(length, 1)
+    y = y.reshape(length, 1)
+
+    regressor = LinearRegression()
+    regressor.fit(X, y)
+
+    y_pred1 = regressor.predict(X)
+    y_pred = pd.DataFrame(y_pred1)
+
+    # create a new value based off of 
+    df[i] = df[i] - y_pred[0]
+    # print(y_pred[0])
+
+    # plotting
+    plt.scatter(X, y, color="black")
+    plt.plot(X, y_pred1, color="blue", linewidth=3)
+
+    plt.xticks(())
+    plt.yticks(())
+    plt.title(i)
+    plt.show()
+
+
+
 # del df['volume']
 # del df['barCount']
 # del df['UVXY']
 # del df['SQQQ']
+# del df['LTres']
 
-# df.plot()
-# plt.show()
-
-
-# # print(df['LTres']. head(50))
-
-# for i in df.columns:
-#   if i in Naw:
-#     pass
-#   else:
-#     # does the linear regression on the columns
-#     X = df.index.values
-#     y = df[[i]].values
-
-#     length = len(X)
-
-#     X = X.reshape(length, 1)
-#     y = y.reshape(length, 1)
-
-#     regressor = LinearRegression()
-#     regressor.fit(X, y)
-
-#     y_pred1 = regressor.predict(X)
-#     y_pred = pd.DataFrame(y_pred1)
-
-#     # create a new value based off of 
-#     df[i] = df[i] - y_pred[0]
-#     # print(y_pred[0])
-
-#     # plotting
-#     plt.scatter(X, y, color="black")
-#     plt.plot(X, y_pred1, color="blue", linewidth=3)
-
-#     plt.xticks(())
-#     plt.yticks(())
-#     plt.title(i)
-#     plt.show()
+df.plot()
+plt.show()
 
 
+plt.figure(figsize = (15,15))
+sns.set(font_scale=0.75)
+ax = sns.heatmap(df.corr().round(3), 
+            annot=True, 
+            square=True, 
+            linewidths=.75, cmap="coolwarm", 
+            fmt = ".2f", 
+            annot_kws = {"size": 11})
+ax.xaxis.tick_bottom()
+plt.title("correlation matrix")
+plt.show()
 
-# # del df['volume']
-# # del df['barCount']
-# # del df['UVXY']
-# # del df['SQQQ']
-# # del df['LTres']
-
-# df.plot()
-# plt.show()
-
-
-# plt.figure(figsize = (15,15))
-# sns.set(font_scale=0.75)
-# ax = sns.heatmap(df.corr().round(3), 
-#             annot=True, 
-#             square=True, 
-#             linewidths=.75, cmap="coolwarm", 
-#             fmt = ".2f", 
-#             annot_kws = {"size": 11})
-# ax.xaxis.tick_bottom()
-# plt.title("correlation matrix")
-# plt.show()
-
-####################################### normalize the trade chart
+###################################### normalize the trade chart
 
   
 

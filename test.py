@@ -203,6 +203,7 @@ trade = df1['trade']
 
 # 853.2800000000002 max achieved gain
 df1['trade'] = df1['trade'].rolling(4).mean()
+# df1['trade'] = df1['trade'].ewm(span=12, adjust=False).mean()
 
 # df1['date'] = pd.to_datetime(df1['date'])
 # df1 = df1.set_index('date')
@@ -307,33 +308,40 @@ covF_t = scalerF.transform(ts_covF)
 
 lol = df1['trade']
 
-N = int(len(lol)/10)
-
-last_n_column  = lol.iloc[-N:]
-
-
-# print(last_n_column)
-
-# print(type(lol))
-
-# only buy once when its that number, don't buy another one if its the same number
-
-# $19 with 8 rolling
-# $80 with 4 rolling
-backtest(last_n_column, 2.03, 1.97, ts)
-# backtest(actual, 2.9, 1.1, ts)
-# 119$ perfect execution
-# backtest(last_n_column, 2.9, 1.1, ts)
-
-
-
-fig1, ax1 = plt.subplots()
-ax2 = ax1.twinx()
-ax1.plot(last_n_column, c='g')
-# ax1.plot(trade, c='b')
-ax2.plot(ts)
-
+lol.plot()
 plt.show()
+
+# N = int(len(lol)/10)
+
+# last_n_column  = lol.iloc[-N:]
+
+
+# # print(last_n_column)
+
+# # print(type(lol))
+
+# # only buy once when its that number, don't buy another one if its the same number
+
+# # $19 with 8 rolling
+# # $80 with 4 rolling
+# backtest(last_n_column, 2.03, 1.97, ts)
+# # backtest(actual, 2.9, 1.1, ts)
+# # 119$ perfect execution
+# # backtest(last_n_column, 2.9, 1.1, ts)
+
+
+
+# fig1, ax1 = plt.subplots()
+# ax2 = ax1.twinx()
+# ax1.plot(last_n_column, c='g')
+# # ax1.plot(trade, c='b')
+# ax2.plot(ts)
+
+# plt.show()
+
+
+
+
 
 # ts.plot()
 
@@ -354,73 +362,73 @@ plt.show()
 
 ###############################################################################################
 
-model = TransformerModel(
-                    input_chunk_length = INLEN,
-                    output_chunk_length = N_FC,
-                    batch_size = BATCH,
-                    n_epochs = EPOCHS,
-                    model_name = "Transformer_price",
-                    nr_epochs_val_period = VALWAIT,
-                    d_model = FEAT,
-                    nhead = HEADS,
-                    num_encoder_layers = ENCODE,
-                    num_decoder_layers = DECODE,
-                    dim_feedforward = DIM_FF,
-                    dropout = DROPOUT,
-                    activation = ACTF,
-                    random_state=RAND,
-                    likelihood=QuantileRegression(quantiles=QUANTILES), 
-                    optimizer_kwargs={'lr': LEARN},
-                    add_encoders={"cyclic": {"future": ["dayofweek", "month"]}},
-                    save_checkpoints=True,
-                    force_reset=True
-                    )
+# model = TransformerModel(
+#                     input_chunk_length = INLEN,
+#                     output_chunk_length = N_FC,
+#                     batch_size = BATCH,
+#                     n_epochs = EPOCHS,
+#                     model_name = "Transformer_price",
+#                     nr_epochs_val_period = VALWAIT,
+#                     d_model = FEAT,
+#                     nhead = HEADS,
+#                     num_encoder_layers = ENCODE,
+#                     num_decoder_layers = DECODE,
+#                     dim_feedforward = DIM_FF,
+#                     dropout = DROPOUT,
+#                     activation = ACTF,
+#                     random_state=RAND,
+#                     likelihood=QuantileRegression(quantiles=QUANTILES), 
+#                     optimizer_kwargs={'lr': LEARN},
+#                     add_encoders={"cyclic": {"future": ["dayofweek", "month"]}},
+#                     save_checkpoints=True,
+#                     force_reset=True
+#                     )
 
 
-# training: load a saved model or (re)train
-if LOAD:
-    print("have loaded a previously saved model from disk:" + mpath)
-    model = TransformerModel.load_model(mpath)                            # load previously model from disk 
-else:
-    model.fit(  ts_ttrain, 
-                past_covariates=covF_t, 
-                verbose=True)
-    print("have saved the model after training:", mpath)
-    model.save_model(mpath)
+# # training: load a saved model or (re)train
+# if LOAD:
+#     print("have loaded a previously saved model from disk:" + mpath)
+#     model = TransformerModel.load_model(mpath)                            # load previously model from disk 
+# else:
+#     model.fit(  ts_ttrain, 
+#                 past_covariates=covF_t, 
+#                 verbose=True)
+#     print("have saved the model after training:", mpath)
+#     model.save_model(mpath)
 
-# # testing: generate predictions
-ts_tpred = model.predict(   n=len(ts_ttest), 
-                            num_samples=N_SAMPLES,   
-                            n_jobs=N_JOBS, 
-                            verbose=True)
-
-
-
-# testing: helper function: plot predictions
-def plot_predict(ts_actual, ts_test, ts_pred):
-
-  fig1, ax1 = plt.subplots()
-  ax2 = ax1.twinx()
-
-  ## plot time series, limited to forecast horizon
-  plt.figure(figsize=FIGSIZE)
-
-  ts_actual.plot(label="actual")                                       # plot actual
-
-  trade.plot(label="Actual Trade")
-
-  ts_pred.plot(low_quantile=qL1, high_quantile=qU1, label=label_q1)    # plot U1 quantile band
-  #ts_pred.plot(low_quantile=qL2, high_quantile=qU2, label=label_q2)   # plot U2 quantile band
-  ts_pred.plot(low_quantile=qL3, high_quantile=qU3, label=label_q3)    # plot U3 quantile band
-  ts_pred.plot(central_quantile="mean", label="expected")              # plot "mean" or median=0.5
-
-  plt.title("TFT: test set (MAPE: {:.2f}%)".format(mape(ts_test, ts_pred)))
-  plt.legend()
-  plt.show()    
+# # # testing: generate predictions
+# ts_tpred = model.predict(   n=len(ts_ttest), 
+#                             num_samples=N_SAMPLES,   
+#                             n_jobs=N_JOBS, 
+#                             verbose=True)
 
 
-ts_pred = scalerP.inverse_transform(ts_tpred)
-plot_predict(ts, ts_test, ts_pred)
+
+# # testing: helper function: plot predictions
+# def plot_predict(ts_actual, ts_test, ts_pred):
+
+#   fig1, ax1 = plt.subplots()
+#   ax2 = ax1.twinx()
+
+#   ## plot time series, limited to forecast horizon
+#   plt.figure(figsize=FIGSIZE)
+
+#   ts_actual.plot(label="actual")                                       # plot actual
+
+#   trade.plot(label="Actual Trade")
+
+#   ts_pred.plot(low_quantile=qL1, high_quantile=qU1, label=label_q1)    # plot U1 quantile band
+#   #ts_pred.plot(low_quantile=qL2, high_quantile=qU2, label=label_q2)   # plot U2 quantile band
+#   ts_pred.plot(low_quantile=qL3, high_quantile=qU3, label=label_q3)    # plot U3 quantile band
+#   ts_pred.plot(central_quantile="mean", label="expected")              # plot "mean" or median=0.5
+
+#   plt.title("TFT: test set (MAPE: {:.2f}%)".format(mape(ts_test, ts_pred)))
+#   plt.legend()
+#   plt.show()    
+
+
+# ts_pred = scalerP.inverse_transform(ts_tpred)
+# plot_predict(ts, ts_test, ts_pred)
 
 
 
