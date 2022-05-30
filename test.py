@@ -113,35 +113,69 @@ def isResistance(df,i):
 
 
 # data is the column where your signal goes, buy and sell are values that need to be passed to trigger the buy/sell, ts is the open data
+# def backtest(data, buy, sell, ts):
+#   buy_trade = True
+#   sell_trade = True
+#   total = 0
+#   trade_count = 0
+#   for i in data.index:
+#   # for i in range(len(data)):
+#     if lol[i] > buy:
+#       if buy_trade == True:
+#         total -= ts[i]
+#         trade_count += 1
+#         buy_trade = False
+#         print("buy", total, "@ ", i)
+
+#     if lol[i] == 2:
+#       buy_trade = True
+#       sell_trade = True
+    
+#     if lol[i] < sell:
+#       if sell_trade == True:
+#         if trade_count > 0:
+#           j = 0
+#           while j < trade_count:
+#             j += 1
+#             total += ts[i]
+#             print("sell", total, "@ ", i)
+#           sell_trade = False
+#           trade_count = 0
+#           print("profit at end of trade: ", total)
+
+#   return total
+
+
+
 def backtest(data, buy, sell, ts):
-  buy_trade = True
-  sell_trade = True
+  trade = True
   total = 0
-  trade_count = 0
+  buy_count = 0
+  sell_count = 0
   for i in data.index:
   # for i in range(len(data)):
     if lol[i] > buy:
-      if buy_trade == True:
+      j = 0
+      while j < sell_count:
+        j += 1
         total -= ts[i]
-        trade_count += 1
-        buy_trade = False
-        print("buy", total, "@ ", i)
 
-    if lol[i] == 2:
-      buy_trade = True
-      sell_trade = True
-    
+      total -= ts[i]
+      buy_count += 1
+      sell_count = 0
+      print("buy", total, "@ ", i)
+
     if lol[i] < sell:
-      if sell_trade == True:
-        if trade_count > 0:
-          j = 0
-          while j < trade_count:
-            j += 1
-            total += ts[i]
-            print("sell", total, "@ ", i)
-          sell_trade = False
-          trade_count = 0
-          print("profit at end of trade: ", total)
+      j = 0
+      while j < buy_count:
+        j += 1
+        total += ts[i]
+        print("sell", total, "@ ", i)
+
+      total += ts[i]
+      sell_count += 1
+      buy_count = 0
+  print("profit at end of trade: ", total)
 
   return total
 
@@ -202,8 +236,8 @@ ts = df1['open']
 trade = df1['trade']
 
 # 853.2800000000002 max achieved gain
-# df1['trade'] = df1['trade'].rolling(4).mean()
-df1['trade'] = df1['trade'].ewm(span=16, adjust=False).mean()
+df1['trade'] = df1['trade'].rolling(4).mean()
+# df1['trade'] = df1['trade'].ewm(span=16, adjust=False).mean()
 
 # df1['date'] = pd.to_datetime(df1['date'])
 # df1 = df1.set_index('date')
