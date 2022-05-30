@@ -202,8 +202,8 @@ ts = df1['open']
 trade = df1['trade']
 
 # 853.2800000000002 max achieved gain
-df1['trade'] = df1['trade'].rolling(4).mean()
-# df1['trade'] = df1['trade'].ewm(span=12, adjust=False).mean()
+# df1['trade'] = df1['trade'].rolling(4).mean()
+df1['trade'] = df1['trade'].ewm(span=16, adjust=False).mean()
 
 # df1['date'] = pd.to_datetime(df1['date'])
 # df1 = df1.set_index('date')
@@ -314,24 +314,26 @@ last_n_column  = lol.iloc[-N:]
 
 # print(last_n_column)
 
+backtest(lol, 2.1, 1.9, ts)
+
 # print(type(lol))
 
 # only buy once when its that number, don't buy another one if its the same number
 
 # $19 with 8 rolling
 # $80 with 4 rolling
-backtest(last_n_column, 2.03, 1.97, ts)
+# backtest(last_n_column, 2.03, 1.97, ts)
 # backtest(actual, 2.9, 1.1, ts)
 # 119$ perfect execution
 # backtest(last_n_column, 2.9, 1.1, ts)
 
 
 
-fig1, ax1 = plt.subplots()
-ax2 = ax1.twinx()
-ax1.plot(last_n_column, c='g')
-# ax1.plot(trade, c='b')
-ax2.plot(ts)
+# fig1, ax1 = plt.subplots()
+# ax2 = ax1.twinx()
+# ax1.plot(last_n_column, c='g')
+# # ax1.plot(trade, c='b')
+# ax2.plot(ts)
 
 lol.plot()
 plt.show()
