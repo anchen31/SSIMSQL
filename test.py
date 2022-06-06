@@ -111,42 +111,6 @@ def isResistance(df,i):
   resistance = df['high'][i] > df['high'][i-1]  and df['high'][i] > df['high'][i+1] and df['high'][i+1] > df['high'][i+2] and df['high'][i-1] > df['high'][i-2]
   return resistance
 
-
-# data is the column where your signal goes, buy and sell are values that need to be passed to trigger the buy/sell, ts is the open data
-# def backtest(data, buy, sell, ts):
-#   buy_trade = True
-#   sell_trade = True
-#   total = 0
-#   trade_count = 0
-#   for i in data.index:
-#   # for i in range(len(data)):
-#     if lol[i] > buy:
-#       if buy_trade == True:
-#         total -= ts[i]
-#         trade_count += 1
-#         buy_trade = False
-#         print("buy", total, "@ ", i)
-
-#     if lol[i] == 2:
-#       buy_trade = True
-#       sell_trade = True
-    
-#     if lol[i] < sell:
-#       if sell_trade == True:
-#         if trade_count > 0:
-#           j = 0
-#           while j < trade_count:
-#             j += 1
-#             total += ts[i]
-#             print("sell", total, "@ ", i)
-#           sell_trade = False
-#           trade_count = 0
-#           print("profit at end of trade: ", total)
-
-#   return total
-
-
-
 def backtest(data, buy, sell, ts):
   trade = True
   total = 0
@@ -186,26 +150,6 @@ def backtest(data, buy, sell, ts):
   print("profit at end of trade: ", total)
 
   return total
-
-# for i in data.index:
-#   if lol[i] > buy:
-#     # check if it is halted
-#     if halt = True:
-#       pass:
-#     else:
-#       total -= ts[i]
-#       buy_count += 1
-#       sell_count = 0
-#       print("buy", total, "@ ", i)
-#       halt = 
-
-
-
-# when it buys something, it triggers a halt until it goes below the buy/ sell price
-    
-
-
-
 
 ################################################################## pull the data and read it 
 
