@@ -159,6 +159,7 @@ def backtest(data, buy, sell, ts):
       while j < sell_count:
         j += 1
         total -= ts[i]
+        print("buy", total, "@ ", i)
 
       total -= ts[i]
       buy_count += 1
@@ -236,8 +237,8 @@ ts = df1['open']
 trade = df1['trade']
 
 # 853.2800000000002 max achieved gain
-df1['trade'] = df1['trade'].rolling(4).mean()
-# df1['trade'] = df1['trade'].ewm(span=16, adjust=False).mean()
+# df1['trade'] = df1['trade'].rolling(4).mean()
+df1['trade'] = df1['trade'].ewm(span=16, adjust=False).mean()
 
 # df1['date'] = pd.to_datetime(df1['date'])
 # df1 = df1.set_index('date')
@@ -332,9 +333,9 @@ covF_ttest = scalerF.transform(covF_test)
 covF_t = scalerF.transform(ts_covF)
 
 # #################################################################### graphs the cycles of the data
-# cov_t = covF_t.pd_dataframe()
+cov_t = covF_t.pd_dataframe()
 
-# df3 = cov_t
+df3 = cov_t
 
 # df3.plot()
 
@@ -342,15 +343,19 @@ covF_t = scalerF.transform(ts_covF)
 
 lol = df1['trade']
 
-N = int(len(lol)/10)
+lol.plot()
+plt.show()
 
-last_n_column  = lol.iloc[-N:]
+# N = int(len(lol)/10)
 
-# print(last_n_column)
+# last_n_column  = lol.iloc[-N:]
 
-backtest(lol, 2.1, 1.9, ts)
+# # print(last_n_column)
 
-# print(type(lol))
+# backtest(lol, 2.1, 1.9, ts)
+
+# lol.plot()
+# plt.show()
 
 # only buy once when its that number, don't buy another one if its the same number
 
@@ -369,8 +374,6 @@ backtest(lol, 2.1, 1.9, ts)
 # # ax1.plot(trade, c='b')
 # ax2.plot(ts)
 
-lol.plot()
-plt.show()
 
 # N = int(len(lol)/10)
 
