@@ -152,32 +152,58 @@ def backtest(data, buy, sell, ts):
   total = 0
   buy_count = 0
   sell_count = 0
+
   for i in data.index:
-  # for i in range(len(data)):
-    if lol[i] > buy:
-      j = 0
-      while j < sell_count:
-        j += 1
+
+    if i == 0:
+      pass
+
+    else:
+      if ((data[i] > buy) and (data[i-1] < buy)):
+        j = 0
+        while j < sell_count:
+          j += 1
+          total -= ts[i]
+
         total -= ts[i]
+        buy_count += 1
+        sell_count = 0
+        print("buy", total, "@ ", i)
 
-      total -= ts[i]
-      buy_count += 1
-      sell_count = 0
-      print("buy", total, "@ ", i)
-
-    if lol[i] < sell:
-      j = 0
-      while j < buy_count:
-        j += 1
+      if ((data[i] < sell) and (data[i-1] > sell)):
+        j = 0
+        while j < buy_count:
+          j += 1
+          total += ts[i]
+          
         total += ts[i]
+        sell_count += 1
+        buy_count = 0
         print("sell", total, "@ ", i)
 
-      total += ts[i]
-      sell_count += 1
-      buy_count = 0
   print("profit at end of trade: ", total)
 
   return total
+
+# for i in data.index:
+#   if lol[i] > buy:
+#     # check if it is halted
+#     if halt = True:
+#       pass:
+#     else:
+#       total -= ts[i]
+#       buy_count += 1
+#       sell_count = 0
+#       print("buy", total, "@ ", i)
+#       halt = 
+
+
+
+# when it buys something, it triggers a halt until it goes below the buy/ sell price
+    
+
+
+
 
 ################################################################## pull the data and read it 
 
@@ -347,7 +373,7 @@ N = int(len(lol)/10)
 last_n_column  = lol.iloc[-N:]
 
 # print(last_n_column)
-
+# print(lol)
 backtest(lol, 2.1, 1.9, ts)
 
 # print(type(lol))
