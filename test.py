@@ -166,7 +166,7 @@ def backtest(data, buy, sell, ts):
           total -= ts[i]
 
         total -= ts[i]
-        
+
         buy_count += 1
         sell_count = 0
 
@@ -375,15 +375,12 @@ plt.show()
 
 # N = int(len(lol)/10)
 
-<<<<<<< HEAD
 # print(last_n_column)
 # print(lol)
 backtest(lol, 2.1, 1.9, ts)
-=======
 # last_n_column  = lol.iloc[-N:]
 
 # # print(last_n_column)
->>>>>>> cc65a433fbfbac0502bb573a43efbfab35b6b79d
 
 # backtest(lol, 2.1, 1.9, ts)
 
