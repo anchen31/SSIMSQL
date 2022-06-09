@@ -119,7 +119,7 @@ def backtest(data, buy, sell, ts):
 
   for i in data.index:
 
-    if i == 0:
+    if i == data.index[0]:
       pass
 
     else:
@@ -151,6 +151,19 @@ def backtest(data, buy, sell, ts):
   print("profit at end of trade: ", total)
 
   return total
+
+
+def backtest(data, signal, buy, sell, stopLossPct):
+  for i in data.index:
+    if i == data.index[0]:
+      pass
+    else:
+      if ((data[i] > buy) and (data[i-1] < buy)):
+        j = 0
+
+
+
+
 
 ################################################################## pull the data and read it 
 
@@ -209,7 +222,7 @@ ts = df1['open']
 trade = df1['trade']
 
 # 853.2800000000002 max achieved gain
-df1['trade'] = df1['trade'].rolling(4).mean()
+df1['trade'] = df1['trade'].rolling(8).mean()
 # df1['trade'] = df1['trade'].ewm(span=16, adjust=False).mean()
 
 # df1['date'] = pd.to_datetime(df1['date'])
@@ -319,16 +332,16 @@ lol = df1['trade']
 
 # print(last_n_column)
 # print(lol)
-backtest(lol, 2.1, 1.9, ts)
+# backtest(lol, 2.1, 1.9, ts)
 
 
-lol.plot()
-plt.show()
+# lol.plot()
+# plt.show()
 # last_n_column  = lol.iloc[-N:]
 
 # # print(last_n_column)
 
-# backtest(lol, 2.1, 1.9, ts)
+backtest(lol, 2.11, 1.87, ts)
 
 # lol.plot()
 # plt.show()
@@ -344,11 +357,12 @@ plt.show()
 
 
 
-# fig1, ax1 = plt.subplots()
-# ax2 = ax1.twinx()
-# ax1.plot(last_n_column, c='g')
-# # ax1.plot(trade, c='b')
-# ax2.plot(ts)
+fig1, ax1 = plt.subplots()
+ax2 = ax1.twinx()
+ax1.plot(lol, c='g')
+# ax1.plot(trade, c='b')
+ax2.plot(ts)
+plt.show()
 
 
 # N = int(len(lol)/10)
