@@ -326,9 +326,9 @@ cov_t = covF_t.pd_dataframe()
 
 df3 = cov_t
 
-df3.plot()
+# df3.plot()
 
-plt.show()
+# plt.show()
 
 lol = df1['trade']
 
@@ -405,16 +405,16 @@ lol = df1['trade']
 
 
 # plt.figure(figsize = (15,15))
-# sns.set(font_scale=0.75)
-# ax = sns.heatmap(df3.corr().round(3), 
-#             annot=True, 
-#             square=True, 
-#             linewidths=.75, cmap="coolwarm", 
-#             fmt = ".2f", 
-#             annot_kws = {"size": 11})
-# ax.xaxis.tick_bottom()
-# plt.title("correlation matrix")
-# plt.show()
+sns.set(font_scale=0.75)
+ax = sns.heatmap(df3.corr().round(3), 
+            annot=True, 
+            square=True, 
+            linewidths=.75, cmap="coolwarm", 
+            fmt = ".2f", 
+            annot_kws = {"size": 11})
+ax.xaxis.tick_bottom()
+plt.title("correlation matrix")
+plt.show()
 
 ###############################################################################################
 
