@@ -178,7 +178,8 @@ ts_P = ts_P.pd_dataframe()
 ts_P_1 = ts_P.fillna(method='ffill')
 ts_P = TimeSeries.from_series(ts_P_1)
 
-# turn ts_p into a df
+
+############################################## linear regression
 ts_p = ts_P.pd_dataframe()
 
 X = ts_p.index.values
@@ -201,6 +202,8 @@ ts_p['open'] = ts_p['open'] - y_pred[0] + 200
 ts = ts_p['open']
 # turn back into timeseries object
 ts_P = TimeSeries.from_dataframe(ts_p)
+############################################## end of linear regression
+
 
 # creates time series object covariate feature, This is multivariate
 df_covF = df.loc[:, df.columns != "open"]
@@ -209,7 +212,8 @@ ts_covF = ts_covF.pd_dataframe()
 ts_covF_1 = ts_covF.fillna(method='bfill')
 ts_covF = TimeSeries.from_series(ts_covF_1)
 
-# turn ts_p into a df
+
+############################################## linear regression
 ts_covF = ts_covF.pd_dataframe()
 
 
@@ -233,6 +237,9 @@ for i in ts_covF.columns:
   ts_covF[i] = ts_covF[i] - y_pred[0] +200
 # test to se if this works
 ts_covF = TimeSeries.from_dataframe(ts_covF)
+############################################## end of linear regression
+
+
 
 ############################################################## splits data into train or test data
 

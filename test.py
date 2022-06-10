@@ -129,6 +129,9 @@ def backtest(data, buy, sell, ts):
           j += 1
           total -= ts[i]
 
+        if buy_count == 0:
+          print("total is ", total)
+
         total -= ts[i]
 
         buy_count += 1
@@ -142,6 +145,9 @@ def backtest(data, buy, sell, ts):
           j += 1
           total += ts[i]
 
+        if sell_count == 0:
+          print('total is', total)
+
         total += ts[i]
         sell_count += 1
         buy_count = 0
@@ -153,14 +159,36 @@ def backtest(data, buy, sell, ts):
   return total
 
 
-def backtest(data, signal, buy, sell, stopLossPct):
-  for i in data.index:
-    if i == data.index[0]:
-      pass
-    else:
-      if ((data[i] > buy) and (data[i-1] < buy)):
-        j = 0
+# def backtest(data, buy, sell, ts):
+#   trade = True
+#   total = 0
+#   buy_count = 0
 
+#   for i in data.index:
+
+#     if i == data.index[0]:
+#       pass
+
+#     else:
+#       if ((data[i] > buy) and (data[i-1] < buy)):
+#         total -= ts[i]
+
+#         buy_count += 1
+#         print("buy", total, "@ ", i)
+
+#       if ((data[i] < sell) and (data[i-1] > sell)):
+#         j = 0
+#         while j < buy_count:
+#           j += 1
+#           total += ts[i]
+
+#         buy_count = 0
+#         print("sell", total, "@ ", i)
+
+
+#   print("profit at end of trade: ", total)
+
+#   return total
 
 
 
@@ -222,8 +250,8 @@ ts = df1['open']
 trade = df1['trade']
 
 # 853.2800000000002 max achieved gain
-df1['trade'] = df1['trade'].rolling(8).mean()
-# df1['trade'] = df1['trade'].ewm(span=16, adjust=False).mean()
+df1['trade'] = df1['trade'].rolling(4).mean()
+# df1['trade'] = df1['trade'].ewm(span=4, adjust=False).mean()
 
 # df1['date'] = pd.to_datetime(df1['date'])
 # df1 = df1.set_index('date')
@@ -236,37 +264,13 @@ freq = None
 
 ############################################################## create multiple time series object 
 # create time series object for target variable, This is univariate
-ts_P = TimeSeries.from_series(df["open"], fill_missing_dates=fill, freq=freq)
+ts_P = TimeSeries.from_series(df["trade"], fill_missing_dates=fill, freq=freq)
 ts_P = ts_P.pd_dataframe()
 ts_P_1 = ts_P.fillna(method='ffill')
 ts_P = TimeSeries.from_series(ts_P_1)
 
-# turn ts_p into a df
-ts_p = ts_P.pd_dataframe()
-
-X = ts_p.index.values
-y = ts_p[['open']].values
-
-length = len(X)
-
-X = X.reshape(length, 1)
-y = y.reshape(length, 1)
-
-regressor = LinearRegression()
-regressor.fit(X, y)
-
-y_pred1 = regressor.predict(X)
-y_pred = pd.DataFrame(y_pred1)
-
-# create a new value based off of 
-ts_p['open'] = ts_p['open'] - y_pred[0] + 200
-
-# ts = ts_p['open']
-# turn back into timeseries object
-ts_P = TimeSeries.from_dataframe(ts_p)
-
 # creates time series object covariate feature, This is multivariate
-df_covF = df.loc[:, df.columns != "open"]
+df_covF = df.loc[:, df.columns != "trade"]
 ts_covF = TimeSeries.from_dataframe(df_covF, fill_missing_dates=fill, freq=freq)
 ts_covF = ts_covF.pd_dataframe()
 ts_covF_1 = ts_covF.fillna(method='bfill')
@@ -293,7 +297,7 @@ for i in ts_covF.columns:
   y_pred = pd.DataFrame(y_pred1)
 
   # create a new value based off of 
-  ts_covF[i] = ts_covF[i] - y_pred[0] +200
+  ts_covF[i] = ts_covF[i] - y_pred[0]
 # test to se if this works
 ts_covF = TimeSeries.from_dataframe(ts_covF)
 
@@ -322,9 +326,9 @@ cov_t = covF_t.pd_dataframe()
 
 df3 = cov_t
 
-# df3.plot()
+df3.plot()
 
-# plt.show()
+plt.show()
 
 lol = df1['trade']
 
@@ -341,7 +345,7 @@ lol = df1['trade']
 
 # # print(last_n_column)
 
-backtest(lol, 2.11, 1.87, ts)
+# backtest(lol, 2.2, 1.8, ts)
 
 # lol.plot()
 # plt.show()
@@ -355,14 +359,12 @@ backtest(lol, 2.11, 1.87, ts)
 # 119$ perfect execution
 # backtest(last_n_column, 2.9, 1.1, ts)
 
-
-
-fig1, ax1 = plt.subplots()
-ax2 = ax1.twinx()
-ax1.plot(lol, c='g')
-# ax1.plot(trade, c='b')
-ax2.plot(ts)
-plt.show()
+# fig1, ax1 = plt.subplots()
+# ax2 = ax1.twinx()
+# ax1.plot(lol, c='g')
+# # ax1.plot(trade, c='b')
+# ax2.plot(ts)
+# plt.show()
 
 
 # N = int(len(lol)/10)
