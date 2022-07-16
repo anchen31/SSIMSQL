@@ -69,7 +69,9 @@ N_JOBS = 3          # parallel processors to use;  -1 = all processors
 # default quantiles for QuantileRegression
 QUANTILES = [0.01, 0.1, 0.2, 0.5, 0.8, 0.9, 0.99]
 
-SPLIT = 0.5         # train/test %
+#8.44 mape for 50%
+
+SPLIT = 0.6         # train/test %
 
 FIGSIZE = (9, 6)
 
@@ -210,13 +212,18 @@ for stuff in data:
   if stuff[2] == -1:
     df1.iat[stuff[0], 40] = 1
 
-df1 = df1.drop(columns=['date'])
+df1['date'] = df1['date'].astype('datetime64[ns]')
+df1 = df1.set_index('date')
 
 ts = df1['open']
 trade = df1['trade']
 
+df1 = df1.reset_index()
+
+df1 = df1.drop(columns=['date'])
+
 # 853.2800000000002 max achieved gain
-df1['trade'] = df1['trade'].rolling(4).mean()
+# df1['trade'] = df1['trade'].rolling(4).mean()
 # df1['trade'] = df1['trade'].ewm(span=4, adjust=False).mean()
 
 # df1['date'] = pd.to_datetime(df1['date'])
@@ -288,42 +295,24 @@ covF_ttest = scalerF.transform(covF_test)
 covF_t = scalerF.transform(ts_covF)
 
 # #################################################################### graphs the cycles of the data
-# cov_t = covF_t.pd_dataframe()
+# print(df1.columns)
 
-# df3 = cov_t
+# # cov_t = covF_t.pd_dataframe()
 
-# df3.plot()
+# # df3 = cov_t
 
-# plt.show()
+# # df3.plot()
+
+# # plt.show()
 
 # lol = df1['trade']
 
 # N = int(len(lol)/10)
 
-# print(last_n_column)
-# print(lol)
-# backtest(lol, 2.1, 1.9, ts)
-
-
-# lol.plot()
-# plt.show()
 # last_n_column  = lol.iloc[-N:]
 
-# # print(last_n_column)
+# backtest(last_n_column, 2.2, 1.8, ts)
 
-# backtest(lol, 2.2, 1.8, ts)
-
-# lol.plot()
-# plt.show()
-
-# only buy once when its that number, don't buy another one if its the same number
-
-# $19 with 8 rolling
-# $80 with 4 rolling
-# backtest(last_n_column, 2.03, 1.97, ts)
-# backtest(actual, 2.9, 1.1, ts)
-# 119$ perfect execution
-# backtest(last_n_column, 2.9, 1.1, ts)
 
 # fig1, ax1 = plt.subplots()
 # ax2 = ax1.twinx()
@@ -331,36 +320,6 @@ covF_t = scalerF.transform(ts_covF)
 # # ax1.plot(trade, c='b')
 # ax2.plot(ts)
 # plt.show()
-
-
-# N = int(len(lol)/10)
-
-# last_n_column  = lol.iloc[-N:]
-
-
-# # print(last_n_column)
-
-# # print(type(lol))
-
-# # only buy once when its that number, don't buy another one if its the same number
-
-# # $19 with 8 rolling
-# # $80 with 4 rolling
-# backtest(last_n_column, 2.03, 1.97, ts)
-# # backtest(actual, 2.9, 1.1, ts)
-# # 119$ perfect execution
-# # backtest(last_n_column, 2.9, 1.1, ts)
-
-
-
-# fig1, ax1 = plt.subplots()
-# ax2 = ax1.twinx()
-# ax1.plot(last_n_column, c='g')
-# # ax1.plot(trade, c='b')
-# ax2.plot(ts)
-
-# plt.show()
-
 
 
 
@@ -381,6 +340,9 @@ covF_t = scalerF.transform(ts_covF)
 # ax.xaxis.tick_bottom()
 # plt.title("correlation matrix")
 # plt.show()
+
+
+#326.22 for perfect backtest
 
 ###############################################################################################
 
@@ -427,17 +389,21 @@ ts_tpred = model.predict(   n=len(ts_ttest),
 
 def plot_predict(ts_actual, ts_test, ts_pred):
 
-  fig1, ax1 = plt.subplots()
-  ax2 = ax1.twinx()
+  fig1, (ax1, ax2, ax3) = plt.subplots(3, sharex=True)
+  # ax2 = ax1.twinx()
 
   ## plot time series, limited to forecast horizon
-  plt.figure(figsize=FIGSIZE)
+  # plt.figure(figsize=FIGSIZE)
 
   ax1.plot(ts_actual, label="price", c='g')
 
-  ax2.plot(trade, label="actual trade", c='b')
+  ax3.plot(trade, label="actual trade", c='b')
 
   lol = ts_pred.quantile_df(quantile=0.5)
+
+  N = int(len(lol))
+
+  lol = lol.set_index(ts_actual.index[-N:])
 
   ax2.plot(lol, label="prediction")
 
@@ -446,15 +412,19 @@ def plot_predict(ts_actual, ts_test, ts_pred):
   # ts_pred.plot(low_quantile=qL3, high_quantile=qU3, label=label_q3)    # plot U3 quantile band
   # ts_pred.plot(central_quantile="mean", label="expected")              # plot "mean" or median=0.5
 
+  ax1.title.set_text("TFT: test set (MAPE: {:.2f}%)".format(mape(ts_test, ts_pred)))
+  ax1.legend()
+  ax2.legend()
 
-  plt.title("TFT: test set (MAPE: {:.2f}%)".format(mape(ts_test, ts_pred)))
-  plt.legend()
-  plt.show()    
+  # plt.xticks(dates.index, dates.values)
+  # plt.gcf().autofmt_xdate()
 
+  plt.show()
 
 
 ts_pred = scalerP.inverse_transform(ts_tpred)
 plot_predict(ts, ts_test, ts_pred)
+
 
 
 
