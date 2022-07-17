@@ -26,17 +26,60 @@ from sklearn.linear_model import LinearRegression
 
 
 df = pd.read_csv('four_year_date.csv')
+df = df.dropna(axis=0)
+
+print(df.columns)
+
+df1 = df.copy()
+df1 = df1.drop(columns=['date'])
+
+for i in df1.columns:
+  # does the linear regression on the columns
+  X = df1.index.values
+  y = df1[[i]].values
+
+  length = len(X)
+
+  X = X.reshape(length, 1)
+  y = y.reshape(length, 1)
+
+  regressor = LinearRegression()
+  regressor.fit(X, y)
+
+  y_pred1 = regressor.predict(X)
+  y_pred = pd.DataFrame(y_pred1)
+
+  # create a new value based off of 
+  df1[i] = df1[i] - y_pred[0]
+
+df = df.set_index('date')
+
+df1.index = df.index.astype('datetime64[ns]')
 
 spy = pd.DataFrame()
+# spy.index = df['date']
 
 spy['open'] = df['open']
 
-spy['SMA10'] = df.open.rolling(10).mean()/df.open
-spy['SMA20'] = df.open.rolling(20).mean()/df.open
+spy['SMA10'] = df.open.rolling(3).mean()/df.open
+spy['SMA20'] = df.open.rolling(60).mean()/df.open
 spy['EMA10'] = df.open.ewm(span=10, adjust=False).mean()/df.open
-spy['EMA20'] = df.open.ewm(span=20, adjust=False).mean()/df.open
+spy['EMA20'] = df.open.ewm(span=10, adjust=False).mean()/df.open
 spy['SMADiff'] = spy.SMA20-spy.SMA10
 spy['EMADiff'] = spy.EMA20-spy.EMA10
+
+
+
+
+
+
+
+
+# spy['totalDiff'] = spy['EMADiff']-spy['SMADiff']
+
+spy1 = spy.copy()
+spy1.index = df.index.astype('datetime64[ns]')
+spy1 = spy1.dropna(axis=0)
 
 
 spy = spy.dropna(axis=0)
@@ -51,68 +94,53 @@ emadiff = spy['EMADiff'].describe()
 
 
 
-# calculate the pct diff or the point diff?
 
-fig, ax = plt.subplots(nrows=3, ncols=2, figsize=(16, 10))
+fig, (ax, ax2) = plt.subplots(2, sharex=True)
+
+upper = 0.9
+lower = 0.1
+
+spycp = spy1[spy1['open'] > spy1['open'].quantile(upper)]
+spycn = spy1[spy1['open'] < spy1['open'].quantile(lower)]
+
+count_pos = spy1[spy1['SMA10'] > spy1['SMA10'].quantile(upper)]
+count_neg = spy1[spy1['SMA10'] < spy1['SMA10'].quantile(lower)]
+
+count_pos0 = spy1[spy1['EMA20'] > spy1['EMA20'].quantile(upper)]
+count_neg0 = spy1[spy1['EMA20'] < spy1['EMA20'].quantile(lower)]
+
+count_pos1 = spy1[spy1['SMADiff'] > spy1['SMADiff'].quantile(upper)]
+count_neg1 = spy1[spy1['SMADiff'] < spy1['SMADiff'].quantile(lower)]
+
+count_pos2 = spy1[spy1['EMADiff'] > spy1['EMADiff'].quantile(upper)]
+count_neg2 = spy1[spy1['EMADiff'] < spy1['EMADiff'].quantile(lower)]
+
+
+ax.scatter(x=spycp.index, y=spycp['open'], c='g', label='sma10pos')
+ax.scatter(x=spycn.index, y=spycn['open'], c='r', label='sma10pos')
+# ax.scatter(x=count_pos.index, y=count_pos['open'], c='r', label='sma10pos')
+# ax.scatter(x=count_pos1.index, y=count_pos1['open'], c='rosybrown', label='smadiffpos')
+# ax.scatter(x=count_pos2.index, y=count_pos2['open'], c='maroon', label='emadiffpos')
+# ax.scatter(x=count_pos0.index, y=count_pos0['open'], c='mistyrose', label='ema20pos')
+# ax.scatter(x=count_neg.index, y=count_neg['open'], c='mediumspringgreen', label='sma10neg')
+# ax.scatter(x=count_neg1.index, y=count_neg1['open'], c='darkgreen', label='smadiffneg')
+# ax.scatter(x=count_neg2.index, y=count_neg2['open'], c='limegreen', label='emadiffneg')
+# ax.scatter(x=count_neg0.index, y=count_neg0['open'], c='lightseagreen', label='ema20neg')
+ax.plot(spy1['open'])
+ax2.plot(spy1['EMA10'], c='r', label='sma10')
+ax2.plot(spy1['EMA20'], c='g', label='sma20')
+ax2.legend()
+ax.legend()
 
 
 
 
 
-ax[0,0].hist(spy['SMA10'], bins=100)
-ax[0,0].axvline(sma10[1], color='r', linestyle='solid', linewidth=1, label="mean")
-ax[0,0].axvline(sma10[4], color='g', linestyle='solid', linewidth=1, label='25%')
-ax[0,0].axvline(sma10[5], color='b', linestyle='solid', linewidth=1, label='50%')
-ax[0,0].axvline(sma10[6], color='g', linestyle='solid', linewidth=1, label='75%')
-ax[0,0].axvline(spy['SMA10'].quantile(0.95), color='y', linestyle='solid', linewidth=1, label='95%')
-ax[0,0].axvline(spy['SMA10'].quantile(0.05), color='y', linestyle='solid', linewidth=1, label='5%')
-ax[0,0].set_title('SMA10')
-ax[0,0].legend(loc='upper right')
 
-ax[1,0].hist(spy['SMA20'], bins=100)
-ax[1,0].axvline(sma20[1], color='r', linestyle='solid', linewidth=1, label="mean")
-ax[1,0].axvline(sma20[4], color='g', linestyle='solid', linewidth=1, label='25%')
-ax[1,0].axvline(sma20[5], color='b', linestyle='solid', linewidth=1, label='50%')
-ax[1,0].axvline(sma20[6], color='g', linestyle='solid', linewidth=1, label='75%')
-ax[1,0].axvline(spy['SMA20'].quantile(0.95), color='y', linestyle='solid', linewidth=1, label='95%')
-ax[1,0].axvline(spy['SMA20'].quantile(0.05), color='y', linestyle='solid', linewidth=1, label='5%')
-ax[1,0].set_title('SMA20')
+# plt.plot(spy1['open'])
+# plt.plot(count_neg)
+# plt.plot(count_pos)
 
-ax[0,1].hist(spy['EMA10'], bins=100)
-ax[0,1].axvline(ema10[1], color='r', linestyle='solid', linewidth=1, label="mean")
-ax[0,1].axvline(ema10[4], color='g', linestyle='solid', linewidth=1, label='25%')
-ax[0,1].axvline(ema10[5], color='b', linestyle='solid', linewidth=1, label='50%')
-ax[0,1].axvline(ema10[6], color='g', linestyle='solid', linewidth=1, label='75%')
-ax[0,1].axvline(spy['EMA10'].quantile(0.95), color='y', linestyle='solid', linewidth=1, label='95%')
-ax[0,1].axvline(spy['EMA10'].quantile(0.05), color='y', linestyle='solid', linewidth=1, label='5%')
-ax[0,1].set_title('EMA10')
-
-ax[1,1].hist(spy['EMA20'], bins=100)
-ax[1,1].axvline(ema20[1], color='r', linestyle='solid', linewidth=1, label="mean")
-ax[1,1].axvline(ema20[4], color='g', linestyle='solid', linewidth=1, label='25%')
-ax[1,1].axvline(ema20[5], color='b', linestyle='solid', linewidth=1, label='50%')
-ax[1,1].axvline(ema20[6], color='g', linestyle='solid', linewidth=1, label='75%')
-ax[1,1].axvline(spy['EMA20'].quantile(0.95), color='y', linestyle='solid', linewidth=1, label='95%')
-ax[1,1].axvline(spy['EMA20'].quantile(0.05), color='y', linestyle='solid', linewidth=1, label='5%')
-ax[1,1].set_title('EMA20')
-
-ax[2,0].hist(spy['SMADiff'], bins=100)
-ax[2,0].axvline(smadiff[1], color='r', linestyle='solid', linewidth=1, label="mean")
-ax[2,0].axvline(smadiff[4], color='g', linestyle='solid', linewidth=1, label='25%')
-ax[2,0].axvline(smadiff[5], color='b', linestyle='solid', linewidth=1, label='50%')
-ax[2,0].axvline(smadiff[6], color='g', linestyle='solid', linewidth=1, label='75%')
-ax[2,0].axvline(spy['SMADiff'].quantile(0.95), color='y', linestyle='solid', linewidth=1, label='95%')
-ax[2,0].axvline(spy['SMADiff'].quantile(0.05), color='y', linestyle='solid', linewidth=1, label='5%')
-ax[2,0].set_title('SMADiff')
-
-ax[2,1].hist(spy['EMADiff'], bins=100)
-ax[2,1].axvline(emadiff[1], color='r', linestyle='solid', linewidth=1, label="mean")
-ax[2,1].axvline(emadiff[4], color='g', linestyle='solid', linewidth=1, label='25%')
-ax[2,1].axvline(emadiff[5], color='b', linestyle='solid', linewidth=1, label='50%')
-ax[2,1].axvline(emadiff[6], color='g', linestyle='solid', linewidth=1, label='75%')
-ax[2,1].axvline(spy['EMADiff'].quantile(0.95), color='y', linestyle='solid', linewidth=1, label='95%')
-ax[2,1].axvline(spy['EMADiff'].quantile(0.05), color='y', linestyle='solid', linewidth=1, label='5%')
-ax[2,1].set_title('EMADiff')
 
 
 # spy.hist('SMA10', ax=axes[0], bins=100)

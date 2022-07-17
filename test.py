@@ -71,7 +71,7 @@ QUANTILES = [0.01, 0.1, 0.2, 0.5, 0.8, 0.9, 0.99]
 
 #8.44 mape for 50%
 
-SPLIT = 0.6         # train/test %
+SPLIT = 0.8         # train/test %
 
 FIGSIZE = (9, 6)
 
@@ -274,6 +274,25 @@ for i in ts_covF.columns:
 # test to se if this works
 ts_covF = TimeSeries.from_dataframe(ts_covF)
 
+
+
+
+
+# for i in ts_covF.columns:
+
+#   # create a new value based off of 
+#   # ts_covF[i] = ts_covF[i].rolling(10).mean()/ts_covF[i]
+#   # ts_covF[i] = ts_covF[i].rolling(20).mean()/ts_covF[i]
+#   # ts_covF[i] = ts_covF[i].ewm(span=10, adjust=False).mean()/ts_covF[i]
+#   ts_covF[i] = ts_covF[i].ewm(span=20, adjust=False).mean()/ts_covF[i]
+
+# # test to se if this works
+# ts_covF_1 = ts_covF.fillna(method='bfill')
+# ts_covF = TimeSeries.from_series(ts_covF_1)
+
+
+
+
 ############################################################## splits data into train or test data
 
 # train/test split and scaling of TARGET variable
@@ -297,9 +316,9 @@ covF_t = scalerF.transform(ts_covF)
 # #################################################################### graphs the cycles of the data
 # print(df1.columns)
 
-# # cov_t = covF_t.pd_dataframe()
+cov_t = covF_t.pd_dataframe()
 
-# # df3 = cov_t
+df3 = cov_t
 
 # # df3.plot()
 
@@ -329,101 +348,101 @@ covF_t = scalerF.transform(ts_covF)
 # # # covF_ttrain.plot()
 
 
-# plt.figure(figsize = (15,15))
-# sns.set(font_scale=0.75)
-# ax = sns.heatmap(df3.corr().round(3), 
-#             annot=True, 
-#             square=True, 
-#             linewidths=.75, cmap="coolwarm", 
-#             fmt = ".2f", 
-#             annot_kws = {"size": 11})
-# ax.xaxis.tick_bottom()
-# plt.title("correlation matrix")
-# plt.show()
+plt.figure(figsize = (15,15))
+sns.set(font_scale=0.75)
+ax = sns.heatmap(df3.corr().round(3), 
+            annot=True, 
+            square=True, 
+            linewidths=.75, cmap="coolwarm", 
+            fmt = ".2f", 
+            annot_kws = {"size": 11})
+ax.xaxis.tick_bottom()
+plt.title("correlation matrix")
+plt.show()
 
 
 #326.22 for perfect backtest
 
 ###############################################################################################
 
-model = TransformerModel(
-                    input_chunk_length = INLEN,
-                    output_chunk_length = N_FC,
-                    batch_size = BATCH,
-                    n_epochs = EPOCHS,
-                    model_name = "Transformer_price",
-                    nr_epochs_val_period = VALWAIT,
-                    d_model = FEAT,
-                    nhead = HEADS,
-                    num_encoder_layers = ENCODE,
-                    num_decoder_layers = DECODE,
-                    dim_feedforward = DIM_FF,
-                    dropout = DROPOUT,
-                    activation = ACTF,
-                    random_state=RAND,
-                    likelihood=QuantileRegression(quantiles=QUANTILES), 
-                    optimizer_kwargs={'lr': LEARN},
-                    add_encoders={"cyclic": {"future": ["dayofweek", "month"]}},
-                    save_checkpoints=True,
-                    force_reset=True
-                    )
+# model = TransformerModel(
+#                     input_chunk_length = INLEN,
+#                     output_chunk_length = N_FC,
+#                     batch_size = BATCH,
+#                     n_epochs = EPOCHS,
+#                     model_name = "Transformer_price",
+#                     nr_epochs_val_period = VALWAIT,
+#                     d_model = FEAT,
+#                     nhead = HEADS,
+#                     num_encoder_layers = ENCODE,
+#                     num_decoder_layers = DECODE,
+#                     dim_feedforward = DIM_FF,
+#                     dropout = DROPOUT,
+#                     activation = ACTF,
+#                     random_state=RAND,
+#                     likelihood=QuantileRegression(quantiles=QUANTILES), 
+#                     optimizer_kwargs={'lr': LEARN},
+#                     add_encoders={"cyclic": {"future": ["dayofweek", "month"]}},
+#                     save_checkpoints=True,
+#                     force_reset=True
+#                     )
 
 
-# training: load a saved model or (re)train
-if LOAD:
-    print("have loaded a previously saved model from disk:" + mpath)
-    model = TransformerModel.load_model(mpath)                            # load previously model from disk 
-else:
-    model.fit(  ts_ttrain, 
-                past_covariates=covF_t, 
-                verbose=True)
-    print("have saved the model after training:", mpath)
-    model.save_model(mpath)
+# # training: load a saved model or (re)train
+# if LOAD:
+#     print("have loaded a previously saved model from disk:" + mpath)
+#     model = TransformerModel.load_model(mpath)                            # load previously model from disk 
+# else:
+#     model.fit(  ts_ttrain, 
+#                 past_covariates=covF_t, 
+#                 verbose=True)
+#     print("have saved the model after training:", mpath)
+#     model.save_model(mpath)
 
-# # testing: generate predictions
-ts_tpred = model.predict(   n=len(ts_ttest), 
-                            num_samples=N_SAMPLES,   
-                            n_jobs=N_JOBS, 
-                            verbose=True)
-
-
-def plot_predict(ts_actual, ts_test, ts_pred):
-
-  fig1, (ax1, ax2, ax3) = plt.subplots(3, sharex=True)
-  # ax2 = ax1.twinx()
-
-  ## plot time series, limited to forecast horizon
-  # plt.figure(figsize=FIGSIZE)
-
-  ax1.plot(ts_actual, label="price", c='g')
-
-  ax3.plot(trade, label="actual trade", c='b')
-
-  lol = ts_pred.quantile_df(quantile=0.5)
-
-  N = int(len(lol))
-
-  lol = lol.set_index(ts_actual.index[-N:])
-
-  ax2.plot(lol, label="prediction")
-
-  # ts_pred.plot(low_quantile=qL1, high_quantile=qU1, label=label_q1)    # plot U1 quantile band
-  # #ts_pred.plot(low_quantile=qL2, high_quantile=qU2, label=label_q2)   # plot U2 quantile band
-  # ts_pred.plot(low_quantile=qL3, high_quantile=qU3, label=label_q3)    # plot U3 quantile band
-  # ts_pred.plot(central_quantile="mean", label="expected")              # plot "mean" or median=0.5
-
-  ax1.title.set_text("TFT: test set (MAPE: {:.2f}%)".format(mape(ts_test, ts_pred)))
-  ax1.legend()
-  ax2.legend()
-
-  # plt.xticks(dates.index, dates.values)
-  # plt.gcf().autofmt_xdate()
-
-  plt.show()
+# # # testing: generate predictions
+# ts_tpred = model.predict(   n=len(ts_ttest), 
+#                             num_samples=N_SAMPLES,   
+#                             n_jobs=N_JOBS, 
+#                             verbose=True)
 
 
-ts_pred = scalerP.inverse_transform(ts_tpred)
-plot_predict(ts, ts_test, ts_pred)
+# def plot_predict(ts_actual, ts_test, ts_pred):
+
+#   fig1, (ax1, ax2, ax3) = plt.subplots(3, sharex=True)
+#   # ax2 = ax1.twinx()
+
+#   ## plot time series, limited to forecast horizon
+#   # plt.figure(figsize=FIGSIZE)
+
+#   ax1.plot(ts_actual, label="price", c='g')
+
+#   ax3.plot(trade, label="actual trade", c='b')
+
+#   lol = ts_pred.quantile_df(quantile=0.5)
+
+#   N = int(len(lol))
+
+#   lol = lol.set_index(ts_actual.index[-N:])
+
+#   ax2.plot(lol, label="prediction")
+
+#   # ts_pred.plot(low_quantile=qL1, high_quantile=qU1, label=label_q1)    # plot U1 quantile band
+#   # #ts_pred.plot(low_quantile=qL2, high_quantile=qU2, label=label_q2)   # plot U2 quantile band
+#   # ts_pred.plot(low_quantile=qL3, high_quantile=qU3, label=label_q3)    # plot U3 quantile band
+#   # ts_pred.plot(central_quantile="mean", label="expected")              # plot "mean" or median=0.5
+
+#   ax1.title.set_text("TFT: test set (MAPE: {:.2f}%)".format(mape(ts_test, ts_pred)))
+#   ax1.legend()
+#   ax2.legend()
+
+#   # plt.xticks(dates.index, dates.values)
+#   # plt.gcf().autofmt_xdate()
+
+#   plt.show()
+
+
+# ts_pred = scalerP.inverse_transform(ts_tpred)
+# plot_predict(ts, ts_test, ts_pred)
 
 
 
