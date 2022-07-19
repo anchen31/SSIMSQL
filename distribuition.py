@@ -52,6 +52,24 @@ for i in df1.columns:
   # create a new value based off of 
   df1[i] = df1[i] - y_pred[0]
 
+# for i in df1.columns:
+#   # does the linear regression on the columns
+#   X = df1.index.values
+#   y = df1[[i]].values
+
+#   length = len(X)
+
+#   X = X.reshape(length, 1)
+#   y = y.reshape(length, 1)
+
+#   fit = np.polyfit(x, np.log(y), 1)
+
+#   # create a new value based off of 
+#   df1[i] = df1[i] - y_pred[0]
+
+
+
+
 df = df.set_index('date')
 
 df1.index = df.index.astype('datetime64[ns]')
