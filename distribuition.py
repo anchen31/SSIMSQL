@@ -10,6 +10,7 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler, Ro
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 from scipy.stats import norm
+import talib as ta
 # from sqlalchemy import create_engine
 # import pymysql
 # pymysql.install_as_MySQLdb()
@@ -27,30 +28,12 @@ from sklearn.linear_model import LinearRegression
 
 df = pd.read_csv('four_year_date.csv')
 df = df.dropna(axis=0)
+df = df.set_index('date')
+df.index = df.index.astype('datetime64[ns]')
 
 print(df.columns)
 
 df1 = df.copy()
-df1 = df1.drop(columns=['date'])
-
-for i in df1.columns:
-  # does the linear regression on the columns
-  X = df1.index.values
-  y = df1[[i]].values
-
-  length = len(X)
-
-  X = X.reshape(length, 1)
-  y = y.reshape(length, 1)
-
-  regressor = LinearRegression()
-  regressor.fit(X, y)
-
-  y_pred1 = regressor.predict(X)
-  y_pred = pd.DataFrame(y_pred1)
-
-  # create a new value based off of 
-  df1[i] = df1[i] - y_pred[0]
 
 # for i in df1.columns:
 #   # does the linear regression on the columns
@@ -62,80 +45,58 @@ for i in df1.columns:
 #   X = X.reshape(length, 1)
 #   y = y.reshape(length, 1)
 
-#   fit = np.polyfit(x, np.log(y), 1)
+#   regressor = LinearRegression()
+#   regressor.fit(X, y)
+
+#   y_pred1 = regressor.predict(X)
+#   y_pred = pd.DataFrame(y_pred1)
 
 #   # create a new value based off of 
 #   df1[i] = df1[i] - y_pred[0]
 
 
+for i in df1.columns:
+  df1[i] = ta.RSI(df1[i], timeperiod=14)
 
+df1['RSI'] = df.RSI
+df1['crsi'] = ta.RSI(df1['close'], timeperiod=13)
 
-df = df.set_index('date')
-
-df1.index = df.index.astype('datetime64[ns]')
-
-spy = pd.DataFrame()
-# spy.index = df['date']
-
-spy['open'] = df['open']
-
-spy['SMA10'] = df.open.rolling(3).mean()/df.open
-spy['SMA20'] = df.open.rolling(60).mean()/df.open
-spy['EMA10'] = df.open.ewm(span=10, adjust=False).mean()/df.open
-spy['EMA20'] = df.open.ewm(span=10, adjust=False).mean()/df.open
-spy['SMADiff'] = spy.SMA20-spy.SMA10
-spy['EMADiff'] = spy.EMA20-spy.EMA10
-
-
-
-
+df1['rsiDiff'] = df['RSI'] - df1['crsi']
+df1['price'] = df['open']
 
 
 
 
 # spy['totalDiff'] = spy['EMADiff']-spy['SMADiff']
+df1 = df1.dropna(axis=0)
 
-spy1 = spy.copy()
-spy1.index = df.index.astype('datetime64[ns]')
-spy1 = spy1.dropna(axis=0)
-
-
-spy = spy.dropna(axis=0)
-
-
-sma10 = spy['SMA10'].describe()
-sma20 = spy['SMA20'].describe()
-ema10 = spy['EMA10'].describe()
-ema20 = spy['EMA20'].describe()
-smadiff = spy['SMADiff'].describe()
-emadiff = spy['EMADiff'].describe()
 
 
 
 
 fig, (ax, ax2) = plt.subplots(2, sharex=True)
 
-upper = 0.9
-lower = 0.1
-
-spycp = spy1[spy1['open'] > spy1['open'].quantile(upper)]
-spycn = spy1[spy1['open'] < spy1['open'].quantile(lower)]
-
-count_pos = spy1[spy1['SMA10'] > spy1['SMA10'].quantile(upper)]
-count_neg = spy1[spy1['SMA10'] < spy1['SMA10'].quantile(lower)]
-
-count_pos0 = spy1[spy1['EMA20'] > spy1['EMA20'].quantile(upper)]
-count_neg0 = spy1[spy1['EMA20'] < spy1['EMA20'].quantile(lower)]
-
-count_pos1 = spy1[spy1['SMADiff'] > spy1['SMADiff'].quantile(upper)]
-count_neg1 = spy1[spy1['SMADiff'] < spy1['SMADiff'].quantile(lower)]
-
-count_pos2 = spy1[spy1['EMADiff'] > spy1['EMADiff'].quantile(upper)]
-count_neg2 = spy1[spy1['EMADiff'] < spy1['EMADiff'].quantile(lower)]
+upper = 0.95
+lower = 0.05
+ticker = 'GLD'
 
 
-ax.scatter(x=spycp.index, y=spycp['open'], c='g', label='sma10pos')
-ax.scatter(x=spycn.index, y=spycn['open'], c='r', label='sma10pos')
+
+# spycp = spy1[spy1['open'] > spy1['open'].quantile(upper)]
+# spycn = spy1[spy1['open'] < spy1['open'].quantile(lower)]
+
+pos = df1[df1[ticker] > df1[ticker].quantile(upper)]
+neg = df1[df1[ticker] < df1[ticker].quantile(lower)]
+
+
+
+
+ax.scatter(x=pos.index, y=pos['price'], c='g', label='sma10pos')
+ax.scatter(x=neg.index, y=neg['price'], c='r', label='sma10pos')
+
+
+# ax.scatter(x=spyrsip.index, y=spyrsip['open'], c='g', label='sma10pos')
+# ax.scatter(x=spyrsin.index, y=spyrsin['open'], c='r', label='sma10pos')
 # ax.scatter(x=count_pos.index, y=count_pos['open'], c='r', label='sma10pos')
 # ax.scatter(x=count_pos1.index, y=count_pos1['open'], c='rosybrown', label='smadiffpos')
 # ax.scatter(x=count_pos2.index, y=count_pos2['open'], c='maroon', label='emadiffpos')
@@ -144,9 +105,11 @@ ax.scatter(x=spycn.index, y=spycn['open'], c='r', label='sma10pos')
 # ax.scatter(x=count_neg1.index, y=count_neg1['open'], c='darkgreen', label='smadiffneg')
 # ax.scatter(x=count_neg2.index, y=count_neg2['open'], c='limegreen', label='emadiffneg')
 # ax.scatter(x=count_neg0.index, y=count_neg0['open'], c='lightseagreen', label='ema20neg')
-ax.plot(spy1['open'])
-ax2.plot(spy1['EMA10'], c='r', label='sma10')
-ax2.plot(spy1['EMA20'], c='g', label='sma20')
+ax.plot(df['open'])
+# ax2.plot(spy1['EMA10'], c='r', label='sma10')
+# ax2.plot(spy1['EMA20'], c='g', label='sma20')
+ax2.plot(df['RSI'], c='orange', label='RSI')
+ax2.plot(df1['crsi'], c='blue', label='crsi')
 ax2.legend()
 ax.legend()
 
