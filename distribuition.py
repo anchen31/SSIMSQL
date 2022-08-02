@@ -162,7 +162,7 @@ ax[1,4].axvline(total_data[9].mean(), color='r', linestyle='dashed', linewidth=1
 # calculate the expected value of gaining or losing
 
 k = 0
-while k < 9:
+while k < 10:
   pos_count = 0
   neg_count = 0
   pos_amt = 0
