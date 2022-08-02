@@ -15,7 +15,7 @@ plt.rc('font', size=14)
 
 name = 'SPY'
 ticker = yfinance.Ticker(name)
-df = ticker.history(interval="1d",start="2017-1-15", end="2022-05-15")
+df = ticker.history(interval="1d",start="2004-1-15", end="2022-05-15")
 df['Date'] = pd.to_datetime(df.index)
 df['Date'] = df['Date'].apply(mpl_dates.date2num)
 df = df.loc[:,['Date', 'Open', 'High', 'Low', 'Close']]
