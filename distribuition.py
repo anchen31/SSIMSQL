@@ -93,6 +93,12 @@ data['STCH'] = data['%K'] - data['%D']
 
 data = data.dropna()
 
+# data = pd.read_csv('disData.csv')
+# data.to_csv('disData.csv', index=False)
+# print(pd.read_csv('disData.csv'))
+# print(data)
+
+
 total_data = pd.DataFrame()
 
 ################################################################################################# getting data stuff
