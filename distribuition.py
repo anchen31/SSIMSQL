@@ -10,7 +10,7 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler, Ro
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 from scipy.stats import norm
-import talib as ta
+# import talib as ta
 from datetime import date
 import yfinance
 import matplotlib.dates as mpl_dates
@@ -230,7 +230,8 @@ def get_dates(days, d):
 
 def main():
   # 5/13/22 latest
-  data = get_data()
+  # data = get_data()
+  data = pd.read_csv('disData.csv')
 
   # date 5/24
   # rsi = [39.74, 41.25, 35.82, 35.69, 36.65, 44.26]
