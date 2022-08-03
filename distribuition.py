@@ -60,16 +60,16 @@ def get_data():
   data = data.loc[:,['Date', 'Open', 'High', 'Low', 'Close']]
   data['RSI'] = ta.RSI(data['Close'], timeperiod=14)
   data['crossover'] = (data['Close'].ewm(12).mean() - data['Close'].ewm(26).mean()).ewm(span=9, adjust=False, min_periods=9).mean()
-  data['pct_change_closing1'] = data['Close'].pct_change().shift(-1)
-  data['pct_change_closing2'] = data['Close'].pct_change(2).shift(-2)
-  data['pct_change_closing3'] = data['Close'].pct_change(3).shift(-3)
-  data['pct_change_closing4'] = data['Close'].pct_change(4).shift(-4)
-  data['pct_change_closing5'] = data['Close'].pct_change(5).shift(-5)
-  data['pct_change_closing6'] = data['Close'].pct_change(6).shift(-6)
-  data['pct_change_closing7'] = data['Close'].pct_change(7).shift(-7)
-  data['pct_change_closing8'] = data['Close'].pct_change(8).shift(-8)
-  data['pct_change_closing9'] = data['Close'].pct_change(9).shift(-9)
-  data['pct_change_closing10'] = data['Close'].pct_change(10).shift(-10)
+  data['1'] = data['Close'].pct_change(1).shift(-1)
+  data['2'] = data['Close'].pct_change(2).shift(-2)
+  data['3'] = data['Close'].pct_change(3).shift(-3)
+  data['4'] = data['Close'].pct_change(4).shift(-4)
+  data['5'] = data['Close'].pct_change(5).shift(-5)
+  data['6'] = data['Close'].pct_change(6).shift(-6)
+  data['7'] = data['Close'].pct_change(7).shift(-7)
+  data['8'] = data['Close'].pct_change(8).shift(-8)
+  data['9'] = data['Close'].pct_change(9).shift(-9)
+  data['10'] = data['Close'].pct_change(10).shift(-10)
   data['MACD'] = get_macd(data['Close'], 26, 12, 9)
 
   k_period = 14
@@ -85,6 +85,7 @@ def get_data():
   data['%D'] = data['%K'].rolling(d_period).mean()
   # Create new column for difference
   data['STCH'] = data['%K'] - data['%D']
+  data['count'] = range(len(data))
 
   data = data.dropna()
 
@@ -128,6 +129,7 @@ def show_results(total_data):
 # combines previous probabilities with future probabilities
 def manipulate_data(length, rsi, Stoch, MACD, data):
   total_data = pd.DataFrame()
+  # data = data.set_index('Close')
 
   j = 0
   length = length - 1
@@ -139,29 +141,33 @@ def manipulate_data(length, rsi, Stoch, MACD, data):
     selected = selected[((selected['MACD'] > 0) & (MACD[j] > 0)) | ((selected['MACD'] < 0) & (MACD[j] < 0))]
     # print(len(selected))
 
-    selected = selected.iloc[:,7+j:17]
+    selected['count'] = selected['count']+j
+    
+    selected = selected.iloc[:,7:17-j]
+    
+    # print(selected.columns)
     total_data = total_data.append(selected)
     j+=1
 
-  # print(total_data.head(60))
+
 
   total_data = pd.DataFrame(justify(total_data.values, invalid_val=np.nan, axis=1, side='left'))
 
   return total_data
 
 def graph(total_data):
-  fig, ax = plt.subplots(2,5, figsize= (18,10))
+  fig, ax = plt.subplots(2,5, figsize= (15,8))
 
-  ax[0,0].hist(total_data[0], label='pct_change_closing1')
-  ax[0,1].hist(total_data[1], label='pct_change_closing2')
-  ax[0,2].hist(total_data[2], label='pct_change_closing3')
-  ax[0,3].hist(total_data[3], label='pct_change_closing4')
-  ax[0,4].hist(total_data[4], label='pct_change_closing5')
-  ax[1,0].hist(total_data[5], label='pct_change_closing6')
-  ax[1,1].hist(total_data[6], label='pct_change_closing7')
-  ax[1,2].hist(total_data[7], label='pct_change_closing8')
-  ax[1,3].hist(total_data[8], label='pct_change_closing9')
-  ax[1,4].hist(total_data[9], label='pct_change_closing10')
+  ax[0,0].hist(total_data[0], label='1')
+  ax[0,1].hist(total_data[1], label='2')
+  ax[0,2].hist(total_data[2], label='3')
+  ax[0,3].hist(total_data[3], label='4')
+  ax[0,4].hist(total_data[4], label='5')
+  ax[1,0].hist(total_data[5], label='6')
+  ax[1,1].hist(total_data[6], label='7')
+  ax[1,2].hist(total_data[7], label='8')
+  ax[1,3].hist(total_data[8], label='9')
+  ax[1,4].hist(total_data[9], label='10')
   ax[0,0].axvline(total_data[0].mean(), color='r', linestyle='dashed', linewidth=1)
   ax[0,1].axvline(total_data[1].mean(), color='r', linestyle='dashed', linewidth=1)
   ax[0,2].axvline(total_data[2].mean(), color='r', linestyle='dashed', linewidth=1)
@@ -228,16 +234,32 @@ def get_dates(days, d):
 def main():
   # 5/13/22 latest
   data = get_data()
+  # print(data)
+  # print(data['Close'])
   # data.to_csv('disData.csv', index=False)
   # data = pd.read_csv('disData.csv')
 
-  d = get_dates(8, '2022-8-2')
+  # i = 9
+  # while i > 0:
+  #   d = get_dates(i, '2022-8-2')
+  #   rsi = d.RSI.values.tolist()
+  #   Stoch = d.STCH.values.tolist()
+  #   MACD = d.MACD.values.tolist()
+  #   length = len(d)  
+
+  #   total_data = manipulate_data(length, rsi, Stoch, MACD, data)
+  #   show_results(total_data)
+  #   graph(total_data)
+  #   i-=1
+
+  d = get_dates(5, '2022-3-29')
   rsi = d.RSI.values.tolist()
   Stoch = d.STCH.values.tolist()
   MACD = d.MACD.values.tolist()
   length = len(d)  
 
   total_data = manipulate_data(length, rsi, Stoch, MACD, data)
+  # print(total_data)
   show_results(total_data)
   graph(total_data)
 
