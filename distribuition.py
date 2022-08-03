@@ -215,12 +215,9 @@ def get_dates(days, d):
 
   total_data = total_data[['RSI', 'STCH', 'MACD']]
 
-
-
-  print(total_data)
+  return total_data
 
 # data = pd.read_csv('disData.csv')
-# data.to_csv('disData.csv', index=False)
 # print(pd.read_csv('disData.csv'))
 # print(data)
 
@@ -231,30 +228,14 @@ def get_dates(days, d):
 def main():
   # 5/13/22 latest
   data = get_data()
+  # data.to_csv('disData.csv', index=False)
   # data = pd.read_csv('disData.csv')
 
-  # date 5/24
-  # rsi = [39.74, 41.25, 35.82, 35.69, 36.65, 44.26]
-  # Stoch = [3.74, 12.84, 4.09, -15.92, -18.49, 11.11]
-  # MACD = [1, -1, -1, -1, -1, -1]
-  # date 77/29
-  # rsi = [65.91, 62.55, 59.39, 51.77, 56.29, 55.92]
-  # Stoch = [.95, 11.19, 12.05, -10.16, -4.66, -9.62]
-  # date 8/1
-  # rsi = [64.68, 65.91, 62.55, 59.39, 51.77, 56.29]
-  # Stoch = [-3.51, .95, 11.19, 12.05, -10.16, -4.66]
-  # 8/2
-  # rsi = [62.25, 64.68, 65.91, 62.55, 59.39, 51.77, 56.29, 55.92]
-  # Stoch = [-4.77, -3.51, .95, 11.19, 12.05, -10.16, -4.66, -9.62]
-  # MACD = [1, 1, 1, 1, 1, 1, 1, 1]
-
-  rsi = [62.25, 64.68, 65.91, 62.55, 59.39]
-  Stoch = [-4.77, -3.51, .95, 11.19, 12.05]
-  MACD = [1, 1, 1, 1, 1]
-  length = 5
-
-
-  # get_dates(4, '2016-1-15')
+  d = get_dates(8, '2022-8-2')
+  rsi = d.RSI.values.tolist()
+  Stoch = d.STCH.values.tolist()
+  MACD = d.MACD.values.tolist()
+  length = len(d)  
 
   total_data = manipulate_data(length, rsi, Stoch, MACD, data)
   show_results(total_data)
