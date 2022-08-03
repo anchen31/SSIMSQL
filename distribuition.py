@@ -130,12 +130,13 @@ def manipulate_data(length, rsi, Stoch, MACD, data):
   total_data = pd.DataFrame()
 
   j = 0
+  length = length - 1
   while j <= length:
     selected = data[(data['RSI'] <= rsi[j]+1) & (data['RSI'] >= rsi[j]-1)]
     # print(len(selected))
     selected = selected[(selected['STCH'] <= (Stoch[j]+1)) & (selected['STCH'] >= (Stoch[j]-1))]
     # print(len(selected))
-    selected = selected[((selected['MACD'] > 0) & (selected['MACD'] > MACD[j])) | ((selected['MACD'] < 0) & (selected['MACD'] < MACD[j]))]
+    selected = selected[((selected['MACD'] > 0) & (MACD[j] > 0)) | ((selected['MACD'] < 0) & (MACD[j] < 0))]
     # print(len(selected))
 
     selected = selected.iloc[:,7+j:17]
@@ -212,7 +213,9 @@ def get_dates(days, d):
     total_data = total_data.append(row)
     i-=1
 
-  
+  total_data = total_data[['RSI', 'STCH', 'MACD']]
+
+
 
   print(total_data)
 
@@ -247,14 +250,14 @@ def main():
   rsi = [62.25, 64.68, 65.91, 62.55, 59.39]
   Stoch = [-4.77, -3.51, .95, 11.19, 12.05]
   MACD = [1, 1, 1, 1, 1]
-  length = 4
+  length = 5
 
 
-  get_dates(4, '2016-1-15')
+  # get_dates(4, '2016-1-15')
 
-  # total_data = manipulate_data(length, rsi, Stoch, MACD, data)
-  # show_results(total_data)
-  # graph(total_data)
+  total_data = manipulate_data(length, rsi, Stoch, MACD, data)
+  show_results(total_data)
+  graph(total_data)
 
 
 if __name__== '__main__':
