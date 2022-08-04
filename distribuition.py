@@ -158,16 +158,16 @@ def manipulate_data(length, rsi, Stoch, MACD, data):
 def graph(total_data):
   fig, ax = plt.subplots(2,5, figsize= (15,8))
 
-  ax[0,0].hist(total_data[0], label='1')
-  ax[0,1].hist(total_data[1], label='2')
-  ax[0,2].hist(total_data[2], label='3')
-  ax[0,3].hist(total_data[3], label='4')
-  ax[0,4].hist(total_data[4], label='5')
-  ax[1,0].hist(total_data[5], label='6')
-  ax[1,1].hist(total_data[6], label='7')
-  ax[1,2].hist(total_data[7], label='8')
-  ax[1,3].hist(total_data[8], label='9')
-  ax[1,4].hist(total_data[9], label='10')
+  ax[0,0].hist(total_data[0], label='1', bins=30)
+  ax[0,1].hist(total_data[1], label='2', bins=30)
+  ax[0,2].hist(total_data[2], label='3', bins=30)
+  ax[0,3].hist(total_data[3], label='4', bins=30)
+  ax[0,4].hist(total_data[4], label='5', bins=30)
+  ax[1,0].hist(total_data[5], label='6', bins=30)
+  ax[1,1].hist(total_data[6], label='7', bins=30)
+  ax[1,2].hist(total_data[7], label='8', bins=30)
+  ax[1,3].hist(total_data[8], label='9', bins=30)
+  ax[1,4].hist(total_data[9], label='10', bins=30)
   ax[0,0].axvline(total_data[0].mean(), color='r', linestyle='dashed', linewidth=1)
   ax[0,1].axvline(total_data[1].mean(), color='r', linestyle='dashed', linewidth=1)
   ax[0,2].axvline(total_data[2].mean(), color='r', linestyle='dashed', linewidth=1)
@@ -181,7 +181,7 @@ def graph(total_data):
   plt.show()
 
 # gets the RSI, MACD, STOCH scores for data
-def get_dates(days, d):
+def get_values(days, d):
   total_data = pd.DataFrame()
   today = date.today()
   name = 'SPY'
@@ -223,6 +223,59 @@ def get_dates(days, d):
 
   return total_data
 
+
+def get_backtest_dates(start_date):
+  total_data = pd.DataFrame()
+  today = date.today()
+  name = 'SPY'
+  ticker = yfinance.Ticker(name)
+  data = ticker.history(interval="1d",start=start_date, end=today.strftime("%Y-%m-%d"))
+  data['Date'] = pd.to_datetime(data.index)
+  data['Date'] = data['Date'].apply(mpl_dates.date2num)
+  data = data.loc[:,['Date', 'Open', 'High', 'Low', 'Close']]
+  data['1'] = data['Close'].pct_change(1).shift(-1)
+
+  return data
+
+
+def backtest(dates, k, data):
+  # dates = get_backtest_dates('2022-7-16')
+  results = []
+
+  for j in dates.index.values:
+    d = get_values(10, j)
+    rsi = d.RSI.values.tolist()
+    Stoch = d.STCH.values.tolist()
+    MACD = d.MACD.values.tolist()
+    length = len(d)  
+
+    total_data = manipulate_data(length, rsi, Stoch, MACD, data)
+    # gets the first prediction
+    total_data = total_data[k]
+
+    pos_count = 0
+    neg_count = 0
+    pos_amt = 0
+    neg_amt = 0
+
+    for i in total_data:
+      if i > 0:
+        pos_count += i
+        pos_amt +=1
+
+      elif i < 0:
+        neg_count += i
+        neg_amt += 1
+      else:
+        pass
+
+    # print(j)
+    print(j, ' neg amt = ', neg_amt, ' pos amt = ', pos_amt)
+    # get the number of pos and negs
+
+
+
+
 # data = pd.read_csv('disData.csv')
 # print(pd.read_csv('disData.csv'))
 # print(data)
@@ -239,29 +292,25 @@ def main():
   # data.to_csv('disData.csv', index=False)
   # data = pd.read_csv('disData.csv')
 
-  # i = 9
-  # while i > 0:
-  #   d = get_dates(i, '2022-8-2')
-  #   rsi = d.RSI.values.tolist()
-  #   Stoch = d.STCH.values.tolist()
-  #   MACD = d.MACD.values.tolist()
-  #   length = len(d)  
+  # generate a list of dates that I want to test
+  # print(get_backtest_dates('2022-5-16'))
+  dates = get_backtest_dates('2022-5-16')
+  backtest(dates, 0, data)
 
-  #   total_data = manipulate_data(length, rsi, Stoch, MACD, data)
-  #   show_results(total_data)
-  #   graph(total_data)
-  #   i-=1
 
-  d = get_dates(5, '2022-3-29')
-  rsi = d.RSI.values.tolist()
-  Stoch = d.STCH.values.tolist()
-  MACD = d.MACD.values.tolist()
-  length = len(d)  
 
-  total_data = manipulate_data(length, rsi, Stoch, MACD, data)
-  # print(total_data)
-  show_results(total_data)
-  graph(total_data)
+  # d = get_values(10, '2022-7-26')
+  # rsi = d.RSI.values.tolist()
+  # Stoch = d.STCH.values.tolist()
+  # MACD = d.MACD.values.tolist()
+  # length = len(d)  
+
+  # total_data = manipulate_data(length, rsi, Stoch, MACD, data)
+  # # print(total_data)
+
+  # # # print(total_data)
+  # # show_results(total_data)
+  # # graph(total_data)
 
 
 if __name__== '__main__':
