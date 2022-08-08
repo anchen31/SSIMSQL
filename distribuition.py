@@ -51,10 +51,10 @@ def get_macd(price, slow, fast, smooth):
     hist = macd - signal
     return hist
 
-def get_data():
+def get_data(start_date, end_date):
   name = 'SPY'
   ticker = yfinance.Ticker(name)
-  data = ticker.history(interval="1d",start="2004-1-15", end="2022-05-15")
+  data = ticker.history(interval="1d",start=start_date, end=end_date)
   data['Date'] = pd.to_datetime(data.index)
   data['Date'] = data['Date'].apply(mpl_dates.date2num)
   data = data.loc[:,['Date', 'Open', 'High', 'Low', 'Close']]
@@ -181,6 +181,7 @@ def graph(total_data):
   plt.show()
 
 # gets the RSI, MACD, STOCH scores for data
+# days is the days to look behind, d is the date selected
 def get_values(days, d):
   total_data = pd.DataFrame()
   today = date.today()
@@ -224,26 +225,13 @@ def get_values(days, d):
   return total_data
 
 
-def get_backtest_dates(start_date):
-  total_data = pd.DataFrame()
-  today = date.today()
-  name = 'SPY'
-  ticker = yfinance.Ticker(name)
-  data = ticker.history(interval="1d",start=start_date, end=today.strftime("%Y-%m-%d"))
-  data['Date'] = pd.to_datetime(data.index)
-  data['Date'] = data['Date'].apply(mpl_dates.date2num)
-  data = data.loc[:,['Date', 'Open', 'High', 'Low', 'Close']]
-  data['1'] = data['Close'].pct_change(1).shift(-1)
-
-  return data
-
-
 def backtest(dates, k, data):
-  # dates = get_backtest_dates('2022-7-16')
-  results = []
+  df = pd.DataFrame()
+  l = []
+  expv = dates['1']
 
   for j in dates.index.values:
-    d = get_values(10, j)
+    d = get_values(5, j)
     rsi = d.RSI.values.tolist()
     Stoch = d.STCH.values.tolist()
     MACD = d.MACD.values.tolist()
@@ -270,7 +258,19 @@ def backtest(dates, k, data):
         pass
 
     # print(j)
-    print(j, ' neg amt = ', neg_amt, ' pos amt = ', pos_amt)
+    # print(j, ' ratio = ', pos_amt/neg_amt, ' expected increase = ', expv[j])
+    try:
+      l.append((((pos_count/pos_amt)*(pos_amt/(pos_amt + neg_amt))))+(((neg_count/neg_amt)*(neg_amt/(pos_amt + neg_amt)))))
+    except:
+      l.append(0)
+
+
+  df.index = dates.index
+  df['ratio'] = l
+  # df['Close'] = dates.Close
+  # df['1'] = dates['1']
+  # df['ratio'] = l
+  return df
     # get the number of pos and negs
 
 
@@ -286,20 +286,57 @@ def backtest(dates, k, data):
 
 def main():
   # 5/13/22 latest
-  data = get_data()
+  # data = get_data("2004-1-15", "2022-5-15")
+  today = date.today().strftime("%Y-%m-%d")
+  data = get_data('2022-1-1', today)
+
+
   # print(data)
   # print(data['Close'])
   # data.to_csv('disData.csv', index=False)
   # data = pd.read_csv('disData.csv')
 
-  # generate a list of dates that I want to test
-  # print(get_backtest_dates('2022-5-16'))
-  dates = get_backtest_dates('2022-5-16')
-  backtest(dates, 0, data)
+  figure, ax = plt.subplots(figsize=(13, 6))
+  plt.plot(data.Close)
+
+  for ind in data.index:
+    if((data.loc[ind, 'STCH'] > 0) & (data.loc[ind, 'MACD'] < 0)):
+      plt.plot(ind, data.loc[ind, 'Close'], 'o',color='green')
+    if((data.loc[ind, 'STCH'] < 0) & (data.loc[ind, 'MACD'] > 0)):
+      plt.plot(ind, data.loc[ind, 'Close'], 'o',color='red')
 
 
 
-  # d = get_values(10, '2022-7-26')
+  plt.show()
+
+
+
+
+
+
+  # # generate a list of dates that I want to test
+  # # print(get_backtest_dates('2022-5-16'))
+  # dates = get_data('2022-1-1')
+  # b = backtest(dates, 5, data)
+
+  # dates['ratio'] = ta.RSI(b.ratio, timeperiod=14)
+  # print(dates)
+
+  # fig, (ax, ax1) = plt.subplots(2, sharex=True)
+  # ax.plot(dates.Close)
+  # ax1.plot(dates.ratio, color='red')
+  # ax2 = ax1.twinx()
+  # # ax2.plot(dates['1'], color='blue')
+  # ax2.plot(dates.Close)
+
+  # plt.show()
+
+
+
+
+
+
+  # d = get_values(5, '2022-8-4')
   # rsi = d.RSI.values.tolist()
   # Stoch = d.STCH.values.tolist()
   # MACD = d.MACD.values.tolist()
@@ -309,8 +346,8 @@ def main():
   # # print(total_data)
 
   # # # print(total_data)
-  # # show_results(total_data)
-  # # graph(total_data)
+  # show_results(total_data)
+  # graph(total_data)
 
 
 if __name__== '__main__':

@@ -9,7 +9,6 @@ import seaborn as sns
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler, RobustScaler
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
-import talib as ta
 # from sqlalchemy import create_engine
 # import pymysql
 # pymysql.install_as_MySQLdb()
