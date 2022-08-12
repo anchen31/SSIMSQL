@@ -22,11 +22,65 @@ import matplotlib.dates as mpl_dates
 
 from darts import TimeSeries, concatenate
 from darts.dataprocessing.transformers import Scaler
-# from darts.models import TransformerModel
+from darts.models import TransformerModel
 from darts.metrics import mape, rmse
 from darts.utils.timeseries_generation import datetime_attribute_timeseries
 from darts.utils.likelihood_models import QuantileRegression
 from sklearn.linear_model import LinearRegression
+
+import config
+
+password = config.password
+
+# 3.84 w standard scaler`
+
+# min_max_scaler = preprocessing.MinMaxScaler()
+# scaler = MinMaxScaler(feature_range = (0,1))
+scaler = StandardScaler()
+
+LOAD = False         # True = load previously saved model from disk?  False = (re)train the model
+# SAVE = "/_TForm_model10e.pth.tar"   # file name to save the model under
+
+SAVE = "/_distrib_nn_pct10e.pth.tar"   # file name to save the model under
+
+EPOCHS = 10
+INLEN = 8          # input size
+FEAT = 128           # d_model = number of expected features in the inputs, up to 512    
+HEADS = 4           # default 8
+ENCODE = 4          # encoder layers
+DECODE = 4          # decoder layers
+DIM_FF = 256         # dimensions of the feedforward network, default 2048
+BATCH = 16           # batch size
+ACTF = "gelu"       # activation function, relu (default) or gelu
+SCHLEARN = None     # a PyTorch learning rate scheduler; None = constant rate
+LEARN = 1e-4        # learning rate
+VALWAIT = 1         # epochs to wait before evaluating the loss on the test/validation set
+DROPOUT = 0.1       # dropout rate
+N_FC = 1            # output size
+
+RAND = 42           # random seed
+N_SAMPLES = 100     # number of times a prediction is sampled from a probabilistic model
+N_JOBS = 3          # parallel processors to use;  -1 = all processors
+
+
+# default quantiles for QuantileRegression
+QUANTILES = [0.01, 0.1, 0.2, 0.5, 0.8, 0.9, 0.99]
+
+#8.44 mape for 50%
+
+SPLIT = 0.8         # train/test %
+
+FIGSIZE = (9, 6)
+
+
+qL1, qL2, qL3 = 0.01, 0.05, 0.10        # percentiles of predictions: lower bounds
+qU1, qU2, qU3 = 1-qL1, 1-qL2, 1-qL3     # upper bounds derived from lower bounds
+label_q1 = f'{int(qU1 * 100)} / {int(qL1 * 100)} percentile band'
+label_q2 = f'{int(qU2 * 100)} / {int(qL2 * 100)} percentile band'
+label_q3 = f'{int(qU3 * 100)} / {int(qL3 * 100)} percentile band'
+
+mpath = os.path.abspath(os.getcwd()) + SAVE     # path and file name to save the model
+
 
 def justify(a, invalid_val=0, axis=1, side='left'):    
     if invalid_val is np.nan:
@@ -268,94 +322,38 @@ def backtest(dates, k, data):
   # df['1'] = dates['1']
   # df['ratio'] = l
   return df
-    # get the number of pos and negs
-
-
-
-
-# data = pd.read_csv('disData.csv')
-# print(pd.read_csv('disData.csv'))
-# print(data)
-
-################################################################################################# getting data stuff
-
 
 
 def main():
-  # 5/13/22 latest
-  data = get_data("2003-1-15", "2022-5-15")
+	data = get_data("2003-1-15", "2022-5-15")
+	dates = get_data('2018-1-1', '2022-8-11')
+	b1 = backtest(dates, 0, data)
+	b2 = backtest(dates, 1, data)
+	b3 = backtest(dates, 2, data)
+	b4 = backtest(dates, 3, data)
+	b5 = backtest(dates, 4, data)
+	b6 = backtest(dates, 5, data)
+	b7 = backtest(dates, 6, data)
+	b8 = backtest(dates, 7, data)
+	b9 = backtest(dates, 8, data)
+	b10 = backtest(dates, 9, data)
 
-  # print(data)
-  # print(data['Close'])
-  # data.to_csv('disData.csv', index=False)
-  # data = pd.read_csv('disData.csv')
+	dates['ratio1'] = ta.RSI(b1.ratio, timeperiod=14)
+	dates['ratio2'] = ta.RSI(b2.ratio, timeperiod=14)
+	dates['ratio3'] = ta.RSI(b3.ratio, timeperiod=14)
+	dates['ratio4'] = ta.RSI(b4.ratio, timeperiod=14)
+	dates['ratio5'] = ta.RSI(b5.ratio, timeperiod=14)
+	dates['ratio6'] = ta.RSI(b6.ratio, timeperiod=14)
+	dates['ratio7'] = ta.RSI(b7.ratio, timeperiod=14)
+	dates['ratio8'] = ta.RSI(b8.ratio, timeperiod=14)
+	dates['ratio9'] = ta.RSI(b9.ratio, timeperiod=14)
+	dates['ratio10'] = ta.RSI(b10.ratio, timeperiod=14)
 
-  # figure, ax = plt.subplots(figsize=(13, 6))
-  # plt.plot(data.Close)
+	dates.to_csv('NNdistribuition_data.csv', index=False)
+	print('Done')
 
-  # for ind in data.index:
-  #   if((data.loc[ind, 'STCH'] > 0) & (data.loc[ind, 'MACD'] < 0)):
-  #     plt.plot(ind, data.loc[ind, 'Close'], 'o',color='green')
-  #   if((data.loc[ind, 'STCH'] < 0) & (data.loc[ind, 'MACD'] > 0)):
-  #     plt.plot(ind, data.loc[ind, 'Close'], 'o',color='red')
-
-  # plt.show()
-
-
-  # generate a list of dates that I want to test
-  # print(get_backtest_dates('2022-5-16'))
-  dates = get_data('2021-1-1', '2022-8-11')
-  # print(dates)
-  b = backtest(dates, 5, data)
-  b1 = backtest(dates, 4, data)
-  b2 = backtest(dates, 0, data)
-  b3 = backtest(dates, 9, data)
-
-  dates['ratio'] = ta.RSI(b.ratio, timeperiod=14)
-  dates['ratio1'] = ta.RSI(b1.ratio, timeperiod=14)
-  dates['ratio2'] = ta.RSI(b2.ratio, timeperiod=14)
-  dates['ratio3'] = ta.RSI(b3.ratio, timeperiod=14)
-  # print(dates)
-
-
-  plt.style.use('dark_background')
-  fig, (ax, ax1) = plt.subplots(2, sharex=True)
-  ax.plot(dates.Close)
-  ax1.plot(dates.ratio, color='red')
-  ax1.plot(dates.ratio1, color='blue')
-  ax1.plot(dates.ratio2, color='green')
-  ax1.plot(dates.ratio3, color='yellow')
-  ax2 = ax1.twinx()
-  # ax2.plot(dates['1'], color='blue')
-  ax2.plot(dates.Close)
-
-  plt.show()
-
-
-
-
-
-
-  # d = get_values(5, '2022-8-4')
-  # rsi = d.RSI.values.tolist()
-  # Stoch = d.STCH.values.tolist()
-  # MACD = d.MACD.values.tolist()
-  # length = len(d)  
-
-  # total_data = manipulate_data(length, rsi, Stoch, MACD, data)
-  # # print(total_data)
-
-  # # # print(total_data)
-  # show_results(total_data)
-  # graph(total_data)
 
 
 if __name__== '__main__':
     # put the loop logic here eto loop through everything accordingly
     main()
-
-# print(total_data)
-
-
-
-

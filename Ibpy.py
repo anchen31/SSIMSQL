@@ -129,7 +129,7 @@ def ltSR():
     bars = ib.reqHistoricalData(
         contract1, 
         endDateTime='',
-        durationStr='4 Y',
+        durationStr='8 Y',
         barSizeSetting='1 day',
         whatToShow='TRADES',
         useRTH=RTH,
