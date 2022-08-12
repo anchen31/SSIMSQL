@@ -236,7 +236,6 @@ def graph(total_data):
 
 
 def t_data():
-  total_data = pd.DataFrame()
   today = date.today()
   name = 'SPY'
   ticker = yfinance.Ticker(name)
@@ -252,7 +251,7 @@ tdata = t_data()
 # gets the RSI, MACD, STOCH scores for data
 # days is the days to look behind, d is the date selected
 def get_values(days, d):
-  # total_data = pd.DataFrame()
+  total_data = pd.DataFrame()
   # today = date.today()
   # name = 'SPY'
   # ticker = yfinance.Ticker(name)
@@ -341,37 +340,37 @@ def backtest(dates, k, data):
 
 
 def main():
-	data = get_data("2003-1-15", "2022-5-15")
-	dates = get_data('2018-1-1', '2022-8-11')
-	b1 = backtest(dates, 0, data)
-	b2 = backtest(dates, 1, data)
-	b3 = backtest(dates, 2, data)
-	b4 = backtest(dates, 3, data)
-	b5 = backtest(dates, 4, data)
-	b6 = backtest(dates, 5, data)
-	b7 = backtest(dates, 6, data)
-	b8 = backtest(dates, 7, data)
-	b9 = backtest(dates, 8, data)
-	b10 = backtest(dates, 9, data)
+	# data = get_data("2003-1-15", "2022-5-15")
+	# dates = get_data('2018-1-1', '2022-8-11')
+  d = pd.read_csv('NNdistribuition_data.csv')
+  print(len(d))
+  d = d.dropna()
+  print(len(d))
+  # print(len(d))
+	# b1 = backtest(dates, 0, data)
+	# b2 = backtest(dates, 1, data)
+	# b3 = backtest(dates, 2, data)
+	# b4 = backtest(dates, 3, data)
+	# b5 = backtest(dates, 4, data)
+	# b6 = backtest(dates, 5, data)
+	# b7 = backtest(dates, 6, data)
+	# b8 = backtest(dates, 7, data)
+	# b9 = backtest(dates, 8, data)
+	# b10 = backtest(dates, 9, data)
 
-	dates['ratio1'] = ta.RSI(b1.ratio, timeperiod=14)
-	dates['ratio2'] = ta.RSI(b2.ratio, timeperiod=14)
-	dates['ratio3'] = ta.RSI(b3.ratio, timeperiod=14)
-	dates['ratio4'] = ta.RSI(b4.ratio, timeperiod=14)
-	dates['ratio5'] = ta.RSI(b5.ratio, timeperiod=14)
-	dates['ratio6'] = ta.RSI(b6.ratio, timeperiod=14)
-	dates['ratio7'] = ta.RSI(b7.ratio, timeperiod=14)
-	dates['ratio8'] = ta.RSI(b8.ratio, timeperiod=14)
-	dates['ratio9'] = ta.RSI(b9.ratio, timeperiod=14)
-	dates['ratio10'] = ta.RSI(b10.ratio, timeperiod=14)
+	# dates['ratio1'] = ta.RSI(b1.ratio, timeperiod=14)
+	# dates['ratio2'] = ta.RSI(b2.ratio, timeperiod=14)
+	# dates['ratio3'] = ta.RSI(b3.ratio, timeperiod=14)
+	# dates['ratio4'] = ta.RSI(b4.ratio, timeperiod=14)
+	# dates['ratio5'] = ta.RSI(b5.ratio, timeperiod=14)
+	# dates['ratio6'] = ta.RSI(b6.ratio, timeperiod=14)
+	# dates['ratio7'] = ta.RSI(b7.ratio, timeperiod=14)
+	# dates['ratio8'] = ta.RSI(b8.ratio, timeperiod=14)
+	# dates['ratio9'] = ta.RSI(b9.ratio, timeperiod=14)
+	# dates['ratio10'] = ta.RSI(b10.ratio, timeperiod=14)
 
-	dates.to_csv('NNdistribuition_data.csv', index=True)
-	print('Done')
-
-
-
-  # data = pd.read_csv('NNdistribuition_data.csv')
-
+	# dates.to_csv('NNdistribuition_data.csv', index=True)
+	# print('Done')
 
 
 if __name__== '__main__':
