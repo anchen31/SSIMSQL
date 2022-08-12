@@ -300,7 +300,7 @@ def backtest(dates, k, data):
   l = []
 
   for j in dates.index.values:
-    d = get_values(5, j)
+    d = get_values(10, j)
     rsi = d.RSI.values.tolist()
     Stoch = d.STCH.values.tolist()
     MACD = d.MACD.values.tolist()
@@ -367,6 +367,10 @@ def main():
 
 	dates.to_csv('NNdistribuition_data.csv', index=True)
 	print('Done')
+
+
+
+  # data = pd.read_csv('NNdistribuition_data.csv')
 
 
 
