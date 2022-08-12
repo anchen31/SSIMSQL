@@ -234,9 +234,8 @@ def graph(total_data):
   ax[1,4].axvline(total_data[9].mean(), color='r', linestyle='dashed', linewidth=1)
   plt.show()
 
-# gets the RSI, MACD, STOCH scores for data
-# days is the days to look behind, d is the date selected
-def get_values(days, d):
+
+def t_data():
   total_data = pd.DataFrame()
   today = date.today()
   name = 'SPY'
@@ -245,6 +244,23 @@ def get_values(days, d):
   data['Date'] = pd.to_datetime(data.index)
   data['Date'] = data['Date'].apply(mpl_dates.date2num)
   data = data.loc[:,['Date', 'Open', 'High', 'Low', 'Close']]
+  return data
+
+tdata = t_data()
+
+
+# gets the RSI, MACD, STOCH scores for data
+# days is the days to look behind, d is the date selected
+def get_values(days, d):
+  # total_data = pd.DataFrame()
+  # today = date.today()
+  # name = 'SPY'
+  # ticker = yfinance.Ticker(name)
+  # data = ticker.history(interval="1d",start="2010-1-15", end=today.strftime("%Y-%m-%d"))
+  # data['Date'] = pd.to_datetime(data.index)
+  # data['Date'] = data['Date'].apply(mpl_dates.date2num)
+  # data = data.loc[:,['Date', 'Open', 'High', 'Low', 'Close']]
+  data = tdata
 
   k_period = 14
   d_period = 3
@@ -349,7 +365,7 @@ def main():
 	dates['ratio9'] = ta.RSI(b9.ratio, timeperiod=14)
 	dates['ratio10'] = ta.RSI(b10.ratio, timeperiod=14)
 
-	dates.to_csv('NNdistribuition_data.csv', index=False)
+	dates.to_csv('NNdistribuition_data.csv', index=True)
 	print('Done')
 
 
