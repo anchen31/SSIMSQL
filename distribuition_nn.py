@@ -44,16 +44,16 @@ LOAD = False         # True = load previously saved model from disk?  False = (r
 SAVE = "/_distrib_nn_pct10e.pth.tar"   # file name to save the model under
 
 EPOCHS = 10
-INLEN = 8          # input size
+INLEN = 4          # input size
 FEAT = 128           # d_model = number of expected features in the inputs, up to 512    
 HEADS = 4           # default 8
 ENCODE = 4          # encoder layers
 DECODE = 4          # decoder layers
 DIM_FF = 256         # dimensions of the feedforward network, default 2048
-BATCH = 16           # batch size
+BATCH = 4           # batch size
 ACTF = "gelu"       # activation function, relu (default) or gelu
 SCHLEARN = None     # a PyTorch learning rate scheduler; None = constant rate
-LEARN = 1e-4        # learning rate
+LEARN = 1e-3        # learning rate
 VALWAIT = 1         # epochs to wait before evaluating the loss on the test/validation set
 DROPOUT = 0.1       # dropout rate
 N_FC = 1            # output size
@@ -338,39 +338,175 @@ def backtest(dates, k, data):
   # df['ratio'] = l
   return df
 
+def get_csv():
+  data = get_data("2003-1-15", "2022-5-15")
+  dates = get_data('2018-1-1', '2022-8-11')
+
+  b1 = backtest(dates, 0, data)
+  b2 = backtest(dates, 1, data)
+  b3 = backtest(dates, 2, data)
+  b4 = backtest(dates, 3, data)
+  b5 = backtest(dates, 4, data)
+  b6 = backtest(dates, 5, data)
+  b7 = backtest(dates, 6, data)
+  b8 = backtest(dates, 7, data)
+  b9 = backtest(dates, 8, data)
+  b10 = backtest(dates, 9, data)
+
+  dates['ratio1'] = ta.RSI(b1.ratio, timeperiod=14)
+  dates['ratio2'] = ta.RSI(b2.ratio, timeperiod=14)
+  dates['ratio3'] = ta.RSI(b3.ratio, timeperiod=14)
+  dates['ratio4'] = ta.RSI(b4.ratio, timeperiod=14)
+  dates['ratio5'] = ta.RSI(b5.ratio, timeperiod=14)
+  dates['ratio6'] = ta.RSI(b6.ratio, timeperiod=14)
+  dates['ratio7'] = ta.RSI(b7.ratio, timeperiod=14)
+  dates['ratio8'] = ta.RSI(b8.ratio, timeperiod=14)
+  dates['ratio9'] = ta.RSI(b9.ratio, timeperiod=14)
+  dates['ratio10'] = ta.RSI(b10.ratio, timeperiod=14)
+
+  dates.to_csv('NNdistribuition_data.csv', index=True)
+  print('Done')
+
+
+def plot_predict(ts_actual, ts_test, ts_pred, trade):
+
+  fig1, (ax1, ax2, ax3) = plt.subplots(3, sharex=True)
+
+  ax1.plot(ts_actual, label="price", c='g')
+
+  ax3.plot(trade, label="actual trade", c='b')
+
+  lol = ts_pred.quantile_df(quantile=0.5)
+
+  N = int(len(lol))
+
+  lol = lol.set_index(ts_actual.index[-N:])
+
+  ax2.plot(lol, label="prediction")
+
+  # ts_pred.plot(low_quantile=qL1, high_quantile=qU1, label=label_q1)    # plot U1 quantile band
+  # #ts_pred.plot(low_quantile=qL2, high_quantile=qU2, label=label_q2)   # plot U2 quantile band
+  # ts_pred.plot(low_quantile=qL3, high_quantile=qU3, label=label_q3)    # plot U3 quantile band
+  # ts_pred.plot(central_quantile="mean", label="expected")              # plot "mean" or median=0.5
+
+  ax1.title.set_text("TFT: test set (MAPE: {:.2f}%)".format(mape(ts_test, ts_pred)))
+  ax1.legend()
+  ax2.legend()
+
+  # plt.xticks(dates.index, dates.values)
+  # plt.gcf().autofmt_xdate()
+
+  plt.show()
+
+
+
 
 def main():
-	# data = get_data("2003-1-15", "2022-5-15")
-	# dates = get_data('2018-1-1', '2022-8-11')
   d = pd.read_csv('NNdistribuition_data.csv')
-  print(len(d))
-  d = d.dropna()
-  print(len(d))
   # print(len(d))
-	# b1 = backtest(dates, 0, data)
-	# b2 = backtest(dates, 1, data)
-	# b3 = backtest(dates, 2, data)
-	# b4 = backtest(dates, 3, data)
-	# b5 = backtest(dates, 4, data)
-	# b6 = backtest(dates, 5, data)
-	# b7 = backtest(dates, 6, data)
-	# b8 = backtest(dates, 7, data)
-	# b9 = backtest(dates, 8, data)
-	# b10 = backtest(dates, 9, data)
+  d = d.dropna()
+  d = d.reset_index(drop=True)
 
-	# dates['ratio1'] = ta.RSI(b1.ratio, timeperiod=14)
-	# dates['ratio2'] = ta.RSI(b2.ratio, timeperiod=14)
-	# dates['ratio3'] = ta.RSI(b3.ratio, timeperiod=14)
-	# dates['ratio4'] = ta.RSI(b4.ratio, timeperiod=14)
-	# dates['ratio5'] = ta.RSI(b5.ratio, timeperiod=14)
-	# dates['ratio6'] = ta.RSI(b6.ratio, timeperiod=14)
-	# dates['ratio7'] = ta.RSI(b7.ratio, timeperiod=14)
-	# dates['ratio8'] = ta.RSI(b8.ratio, timeperiod=14)
-	# dates['ratio9'] = ta.RSI(b9.ratio, timeperiod=14)
-	# dates['ratio10'] = ta.RSI(b10.ratio, timeperiod=14)
+  new_df = d[['Date', '1', 'ratio1', 'ratio2', 'ratio3', 
+              'ratio4', 'ratio5', 'ratio6', 'ratio7', 
+              'ratio8', 'ratio9', 'ratio10']].copy()
 
-	# dates.to_csv('NNdistribuition_data.csv', index=True)
-	# print('Done')
+  df = new_df.copy()
+  df = df.drop(columns=['Date'])  
+
+  # plt.figure(figsize = (15,15))
+  # sns.set(font_scale=0.75)
+  # ax = sns.heatmap(df.corr().round(3), 
+  #             annot=True, 
+  #             square=True, 
+  #             linewidths=.75, cmap="coolwarm", 
+  #             fmt = ".2f", 
+  #             annot_kws = {"size": 11})
+  # ax.xaxis.tick_bottom()
+  # plt.title("correlation matrix")
+  # plt.show()
+
+
+  fill = False
+  freq = None
+
+  ts_P = TimeSeries.from_series(df["1"], fill_missing_dates=fill, freq=freq)
+  ts_P = ts_P.pd_dataframe()
+  ts_P_1 = ts_P.fillna(method='bfill')
+  ts_P = TimeSeries.from_series(ts_P_1)
+
+  # creates time series object covariate feature, This is multivariate
+  df_covF = df.loc[:, df.columns != "1"]
+  ts_covF = TimeSeries.from_dataframe(df_covF, fill_missing_dates=fill, freq=freq)
+  ts_covF = ts_covF.pd_dataframe()
+  ts_covF_1 = ts_covF.fillna(method='bfill')
+  ts_covF = TimeSeries.from_series(ts_covF_1)
+
+
+
+  ts_train, ts_test = ts_P.split_after(SPLIT)
+
+  scalerP = Scaler(scaler)
+  scalerP.fit_transform(ts_P)
+  ts_ttrain = scalerP.transform(ts_train)
+  ts_ttest = scalerP.transform(ts_test)    
+  ts_t = scalerP.transform(ts_P)
+
+  # train/test split and scaling of FEATURE covariates
+  covF_train, covF_test = ts_covF.split_after(SPLIT)
+
+  scalerF = Scaler(scaler)
+  scalerF.fit_transform(ts_covF)
+  covF_ttrain = scalerF.transform(covF_train) 
+  covF_ttest = scalerF.transform(covF_test)   
+  covF_t = scalerF.transform(ts_covF)
+
+  model = TransformerModel(
+                      input_chunk_length = INLEN,
+                      output_chunk_length = N_FC,
+                      batch_size = BATCH,
+                      n_epochs = EPOCHS,
+                      model_name = "Transformer_price",
+                      nr_epochs_val_period = VALWAIT,
+                      d_model = FEAT,
+                      nhead = HEADS,
+                      num_encoder_layers = ENCODE,
+                      num_decoder_layers = DECODE,
+                      dim_feedforward = DIM_FF,
+                      dropout = DROPOUT,
+                      activation = ACTF,
+                      random_state=RAND,
+                      likelihood=QuantileRegression(quantiles=QUANTILES), 
+                      optimizer_kwargs={'lr': LEARN},
+                      add_encoders={"cyclic": {"future": ["dayofweek", "month"]}},
+                      save_checkpoints=True,
+                      force_reset=True
+                      )
+
+
+  # training: load a saved model or (re)train
+  if LOAD:
+      print("have loaded a previously saved model from disk:" + mpath)
+      model = TransformerModel.load_model(mpath)                            # load previously model from disk 
+  else:
+      model.fit(  ts_ttrain, 
+                  past_covariates=covF_t, 
+                  verbose=True)
+      print("have saved the model after training:", mpath)
+      model.save_model(mpath)
+
+  # # testing: generate predictions
+  ts_tpred = model.predict(   n=len(ts_ttest), 
+                              num_samples=N_SAMPLES,   
+                              n_jobs=N_JOBS, 
+                              verbose=True)
+
+
+  ts_pred = scalerP.inverse_transform(ts_tpred)
+
+  ts = d.Open
+  pct = d['1']
+  plot_predict(ts, ts_test, ts_pred, pct)
 
 
 if __name__== '__main__':
