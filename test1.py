@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from sklearn import preprocessing
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler, RobustScaler
+import talib as ta
 
 plt.rcParams['figure.figsize'] = [12, 7]
 plt.rc('font', size=14)
@@ -25,7 +26,7 @@ df = df.loc[:,['Date', 'Open', 'High', 'Low', 'Close']]
 # df['date'] = pd.to_datetime(df.index)
 # # df = df.loc[:,['open', 'high', 'low', 'close']]
 # print(type(df['open'].values))
-print(df)
+# print(df)
 
 def isSupport(df,i):
     support = df['Low'][i] < df['Low'][i-1]  and df['Low'][i] < df['Low'][i+1] and df['Low'][i+1] < df['Low'][i+2] and df['Low'][i-1] < df['Low'][i-2]
@@ -61,8 +62,64 @@ def plot_all():
 
   plt.show()
 
+# takes a df and adds features to it
+def add_features(data):
+  k_period = 14
+  d_period = 3
 
-plot_all()
+  # Adds a "n_high" column with max value of previous 14 periods
+  data['n_high'] = data['High'].rolling(k_period).max()
+  # Adds an "n_low" column with min value of previous 14 periods
+  data['n_low'] = data['Low'].rolling(k_period).min()
+  # Uses the min/max values to calculate the %k (as a percentage) (Fast)
+  data['%K'] = (data['Close'] - data['n_low']) * 100 / (data['n_high'] - data['n_low'])
+  # Uses the %k to calculates a SMA over the past 3 values of %k (Slow)
+  data['%D'] = data['%K'].rolling(d_period).mean()
+  # Create new column for difference
+  data['STCH'] = data['%K'] - data['%D']
+
+  data['RSI'] = ta.RSI(data['Close'], timeperiod=14)
+  data['MACD'] = get_macd(data['Close'], 26, 12, 9)
+
+  return data
+
+
+# plot_all()
+
+# high is 1 and low is 
+
+df1 = pd.DataFrame(data, columns=['Date', 'price', 'sup/res'])
+
+# get regular df and add columns to it
+df = add_features(df)
+
+# merge the two dfs together
+merged_df = pd.merge(df1, df, on='Date')
+
+# print(df1)
+# print(df)
+print(merged_df)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # total = 0
 # total1 = 0
 # count = 0

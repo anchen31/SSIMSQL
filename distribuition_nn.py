@@ -44,7 +44,7 @@ LOAD = False         # True = load previously saved model from disk?  False = (r
 SAVE = "/_distrib_nn_pct10e.pth.tar"   # file name to save the model under
 
 EPOCHS = 10
-INLEN = 4          # input size
+INLEN = 10          # input size
 FEAT = 128           # d_model = number of expected features in the inputs, up to 512    
 HEADS = 4           # default 8
 ENCODE = 4          # encoder layers

@@ -282,57 +282,78 @@ def backtest(dates, k, data):
 
 
 def main():
-  # 5/13/22 latest
-  data = get_data("2003-1-15", "2022-5-15")
+  # # 5/13/22 latest
+  # data = get_data("2003-1-15", "2022-5-15")
 
-  # print(data)
-  # print(data['Close'])
-  # data.to_csv('disData.csv', index=False)
-  # data = pd.read_csv('disData.csv')
+  # # print(data)
+  # # print(data['Close'])
+  # # data.to_csv('disData.csv', index=False)
+  # # data = pd.read_csv('disData.csv')
 
-  # figure, ax = plt.subplots(figsize=(13, 6))
-  # plt.plot(data.Close)
+  # # figure, ax = plt.subplots(figsize=(13, 6))
+  # # plt.plot(data.Close)
 
-  # for ind in data.index:
-  #   if((data.loc[ind, 'STCH'] > 0) & (data.loc[ind, 'MACD'] < 0)):
-  #     plt.plot(ind, data.loc[ind, 'Close'], 'o',color='green')
-  #   if((data.loc[ind, 'STCH'] < 0) & (data.loc[ind, 'MACD'] > 0)):
-  #     plt.plot(ind, data.loc[ind, 'Close'], 'o',color='red')
+  # # for ind in data.index:
+  # #   if((data.loc[ind, 'STCH'] > 0) & (data.loc[ind, 'MACD'] < 0)):
+  # #     plt.plot(ind, data.loc[ind, 'Close'], 'o',color='green')
+  # #   if((data.loc[ind, 'STCH'] < 0) & (data.loc[ind, 'MACD'] > 0)):
+  # #     plt.plot(ind, data.loc[ind, 'Close'], 'o',color='red')
+
+  # # plt.show()
+
+
+  # # generate a list of dates that I want to test
+  # # print(get_backtest_dates('2022-5-16'))
+  # dates = get_data('2021-1-1', '2022-8-11')
+  # # print(dates)
+  # b = backtest(dates, 5, data)
+  # b1 = backtest(dates, 4, data)
+  # b2 = backtest(dates, 0, data)
+  # b3 = backtest(dates, 9, data)
+
+  # dates['ratio'] = ta.RSI(b.ratio, timeperiod=14)
+  # dates['ratio1'] = ta.RSI(b1.ratio, timeperiod=14)
+  # dates['ratio2'] = ta.RSI(b2.ratio, timeperiod=14)
+  # dates['ratio3'] = ta.RSI(b3.ratio, timeperiod=14)
+  # # print(dates)
+
+
+  # plt.style.use('dark_background')
+  # fig, (ax, ax1) = plt.subplots(2, sharex=True)
+  # ax.plot(dates.Close)
+  # ax1.plot(dates.ratio, color='red')
+  # ax1.plot(dates.ratio1, color='blue')
+  # ax1.plot(dates.ratio2, color='green')
+  # ax1.plot(dates.ratio3, color='yellow')
+  # ax2 = ax1.twinx()
+  # # ax2.plot(dates['1'], color='blue')
+  # ax2.plot(dates.Close)
 
   # plt.show()
 
-
-  # generate a list of dates that I want to test
-  # print(get_backtest_dates('2022-5-16'))
-  dates = get_data('2021-1-1', '2022-8-11')
-  # print(dates)
-  b = backtest(dates, 5, data)
-  b1 = backtest(dates, 4, data)
-  b2 = backtest(dates, 0, data)
-  b3 = backtest(dates, 9, data)
-
-  dates['ratio'] = ta.RSI(b.ratio, timeperiod=14)
-  dates['ratio1'] = ta.RSI(b1.ratio, timeperiod=14)
-  dates['ratio2'] = ta.RSI(b2.ratio, timeperiod=14)
-  dates['ratio3'] = ta.RSI(b3.ratio, timeperiod=14)
-  # print(dates)
+  d = pd.read_csv('NNdistribuition_data.csv')
+  # print(len(d))
+  d = d.dropna()
+  d = d.reset_index(drop=True)
+  d = d.set_index('Date')
+  d.index = pd.to_datetime(d.index)
 
 
   plt.style.use('dark_background')
   fig, (ax, ax1) = plt.subplots(2, sharex=True)
-  ax.plot(dates.Close)
-  ax1.plot(dates.ratio, color='red')
-  ax1.plot(dates.ratio1, color='blue')
-  ax1.plot(dates.ratio2, color='green')
-  ax1.plot(dates.ratio3, color='yellow')
+  ax.plot(d.Close)
+  ax1.plot(d.ratio1, color='blue')
+  ax1.plot(d.ratio2, color='green')
+  ax1.plot(d.ratio3, color='yellow')
   ax2 = ax1.twinx()
   # ax2.plot(dates['1'], color='blue')
-  ax2.plot(dates.Close)
+  ax2.plot(d.Close)
+
+
+  ax3 = ax.twinx()
+  ax3.plot(ta.RSI(d['1'], timeperiod=14), color='red')
 
   plt.show()
-
-
-
 
 
 
