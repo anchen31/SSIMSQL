@@ -62,6 +62,14 @@ def plot_all():
 
   plt.show()
 
+def get_macd(price, slow, fast, smooth):
+    exp1 = price.ewm(span = fast, adjust = False).mean()
+    exp2 = price.ewm(span = slow, adjust = False).mean()
+    macd = pd.DataFrame(exp1 - exp2)
+    signal = pd.DataFrame(macd.ewm(span = smooth, adjust = False).mean())
+    hist = macd - signal
+    return hist
+
 # takes a df and adds features to it
 def add_features(data):
   k_period = 14
@@ -80,6 +88,7 @@ def add_features(data):
 
   data['RSI'] = ta.RSI(data['Close'], timeperiod=14)
   data['MACD'] = get_macd(data['Close'], 26, 12, 9)
+  data['count'] = range(len(data))
 
   return data
 
@@ -88,7 +97,7 @@ def add_features(data):
 
 # high is 1 and low is 
 
-df1 = pd.DataFrame(data, columns=['Date', 'price', 'sup/res'])
+df1 = pd.DataFrame(data, columns=['Date', 'price', 'sup_res'])
 
 # get regular df and add columns to it
 df = add_features(df)
@@ -100,6 +109,10 @@ merged_df = pd.merge(df1, df, on='Date')
 # print(df)
 print(merged_df)
 
+# seperate the -1 and positive 1 values and graph data
+sell = merged_df.loc[merged_df['sup_res'] == -1]
+
+buy = merged_df.loc[merged_df['sup_res'] == 1]
 
 
 
