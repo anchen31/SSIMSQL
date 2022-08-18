@@ -20,6 +20,7 @@ df = ticker.history(interval="1d",start="2004-1-15", end="2022-05-15")
 df['Date'] = pd.to_datetime(df.index)
 df['Date'] = df['Date'].apply(mpl_dates.date2num)
 df = df.loc[:,['Date', 'Open', 'High', 'Low', 'Close']]
+df['count'] = range(len(df))
 
 # df = pd.read_csv('data.csv')
 # df = df.loc[:,['date', 'open', 'high', 'low', 'close']]
@@ -35,12 +36,33 @@ def isResistance(df,i):
     resistance = df['High'][i] > df['High'][i-1]  and df['High'][i] > df['High'][i+1] and df['High'][i+1] > df['High'][i+2] and df['High'][i-1] > df['High'][i-2]
     return resistance 
 
+def isFarFromLevel(l):
+    return np.sum([abs(l-x) < s  for x in data]) == 0
+
 data = []
 for i in range(2,df.shape[0]-2):
   if isSupport(df,i):
-    data.append((df['Date'][i],df['Low'][i], 1))
+    data.append((df['Date'][i],df['Low'][i], 1, df['count'][i]))
   elif isResistance(df,i):
-    data.append((df['Date'][i],df['High'][i], -1))
+    data.append((df['Date'][i],df['High'][i], -1, df['count'][i]))
+
+# s =  np.mean(df['High'] - df['Low'])
+
+# data = []
+# for i in range(2,df.shape[0]-2):
+#   if isSupport(df,i):
+#     l = df['Low'][i]
+
+#     if isFarFromLevel(l):
+#       # levels.append((i,l))
+#       data.append((df['Date'][i],df['Low'][i], 1, df['count'][i]))
+
+#   elif isResistance(df,i):
+#     l = df['High'][i]
+
+#     if isFarFromLevel(l):
+#       # levels.append((i,l))
+#       data.append((df['Date'][i],df['High'][i], -1, df['count'][i]))
 
 
 #print out levels and see lows and high and assign them a triangle
@@ -89,7 +111,6 @@ def add_features(data):
   data['RSI'] = ta.RSI(data['Close'], timeperiod=14)
   data['MACD'] = get_macd(data['Close'], 26, 12, 9)
   data['count'] = range(len(data))
-
   return data
 
 
@@ -97,25 +118,44 @@ def add_features(data):
 
 # high is 1 and low is 
 
-df1 = pd.DataFrame(data, columns=['Date', 'price', 'sup_res'])
+df1 = pd.DataFrame(data, columns=['Date', 'price', 'sup_res', 'count'])
 
 # get regular df and add columns to it
 df = add_features(df)
 
 # merge the two dfs together
-merged_df = pd.merge(df1, df, on='Date')
+merged_df = pd.merge(df1, df, on='count')
 
 # print(df1)
 # print(df)
-print(merged_df)
+# print(merged_df)
 
 # seperate the -1 and positive 1 values and graph data
 sell = merged_df.loc[merged_df['sup_res'] == -1]
 
 buy = merged_df.loc[merged_df['sup_res'] == 1]
 
+# merged_df['MACD'].plot()
+# merged_df['RSI'].plot()
+# merged_df['STCH'].plot()
+
+fig1, (ax1, ax2, ax3) = plt.subplots(3, sharex=True)
+
+ax1.hist(ta.RSI(df['MACD'], timeperiod=14))
+ax1.hist(ta.RSI(df['RSI'], timeperiod=14))
+ax1.hist(ta.RSI(df['STCH'], timeperiod=14))
 
 
+# ax2.hist(ta.RSI(sell['MACD'], timeperiod=14))
+# ax2.hist(ta.RSI(sell['RSI'], timeperiod=14))
+ax2.hist(ta.RSI(sell['STCH'], timeperiod=14))
+
+
+# ax3.hist(ta.RSI(buy['MACD'], timeperiod=14))
+# ax3.hist(ta.RSI(buy['RSI'], timeperiod=14))
+ax3.hist(ta.RSI(buy['STCH'], timeperiod=14))
+
+# plt.show()
 
 
 

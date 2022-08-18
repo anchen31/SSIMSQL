@@ -45,7 +45,7 @@ SAVE = "/_distrib_nn_pct10e.pth.tar"   # file name to save the model under
 
 EPOCHS = 10
 INLEN = 10          # input size
-FEAT = 128           # d_model = number of expected features in the inputs, up to 512    
+FEAT = 16           # d_model = number of expected features in the inputs, up to 512    
 HEADS = 4           # default 8
 ENCODE = 4          # encoder layers
 DECODE = 4          # decoder layers
@@ -53,7 +53,7 @@ DIM_FF = 256         # dimensions of the feedforward network, default 2048
 BATCH = 4           # batch size
 ACTF = "gelu"       # activation function, relu (default) or gelu
 SCHLEARN = None     # a PyTorch learning rate scheduler; None = constant rate
-LEARN = 1e-3        # learning rate
+LEARN = 1e-4        # learning rate
 VALWAIT = 1         # epochs to wait before evaluating the loss on the test/validation set
 DROPOUT = 0.1       # dropout rate
 N_FC = 1            # output size
@@ -407,24 +407,24 @@ def main():
   d = d.dropna()
   d = d.reset_index(drop=True)
 
-  new_df = d[['Date', '1', 'ratio1', 'ratio2', 'ratio3', 
+  new_df = d[['Date', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'ratio1', 'ratio2', 'ratio3', 
               'ratio4', 'ratio5', 'ratio6', 'ratio7', 
               'ratio8', 'ratio9', 'ratio10']].copy()
 
   df = new_df.copy()
   df = df.drop(columns=['Date'])  
 
-  # plt.figure(figsize = (15,15))
-  # sns.set(font_scale=0.75)
-  # ax = sns.heatmap(df.corr().round(3), 
-  #             annot=True, 
-  #             square=True, 
-  #             linewidths=.75, cmap="coolwarm", 
-  #             fmt = ".2f", 
-  #             annot_kws = {"size": 11})
-  # ax.xaxis.tick_bottom()
-  # plt.title("correlation matrix")
-  # plt.show()
+  plt.figure(figsize = (15,15))
+  sns.set(font_scale=0.75)
+  ax = sns.heatmap(df.corr().round(3), 
+              annot=True, 
+              square=True, 
+              linewidths=.75, cmap="coolwarm", 
+              fmt = ".2f", 
+              annot_kws = {"size": 11})
+  ax.xaxis.tick_bottom()
+  plt.title("correlation matrix")
+  plt.show()
 
 
   fill = False
@@ -461,52 +461,52 @@ def main():
   covF_ttest = scalerF.transform(covF_test)   
   covF_t = scalerF.transform(ts_covF)
 
-  model = TransformerModel(
-                      input_chunk_length = INLEN,
-                      output_chunk_length = N_FC,
-                      batch_size = BATCH,
-                      n_epochs = EPOCHS,
-                      model_name = "Transformer_price",
-                      nr_epochs_val_period = VALWAIT,
-                      d_model = FEAT,
-                      nhead = HEADS,
-                      num_encoder_layers = ENCODE,
-                      num_decoder_layers = DECODE,
-                      dim_feedforward = DIM_FF,
-                      dropout = DROPOUT,
-                      activation = ACTF,
-                      random_state=RAND,
-                      likelihood=QuantileRegression(quantiles=QUANTILES), 
-                      optimizer_kwargs={'lr': LEARN},
-                      add_encoders={"cyclic": {"future": ["dayofweek", "month"]}},
-                      save_checkpoints=True,
-                      force_reset=True
-                      )
+  # model = TransformerModel(
+  #                     input_chunk_length = INLEN,
+  #                     output_chunk_length = N_FC,
+  #                     batch_size = BATCH,
+  #                     n_epochs = EPOCHS,
+  #                     model_name = "Transformer_price",
+  #                     nr_epochs_val_period = VALWAIT,
+  #                     d_model = FEAT,
+  #                     nhead = HEADS,
+  #                     num_encoder_layers = ENCODE,
+  #                     num_decoder_layers = DECODE,
+  #                     dim_feedforward = DIM_FF,
+  #                     dropout = DROPOUT,
+  #                     activation = ACTF,
+  #                     random_state=RAND,
+  #                     likelihood=QuantileRegression(quantiles=QUANTILES), 
+  #                     optimizer_kwargs={'lr': LEARN},
+  #                     add_encoders={"cyclic": {"future": ["dayofweek", "month"]}},
+  #                     save_checkpoints=True,
+  #                     force_reset=True
+  #                     )
 
 
-  # training: load a saved model or (re)train
-  if LOAD:
-      print("have loaded a previously saved model from disk:" + mpath)
-      model = TransformerModel.load_model(mpath)                            # load previously model from disk 
-  else:
-      model.fit(  ts_ttrain, 
-                  past_covariates=covF_t, 
-                  verbose=True)
-      print("have saved the model after training:", mpath)
-      model.save_model(mpath)
+  # # training: load a saved model or (re)train
+  # if LOAD:
+  #     print("have loaded a previously saved model from disk:" + mpath)
+  #     model = TransformerModel.load_model(mpath)                            # load previously model from disk 
+  # else:
+  #     model.fit(  ts_ttrain, 
+  #                 past_covariates=covF_t, 
+  #                 verbose=True)
+  #     print("have saved the model after training:", mpath)
+  #     model.save_model(mpath)
 
-  # # testing: generate predictions
-  ts_tpred = model.predict(   n=len(ts_ttest), 
-                              num_samples=N_SAMPLES,   
-                              n_jobs=N_JOBS, 
-                              verbose=True)
+  # # # testing: generate predictions
+  # ts_tpred = model.predict(   n=len(ts_ttest), 
+  #                             num_samples=N_SAMPLES,   
+  #                             n_jobs=N_JOBS, 
+  #                             verbose=True)
 
 
-  ts_pred = scalerP.inverse_transform(ts_tpred)
+  # ts_pred = scalerP.inverse_transform(ts_tpred)
 
-  ts = d.Open
-  pct = d['1']
-  plot_predict(ts, ts_test, ts_pred, pct)
+  # ts = d.Open
+  # pct = d['1']
+  # plot_predict(ts, ts_test, ts_pred, pct)
 
 
 if __name__== '__main__':
