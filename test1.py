@@ -16,7 +16,7 @@ plt.rc('font', size=14)
 
 name = 'SPY'
 ticker = yfinance.Ticker(name)
-df = ticker.history(interval="1d",start="2004-1-15", end="2022-05-15")
+df = ticker.history(interval="1wk",start="2003-01-15", end="2022-08-15")
 df['Date'] = pd.to_datetime(df.index)
 df['Date'] = df['Date'].apply(mpl_dates.date2num)
 df = df.loc[:,['Date', 'Open', 'High', 'Low', 'Close']]
@@ -42,9 +42,9 @@ def isFarFromLevel(l):
 data = []
 for i in range(2,df.shape[0]-2):
   if isSupport(df,i):
-    data.append((df['Date'][i],df['Low'][i], 1, df['count'][i]))
+    data.append((df['Date'][i],df['Close'][i], 1, df['count'][i]))
   elif isResistance(df,i):
-    data.append((df['Date'][i],df['High'][i], -1, df['count'][i]))
+    data.append((df['Date'][i],df['Close'][i], -1, df['count'][i]))
 
 # s =  np.mean(df['High'] - df['Low'])
 
@@ -114,48 +114,75 @@ def add_features(data):
   return data
 
 
-# plot_all()
+plot_all()
 
-# high is 1 and low is 
 
-df1 = pd.DataFrame(data, columns=['Date', 'price', 'sup_res', 'count'])
+# given a list of supp/ resistance, find the two values in between the price and convert that value into
 
-# get regular df and add columns to it
-df = add_features(df)
+def get_rr(df, data):
+  for i in range(len(df)):
+    # get the value of the surrounding items from the list
+    print('lol')
 
-# merge the two dfs together
-merged_df = pd.merge(df1, df, on='count')
 
-# print(df1)
-# print(df)
-# print(merged_df)
 
-# seperate the -1 and positive 1 values and graph data
-sell = merged_df.loc[merged_df['sup_res'] == -1]
 
-buy = merged_df.loc[merged_df['sup_res'] == 1]
 
-# merged_df['MACD'].plot()
-# merged_df['RSI'].plot()
-# merged_df['STCH'].plot()
 
-fig1, (ax1, ax2, ax3) = plt.subplots(3, sharex=True)
+# get_rr(df, data)
 
-ax1.hist(ta.RSI(df['MACD'], timeperiod=14))
-ax1.hist(ta.RSI(df['RSI'], timeperiod=14))
-ax1.hist(ta.RSI(df['STCH'], timeperiod=14))
+
+
+
+
+
+
+
+
+
+
+
+
+# # high is 1 and low is 
+
+# df1 = pd.DataFrame(data, columns=['Date', 'price', 'sup_res', 'count'])
+
+# # get regular df and add columns to it
+# df = add_features(df)
+
+# # merge the two dfs together
+# merged_df = pd.merge(df1, df, on='count')
+
+# # print(df1)
+# # print(df)
+# # print(merged_df)
+
+# # seperate the -1 and positive 1 values and graph data
+# sell = merged_df.loc[merged_df['sup_res'] == -1]
+
+# buy = merged_df.loc[merged_df['sup_res'] == 1]
+
+# # merged_df['MACD'].plot()
+# # merged_df['RSI'].plot()
+# # merged_df['STCH'].plot()
+
+# fig1, (ax1, ax2, ax3) = plt.subplots(3, sharex=True)
+
+# ax1.hist(ta.RSI(df['MACD'], timeperiod=14))
+# ax1.hist(ta.RSI(df['RSI'], timeperiod=14))
+# ax1.hist(ta.RSI(df['STCH'], timeperiod=14))
 
 
 # ax2.hist(ta.RSI(sell['MACD'], timeperiod=14))
-# ax2.hist(ta.RSI(sell['RSI'], timeperiod=14))
-ax2.hist(ta.RSI(sell['STCH'], timeperiod=14))
+# # ax2.hist(ta.RSI(sell['RSI'], timeperiod=14))
+# # ax2.hist(ta.RSI(sell['STCH'], timeperiod=14))
 
 
 # ax3.hist(ta.RSI(buy['MACD'], timeperiod=14))
-# ax3.hist(ta.RSI(buy['RSI'], timeperiod=14))
-ax3.hist(ta.RSI(buy['STCH'], timeperiod=14))
+# # ax3.hist(ta.RSI(buy['RSI'], timeperiod=14))
+# # ax3.hist(ta.RSI(buy['STCH'], timeperiod=14))
 
-# plt.show()
+# # plt.show()
 
 
 
