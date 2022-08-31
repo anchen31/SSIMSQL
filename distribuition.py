@@ -54,7 +54,7 @@ def get_macd(price, slow, fast, smooth):
 def get_data(start_date, end_date):
   name = 'SPY'
   ticker = yfinance.Ticker(name)
-  data = ticker.history(interval="1d",start=start_date, end=end_date)
+  data = ticker.history(interval="1wk",start=start_date, end=end_date)
   data['Date'] = pd.to_datetime(data.index)
   data['Date'] = data['Date'].apply(mpl_dates.date2num)
   data = data.loc[:,['Date', 'Open', 'High', 'Low', 'Close']]
@@ -187,7 +187,7 @@ def get_values(days, d):
   today = date.today()
   name = 'SPY'
   ticker = yfinance.Ticker(name)
-  data = ticker.history(interval="1d",start="2010-1-1", end=today.strftime("%Y-%m-%d"))
+  data = ticker.history(interval="1wk",start="2010-1-1", end=today.strftime("%Y-%m-%d"))
   data['Date'] = pd.to_datetime(data.index)
   data['Date'] = data['Date'].apply(mpl_dates.date2num)
   data = data.loc[:,['Date', 'Open', 'High', 'Low', 'Close']]
@@ -284,84 +284,36 @@ def backtest(dates, k, data):
 def main():
   # 5/13/22 latest
   data = get_data("2003-1-15", "2022-5-15")
+  print(data)
 
 
-  # generate a list of dates that I want to test
-  # print(get_backtest_dates('2022-5-16'))
-  dates = get_data('2018-5-21', '2022-8-29')
-  print(dates)
-  b1 = backtest(dates, 0, data)
-  b2 = backtest(dates, 1, data)
-  b3 = backtest(dates, 5, data)
-
-  dates['ratio1'] = ta.RSI(b1.ratio, timeperiod=14)
-  dates['ratio2'] = ta.RSI(b2.ratio, timeperiod=14)
-  dates['ratio3'] = ta.RSI(b3.ratio, timeperiod=14)
+  # # generate a list of dates that I want to test
+  # # print(get_backtest_dates('2022-5-16'))
+  # dates = get_data('2018-5-21', '2022-8-29')
   # print(dates)
+  # b1 = backtest(dates, 0, data)
+  # b2 = backtest(dates, 1, data)
+  # b3 = backtest(dates, 5, data)
 
-  # dates = d[['Date', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'ratio1', 'ratio2', 'ratio3', 
-  #             'ratio4', 'ratio5', 'ratio6', 'ratio7', 
-  #             'ratio8', 'ratio9', 'ratio10', 'Close']].copy()
+  # dates['ratio1'] = ta.RSI(b1.ratio, timeperiod=14)
+  # dates['ratio2'] = ta.RSI(b2.ratio, timeperiod=14)
+  # dates['ratio3'] = ta.RSI(b3.ratio, timeperiod=14)
 
-
-  plt.style.use('dark_background')
-  fig, (ax, ax1) = plt.subplots(2, sharex=True)
-  ax.plot(dates.Close)
-  ax3 = ax.twinx()
-  ax3.plot(dates['1'], color='red')
-
-
-  ax1.plot(dates.ratio1, color='green')
-  ax1.plot(dates.ratio2, color='blue')
-  ax1.plot(dates.ratio3, color='yellow')
-  # ax1.plot(dates.ratio4, color='orange')
-  # ax1.plot(dates.ratio5, color='red')
-  # ax1.plot(dates.ratio6, color='brown')
-  # ax1.plot(dates.ratio7, color='purple')
-  # ax1.plot(dates.ratio8, color='white')
-  # ax1.plot(dates.ratio9, color='pink')
-
-  ax2 = ax1.twinx()
-  # ax2.plot(dates['1'], color='blue')
-
-  plt.show()
-
-  # d = pd.read_csv('four_year_date.csv')
-  # d = d.rename(columns={'date': 'Date'})
-  # d['Date'] = d['Date'].astype('datetime64[ns]')
-  # d = d.reset_index()
+  # plt.style.use('dark_background')
+  # fig, (ax, ax1) = plt.subplots(2, sharex=True)
+  # ax.plot(dates.Close)
+  # ax3 = ax.twinx()
+  # ax3.plot(dates['1'], color='red')
 
 
-  # dates = dates.drop(columns='Date')
-  # dates = dates.reset_index()
+  # ax1.plot(dates.ratio1, color='green')
+  # ax1.plot(dates.ratio2, color='blue')
+  # ax1.plot(dates.ratio3, color='yellow')
 
-  # df = pd.concat([d, dates], axis = 1)
-  # # print(df.columns)
+  # ax2 = ax1.twinx()
+  # # ax2.plot(dates['1'], color='blue')
 
-  # df = df[['Date', 'open', 'high', 'low', 'close', 'volume', 'average', 'barCount',
-  #      'GLD', 'UVXY', 'SQQQ', 'CVX', 'RIO', 'NUE', 'LWAY', 'TSN', 'NTR', 'ADM',
-  #      'HYG', 'SRLN', 'JNK', 'EWH', 'GBTC', 'USO', 'DIA', 'QQQ', 'IWM', 'IEF',
-  #      'SIVR', 'FXB', 'FXE', 'bb_bbm', 'bb_bbh', 'bb_bbl', 'VWAP', 'RSI',
-  #      'STsupp', 'STres', 'LTsupp', 'LTres', 'crossover', '1', '2', '3', 
-  #      '4', '5', '6', '7', '8', '9', '10', 'MACD', 'STCH', 'count']]
-
-  # print(df)
-
-  # df = df.dropna()
-  # print(df)
-
-  # plt.figure(figsize = (15,15))
-  # sns.set(font_scale=0.75)
-  # ax = sns.heatmap(df.corr().round(3), 
-  #             annot=True, 
-  #             square=True, 
-  #             linewidths=.75, cmap="coolwarm", 
-  #             fmt = ".2f", 
-  #             annot_kws = {"size": 11})
-  # ax.xaxis.tick_bottom()
-  # plt.title("correlation matrix")
   # plt.show()
-
 
 
 if __name__== '__main__':
