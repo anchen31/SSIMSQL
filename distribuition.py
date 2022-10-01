@@ -51,14 +51,37 @@ def get_macd(price, slow, fast, smooth):
     hist = macd - signal
     return hist
 
+def rsi(Close, periods = 14, ema = True):
+    """
+    Returns a pd.Series with the relative strength index.
+    """
+    close_delta = Close.diff()
+
+    # Make two series: one for lower closes and one for higher closes
+    up = close_delta.clip(lower=0)
+    down = -1 * close_delta.clip(upper=0)
+    
+    if ema == True:
+      # Use exponential moving average
+        ma_up = up.ewm(com = periods - 1, adjust=True, min_periods = periods).mean()
+        ma_down = down.ewm(com = periods - 1, adjust=True, min_periods = periods).mean()
+    else:
+        # Use simple moving average
+        ma_up = up.rolling(window = periods, adjust=False).mean()
+        ma_down = down.rolling(window = periods, adjust=False).mean()
+        
+    rsi = ma_up / ma_down
+    rsi = 100 - (100/(1 + rsi))
+    return rsi
+
 def get_data(start_date, end_date):
   name = 'SPY'
   ticker = yfinance.Ticker(name)
-  data = ticker.history(interval="1wk",start=start_date, end=end_date)
+  data = ticker.history(interval="1d",start=start_date, end=end_date)
   data['Date'] = pd.to_datetime(data.index)
   data['Date'] = data['Date'].apply(mpl_dates.date2num)
   data = data.loc[:,['Date', 'Open', 'High', 'Low', 'Close']]
-  data['RSI'] = ta.RSI(data['Close'], timeperiod=14)
+  data['RSI'] = rsi(data['Close'])
   data['crossover'] = (data['Close'].ewm(12).mean() - data['Close'].ewm(26).mean()).ewm(span=9, adjust=False, min_periods=9).mean()
   data['1'] = data['Close'].pct_change(1).shift(-1)
   data['2'] = data['Close'].pct_change(2).shift(-2)
@@ -131,6 +154,8 @@ def manipulate_data(length, rsi, Stoch, MACD, data):
   total_data = pd.DataFrame()
   # data = data.set_index('Close')
 
+
+  # selection process for the previous events
   j = 0
   length = length - 1
   while j <= length:
@@ -187,7 +212,7 @@ def get_values(days, d):
   today = date.today()
   name = 'SPY'
   ticker = yfinance.Ticker(name)
-  data = ticker.history(interval="1wk",start="2010-1-1", end=today.strftime("%Y-%m-%d"))
+  data = ticker.history(interval="1d",start="2010-1-1", end=today.strftime("%Y-%m-%d"))
   data['Date'] = pd.to_datetime(data.index)
   data['Date'] = data['Date'].apply(mpl_dates.date2num)
   data = data.loc[:,['Date', 'Open', 'High', 'Low', 'Close']]
@@ -284,36 +309,36 @@ def backtest(dates, k, data):
 def main():
   # 5/13/22 latest
   data = get_data("2003-1-15", "2022-5-15")
-  print(data)
+  # print(data)
 
 
-  # # generate a list of dates that I want to test
-  # # print(get_backtest_dates('2022-5-16'))
-  # dates = get_data('2018-5-21', '2022-8-29')
-  # print(dates)
-  # b1 = backtest(dates, 0, data)
-  # b2 = backtest(dates, 1, data)
-  # b3 = backtest(dates, 5, data)
+  # generate a list of dates that I want to test
+  # print(get_backtest_dates('2022-5-16'))
+  dates = get_data('2020-5-21', '2022-9-15')
 
-  # dates['ratio1'] = ta.RSI(b1.ratio, timeperiod=14)
-  # dates['ratio2'] = ta.RSI(b2.ratio, timeperiod=14)
-  # dates['ratio3'] = ta.RSI(b3.ratio, timeperiod=14)
+  b1 = backtest(dates, 0, data)
+  b2 = backtest(dates, 1, data)
+  b3 = backtest(dates, 4, data)
 
-  # plt.style.use('dark_background')
-  # fig, (ax, ax1) = plt.subplots(2, sharex=True)
-  # ax.plot(dates.Close)
-  # ax3 = ax.twinx()
-  # ax3.plot(dates['1'], color='red')
+  dates['ratio1'] = ta.RSI(b1.ratio, timeperiod=14)
+  dates['ratio2'] = ta.RSI(b2.ratio, timeperiod=14)
+  dates['ratio3'] = ta.RSI(b3.ratio, timeperiod=14)
+
+  plt.style.use('dark_background')
+  fig, (ax, ax1) = plt.subplots(2, sharex=True)
+  ax.plot(dates.Close)
+  ax3 = ax.twinx()
+  ax3.plot(dates['1'], color='red')
 
 
-  # ax1.plot(dates.ratio1, color='green')
-  # ax1.plot(dates.ratio2, color='blue')
-  # ax1.plot(dates.ratio3, color='yellow')
+  ax1.plot(dates.ratio1, color='green')
+  ax1.plot(dates.ratio2, color='blue')
+  ax1.plot(dates.ratio3, color='yellow')
 
-  # ax2 = ax1.twinx()
-  # # ax2.plot(dates['1'], color='blue')
+  ax2 = ax1.twinx()
+  # ax2.plot(dates['1'], color='blue')
 
-  # plt.show()
+  plt.show()
 
 
 if __name__== '__main__':

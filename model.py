@@ -262,9 +262,9 @@ covF_ttest = scalerF.transform(covF_test)
 covF_t = scalerF.transform(ts_covF)
 
 # #################################################################### graphs the cycles of the data
-# cov_t = covF_t.pd_dataframe()
+cov_t = covF_t.pd_dataframe()
 
-# df3 = cov_t
+df3 = cov_t
 
 # df3.plot()
 
@@ -296,17 +296,17 @@ covF_t = scalerF.transform(ts_covF)
 # # # covF_ttrain.plot()
 # plt.show()
 
-# plt.figure(figsize = (15,15))
-# sns.set(font_scale=0.75)
-# ax = sns.heatmap(df3.corr().round(3), 
-#             annot=True, 
-#             square=True, 
-#             linewidths=.75, cmap="coolwarm", 
-#             fmt = ".2f", 
-#             annot_kws = {"size": 11})
-# ax.xaxis.tick_bottom()
-# plt.title("correlation matrix")
-# plt.show()
+plt.figure(figsize = (15,15))
+sns.set(font_scale=0.75)
+ax = sns.heatmap(df3.corr().round(3), 
+            annot=True, 
+            square=True, 
+            linewidths=.75, cmap="coolwarm", 
+            fmt = ".2f", 
+            annot_kws = {"size": 11})
+ax.xaxis.tick_bottom()
+plt.title("correlation matrix")
+plt.show()
 
 ###############################################################################################
 
@@ -353,27 +353,27 @@ ts_tpred = model.predict(   n=len(ts_ttest),
 
 
 # testing: helper function: plot predictions
-def plot_predict(ts_actual, ts_test, ts_pred):
+# def plot_predict(ts_actual, ts_test, ts_pred):
     
-    ## plot time series, limited to forecast horizon
-    plt.figure(figsize=FIGSIZE)
+#     ## plot time series, limited to forecast horizon
+#     plt.figure(figsize=FIGSIZE)
     
-    ts_actual.plot(label="actual")                                       # plot actual
+#     ts_actual.plot(label="actual")                                       # plot actual
     
-    trade.plot(label="Actual Trade")
+#     trade.plot(label="Actual Trade")
 
-    ts_pred.plot(low_quantile=qL1, high_quantile=qU1, label=label_q1)    # plot U1 quantile band
-    #ts_pred.plot(low_quantile=qL2, high_quantile=qU2, label=label_q2)   # plot U2 quantile band
-    ts_pred.plot(low_quantile=qL3, high_quantile=qU3, label=label_q3)    # plot U3 quantile band
-    ts_pred.plot(central_quantile="mean", label="expected")              # plot "mean" or median=0.5
+#     ts_pred.plot(low_quantile=qL1, high_quantile=qU1, label=label_q1)    # plot U1 quantile band
+#     #ts_pred.plot(low_quantile=qL2, high_quantile=qU2, label=label_q2)   # plot U2 quantile band
+#     ts_pred.plot(low_quantile=qL3, high_quantile=qU3, label=label_q3)    # plot U3 quantile band
+#     ts_pred.plot(central_quantile="mean", label="expected")              # plot "mean" or median=0.5
     
-    plt.title("TFT: test set (MAPE: {:.2f}%)".format(mape(ts_test, ts_pred)))
-    plt.legend()
-    plt.show()    
+#     plt.title("TFT: test set (MAPE: {:.2f}%)".format(mape(ts_test, ts_pred)))
+#     plt.legend()
+#     plt.show()    
 
 
-ts_pred = scalerP.inverse_transform(ts_tpred)
-plot_predict(ts, ts_test, ts_pred)
+# ts_pred = scalerP.inverse_transform(ts_tpred)
+# plot_predict(ts, ts_test, ts_pred)
 
 
 
